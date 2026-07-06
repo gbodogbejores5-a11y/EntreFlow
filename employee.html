@@ -7,7 +7,8 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src fonts.gstatic.com; connect-src 'self' http://127.0.0.1:4000 https://script.google.com https://script.googleusercontent.com https://cdn.jsdelivr.net; img-src 'self' data: blob: *;" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght:9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
+  <link rel="icon" href="logoEntre.png" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
 
@@ -1022,7 +1023,7 @@ async function loadStockPage() {
   try {
     const data = await api('listStock', { companyId: EMP.company_id });
     const tbody = document.getElementById('stockTbody');
-    if (!data?.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><strong>Aucun produit</strong></div></td></tr>'); return; }
+    if (!data?.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><strong>Aucun produit</strong></div></td></tr>'; return; }
     tbody.innerHTML = data.map(s => {
       const qty = parseFloat(s.quantity) || 0;
       const thresh = parseFloat(s.min_threshold) || 5;
