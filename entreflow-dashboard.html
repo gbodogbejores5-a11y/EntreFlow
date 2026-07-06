@@ -2005,7 +2005,6 @@ async function suspendEmployee(id,el){if(!confirm('Suspendre cet employé ? Il d
 let _permDelTarget=null;
 function openPermanentDeleteEmployee(id,el){_permDelTarget={id,el};openModal('permDelEmpModal');}
 document.getElementById('confirmPermDelEmpBtn').addEventListener('click',async()=>{if(!_permDelTarget)return;const btn=document.getElementById('confirmPermDelEmpBtn');if(btn){setBtnLoading(btn,true);}try{await api('permanentDeleteEmployee',{id:_permDelTarget.id});clearApiCache();toast('Employé supprimé définitivement','warn');loadEmployeesPage(false);loadHomePage(false);closeModal('permDelEmpModal');}catch(e){toast('Erreur : '+e.message,'error');}finally{if(btn){setBtnLoading(btn,false);}_permDelTarget=null;}});
-function showEmployeeDetail(empId, silent){
 async function loadSalesPage(silent){
   if(!CO)return;
   const filter=document.getElementById('salesDayFilter')?.value||'all';
