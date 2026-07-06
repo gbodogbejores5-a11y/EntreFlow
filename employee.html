@@ -396,7 +396,12 @@ function filterTable(bodyId, q){
 function renderAll(){
   const co = DASH.company || {};
   document.getElementById('coName').textContent = co.name || 'EntreFlow';
-  document.getElementById('coAv').textContent = (co.name || 'E').trim()[0].toUpperCase();
+  const coAvEl = document.getElementById('coAv');
+  if (co.logo_data) {
+    coAvEl.innerHTML = '<img src="'+co.logo_data+'" style="width:100%;height:100%;object-fit:cover;border-radius:9px;">';
+  } else {
+    coAvEl.textContent = (co.name || 'E').trim()[0].toUpperCase();
+  }
   document.getElementById('empAv').textContent = (EMP.full_name || 'V').trim()[0].toUpperCase();
   document.getElementById('greetName').textContent = 'Bonjour, ' + (EMP.full_name || '').split(' ')[0];
   document.getElementById('dateChip').textContent = new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
