@@ -1125,7 +1125,7 @@ async function doEmpLogin() {
     document.getElementById('sbName').textContent = r.employee.company?.name || 'EntreFlow';
     document.getElementById('sbAv').textContent = (r.employee.prenom || 'E')[0].toUpperCase();
     document.getElementById('userAv').textContent = (r.employee.prenom || 'E')[0].toUpperCase();
-    loadHomePage(); startAutoRefresh();
+    loadHomePage(); startAutoRefresh(); hideLoading();
   } catch (err) { errEl.textContent = err.message; errEl.style.display = 'block'; btn.disabled = false; btn.textContent = 'Acceder a mon espace'; }
 }
 function doEmpLogout() { try { localStorage.removeItem('empSession'); } catch (e) {} EMP = null; location.href = location.href; }
@@ -1137,7 +1137,8 @@ let autoRefreshTimer = null;
 function startAutoRefresh() { if (autoRefreshTimer) clearInterval(autoRefreshTimer); autoRefreshTimer = setInterval(() => { if (EMP) refreshCurrentPage(); }, 20000); }
 
 /* ══ INIT ══ */
-async function initEmployee() {
+function hideLoading(){ const el=document.getElementById('loadingScreen'); if(el){ el.style.display='none'; } }
+function initEmployee() {
   const stored = localStorage.getItem('empSession');
   if (stored) {
     try {
@@ -1151,13 +1152,14 @@ async function initEmployee() {
           document.getElementById('sbName').textContent = r.company?.name || 'EntreFlow';
           document.getElementById('sbAv').textContent = (r.prenom || 'E')[0].toUpperCase();
           document.getElementById('userAv').textContent = (r.prenom || 'E')[0].toUpperCase();
-          loadHomePage(); startAutoRefresh(); return;
+          loadHomePage(); startAutoRefresh(); hideLoading(); return;
         }
       }
     } catch (e) { localStorage.removeItem('empSession'); }
   }
   document.getElementById('empLoginScreen').style.display = 'flex';
   document.getElementById('dashboard').style.display = 'none';
+  hideLoading();
 }
 
 /* ══ BACKGROUND ANIMATION ══ */
