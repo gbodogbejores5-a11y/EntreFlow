@@ -2,10 +2,45 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0;url=entreflow-login.html">
-  <title>EntreFlow — Redirection...</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EntreFlow — Accueil</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'DM Sans',-apple-system,sans-serif}
+    body{background:#040612;color:#F8FAFC;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+    .box{max-width:480px;width:100%;text-align:center;background:rgba(8,12,30,.85);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:40px 28px}
+    .logo{width:56px;height:56px;border-radius:18px;background:linear-gradient(150deg,#1D4ED8,#7C4DFF);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;box-shadow:0 14px 34px -8px rgba(37,99,235,.5)}
+    .logo svg{width:26px;height:26px;stroke:#fff}
+    h1{font-size:22px;font-weight:800;margin-bottom:6px}
+    p{color:#64748B;font-size:13.5px;line-height:1.6;margin-bottom:18px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 18px;border-radius:12px;border:none;font-size:13.5px;font-weight:700;cursor:pointer;text-decoration:none;transition:.15s}
+    .btn-primary{background:#1D4ED8;color:#fff}
+    .btn-primary:hover{background:#1E40AF}
+    .links{margin-top:18px;display:flex;flex-direction:column;gap:10px}
+    .links a{color:#94A3B8;font-size:12.5px;text-decoration:none}
+    .links a:hover{color:#E2E8F0}
+  </style>
 </head>
 <body>
-  <p>Redirection vers <a href="entreflow-login.html">la page de connexion</a>...</p>
+  <div class="box">
+    <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+    <h1>Bienvenue sur EntreFlow</h1>
+    <p>Gérez vos ventes, vos devis et votre stock en un seul endroit.</p>
+    <div class="links">
+      <a class="btn btn-primary" href="/entreflow-login.html">Espace Boss — Connexion</a>
+      <a class="btn btn-primary" href="/employee.html">Espace Vendeur</a>
+    </div>
+    <div class="links">
+      <a href="/entreflow-forgot.html">Mot de passe oublié ?</a>
+    </div>
+  </div>
+  <script>
+    (function(){
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('employeeToken') || params.get('token');
+      if (token) {
+        window.location.replace('/employee.html?token=' + encodeURIComponent(token));
+      }
+    })();
+  </script>
 </body>
 </html>
