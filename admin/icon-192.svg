@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <rect width="192" height="192" rx="42" fill="#040810"/>
+  <rect x="28" y="28" width="136" height="136" rx="28" fill="#EF4444"/>
+  <text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" font-family="Syne,sans-serif" font-weight="800" font-size="105" fill="#fff">E</text>
+</svg>

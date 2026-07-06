@@ -1,0 +1,2490 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src fonts.gstatic.com; connect-src 'self' http://127.0.0.1:4001 https://script.google.com https://script.googleusercontent.com https://cdn.jsdelivr.net; img-src 'self' data: blob: *;">
+<title>EntreFlow — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#040810; --navy:#060D25; --sidebar-bg:rgba(4,6,18,.97);
+  --blue:#2563EB; --blue-m:#3B82F6; --blue-l:#60A5FA; --blue-xs:rgba(96,165,250,.08);
+  --white:#EEF2FF; --gray:#8A9AC2; --gray-d:#3A4568;
+  --border:rgba(96,165,250,.10); --border-h:rgba(96,165,250,.22);
+  --card:rgba(6,10,28,.70); --card-h:rgba(8,14,36,.85);
+  --green:#10B981; --amber:#F59E0B; --red:#EF4444; --purple:#8B5CF6;
+  --sb-w:256px; --radius:14px; --radius-sm:9px; --radius-xs:6px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--white);font-family:'DM Sans',sans-serif;overflow-x:hidden;font-size:14px;}
+canvas#bgCanvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+h1,h2,h3,h4{font-family:'Syne',sans-serif;letter-spacing:-.02em;}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-thumb{background:var(--border-h);border-radius:4px;}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadein{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes popIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:none}}
+@keyframes float-y{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes pulse-ring{0%{box-shadow:0 0 0 0 rgba(37,99,235,.4)}70%{box-shadow:0 0 0 9px rgba(37,99,235,0)}100%{box-shadow:0 0 0 0 rgba(37,99,235,0)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+
+#loadingScreen{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .4s;}
+#loadingScreen.hide{opacity:0;pointer-events:none;}
+.spinner{width:42px;height:42px;border:2.5px solid rgba(96,165,250,.12);border-top-color:var(--blue-l);border-radius:50%;animation:spin .75s linear infinite;}
+
+#setupScreen{position:fixed;inset:0;background:rgba(4,6,18,.98);backdrop-filter:blur(16px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
+#setupScreen.show{display:flex;}
+.setup-box{max-width:520px;width:100%;background:rgba(6,10,30,.96);border:1px solid var(--border);border-radius:24px;padding:36px;max-height:92vh;overflow-y:auto;animation:popIn .35s ease;}
+.setup-logo{display:flex;align-items:center;gap:12px;margin-bottom:26px;}
+.logo-icon{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#1D4ED8,#60A5FA);display:flex;align-items:center;justify-content:center;flex-shrink:0;animation:pulse-ring 3s ease-in-out infinite, float-y 4.5s ease-in-out infinite;}
+.logo-icon svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.logo-text{font-size:22px;font-weight:800;font-family:'Syne',sans-serif;background:linear-gradient(90deg,#fff 30%,var(--blue-l));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.setup-title{font-size:20px;font-weight:700;margin-bottom:6px;}
+.setup-sub{font-size:13px;color:var(--gray);margin-bottom:26px;line-height:1.65;}
+
+.fg{margin-bottom:14px;}
+.fg label{display:block;font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 13px;background:rgba(4,6,18,.65);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--white);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:.2s;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:rgba(96,165,250,.45);background:rgba(37,99,235,.05);box-shadow:0 0 0 3px rgba(37,99,235,.08);}
+.fg input::placeholder,.fg textarea::placeholder{color:var(--gray-d);}
+.fg select option{background:#060D25;}
+.fg textarea{resize:vertical;min-height:68px;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;border-radius:999px;font-size:13px;font-weight:500;transition:.2s;text-decoration:none;position:relative;overflow:hidden;}
+.btn svg{flex-shrink:0;}
+.btn-primary{background:linear-gradient(108deg,#1D4ED8,var(--blue-m));color:#fff;padding:11px 22px;box-shadow:0 4px 18px rgba(29,78,216,.28);}
+.btn-primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 26px rgba(29,78,216,.4);}
+.btn-primary:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+.btn-outline{background:rgba(255,255,255,.035);border:1px solid var(--border);color:var(--white);padding:9px 18px;}
+.btn-outline:hover{background:rgba(96,165,250,.07);border-color:var(--border-h);}
+.btn-sm{background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.22);color:var(--blue-l);padding:6px 13px;font-size:12px;border-radius:999px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:.2s;}
+.btn-sm:hover{background:rgba(37,99,235,.24);border-color:rgba(37,99,235,.4);}
+.btn-sm.active-tab{background:rgba(37,99,235,.3);border-color:rgba(37,99,235,.5);color:#fff;}
+.btn-danger{background:rgba(239,68,68,.09);border:1px solid rgba(239,68,68,.25);color:var(--red);padding:6px 10px;border-radius:var(--radius-xs);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:.2s;}
+.btn-danger:hover{background:rgba(239,68,68,.18);}
+.btn-icon{background:rgba(59,130,246,.09);border:1px solid rgba(59,130,246,.18);color:var(--blue-l);padding:6px 10px;border-radius:var(--radius-xs);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:.2s;}
+.btn-icon:hover{background:rgba(59,130,246,.18);}
+.btn-full{width:100%;padding:12px;}
+.btn-green{background:linear-gradient(108deg,#059669,var(--green));color:#fff;padding:11px 22px;box-shadow:0 4px 18px rgba(16,185,129,.28);}
+.btn-green:hover{transform:translateY(-1px);box-shadow:0 8px 26px rgba(16,185,129,.4);}
+.btn-loading{opacity:.45;pointer-events:none;filter:grayscale(.25);}
+
+#dashboard{display:none;min-height:100vh;position:relative;z-index:1;}
+
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sb-w);background:var(--sidebar-bg);backdrop-filter:blur(24px);border-right:1px solid var(--border);z-index:50;display:flex;flex-direction:column;transition:transform .28s cubic-bezier(.4,0,.2,1);}
+.sidebar.collapsed{transform:translateX(-256px);}
+.sb-header{padding:18px 16px 14px;border-bottom:1px solid var(--border);}
+.sb-logo{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.sb-logo .logo-icon{width:30px;height:30px;border-radius:9px;}
+.sb-logo .logo-icon svg{width:16px;height:16px;}
+.sb-logo .logo-text{font-size:16px;}
+.sb-company{padding:9px 11px;background:rgba(96,165,250,.05);border:1px solid var(--border);border-radius:11px;cursor:pointer;transition:.18s;}
+.sb-company:hover{background:rgba(96,165,250,.10);border-color:var(--border-h);}
+.sb-company-av{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--blue-m),var(--blue-l));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;overflow:hidden;flex-shrink:0;}
+.sb-company-av img{width:100%;height:100%;object-fit:cover;}
+.sb-company-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;}
+.sb-company-edit{font-size:10px;color:var(--gray);}
+.sb-nav{flex:1;overflow-y:auto;padding:12px 8px;}
+.nav-group{font-size:9px;font-weight:600;color:rgba(138,154,194,.35);padding:0 9px;margin:14px 0 5px;text-transform:uppercase;letter-spacing:.09em;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:10px;color:var(--gray);cursor:pointer;transition:.16s;margin-bottom:2px;font-size:13px;position:relative;}
+.nav-item:hover{background:rgba(96,165,250,.06);color:var(--white);}
+.nav-item.active{background:rgba(37,99,235,.16);color:var(--blue-l);font-weight:500;}
+.nav-item.active::before{content:'';position:absolute;left:0;top:25%;bottom:25%;width:2.5px;background:var(--blue-l);border-radius:2px;}
+.nav-item svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.nav-badge{margin-left:auto;font-size:10px;background:var(--red);color:#fff;padding:1px 6px;border-radius:999px;font-weight:600;min-width:18px;text-align:center;}
+.sb-footer{padding:10px 8px;border-top:1px solid var(--border);}
+
+.topbar{position:fixed;top:0;left:var(--sb-w);right:0;height:60px;z-index:40;background:rgba(4,8,22,.90);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;transition:left .28s cubic-bezier(.4,0,.2,1);}
+.topbar.expanded{left:0;}
+.topbar-left{display:flex;align-items:center;gap:12px;}
+.menu-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--gray);transition:.18s;}
+.menu-btn:hover{background:rgba(96,165,250,.08);color:var(--white);border-color:var(--border-h);}
+.menu-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;}
+.topbar-title{font-size:14px;font-weight:600;font-family:'Syne',sans-serif;}
+.topbar-right{display:flex;align-items:center;gap:9px;}
+.icon-btn{width:34px;height:34px;border-radius:9px;border:1px solid var(--border);background:rgba(255,255,255,.025);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:.18s;}
+.icon-btn:hover{background:rgba(96,165,250,.09);border-color:var(--border-h);}
+.icon-btn svg{width:16px;height:16px;stroke:var(--gray);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+.notif-dot{position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:50%;background:var(--red);border:1.5px solid var(--bg);}
+.notif-badge{position:absolute;top:-4px;right:-8px;min-width:16px;height:16px;padding:0 5px;border-radius:10px;background:var(--red);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--bg);}
+.notif-panel{position:absolute;top:calc(100% + 8px);right:0;width:360px;max-height:520px;overflow:auto;background:rgba(8,10,20,.96);border:1px solid var(--border);border-radius:12px;backdrop-filter:blur(12px);box-shadow:0 20px 60px rgba(0,0,0,.5);z-index:90;}
+.notif-panel-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(8,10,20,.96);}
+.notif-panel-title{font-weight:700;font-size:13px;color:var(--white);}
+.notif-list{padding:6px;}
+.notif-item{display:flex;gap:10px;padding:10px;border-radius:10px;cursor:pointer;transition:.18s;}
+.notif-item:hover{background:rgba(255,255,255,.05);}
+.notif-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.notif-body{flex:1;min-width:0;}
+.notif-title{font-size:13px;font-weight:600;color:var(--white);line-height:1.3;}
+.notif-msg{font-size:12px;color:var(--gray);margin-top:2px;line-height:1.35;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.notif-time{font-size:11px;color:var(--gray);white-space:nowrap;}
+.notif-empty{padding:18px 10px;text-align:center;color:var(--gray);font-size:13px;}
+.user-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--blue-l));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;cursor:pointer;overflow:hidden;border:2px solid rgba(96,165,250,.2);}
+.user-av img{width:100%;height:100%;object-fit:cover;}
+
+.main{margin-left:var(--sb-w);padding:78px 24px 48px;transition:margin .28s cubic-bezier(.4,0,.2,1);min-height:100vh;}
+.main.expanded{margin-left:0;}
+
+.page{display:none;}
+.page.active{display:block;animation:fadein .35s ease;}
+.page-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px;flex-wrap:wrap;gap:12px;}
+.page-header h1{font-size:22px;font-weight:700;word-break:break-word;overflow-wrap:anywhere;}
+.page-header p{font-size:13px;color:var(--gray);margin-top:3px;}
+.date-chip{font-size:11px;padding:5px 13px;background:rgba(37,99,235,.09);border:1px solid var(--border);border-radius:999px;color:var(--blue-l);font-weight:500;white-space:nowrap;flex-shrink:0;}
+.period-tabs{display:flex;gap:5px;background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:999px;padding:3px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.period-tabs::-webkit-scrollbar{display:none;}
+.period-btn{background:transparent;border:none;color:var(--gray);font-size:12px;padding:6px 13px;border-radius:999px;cursor:pointer;font-weight:500;transition:.2s;font-family:'DM Sans',sans-serif;white-space:nowrap;flex-shrink:0;}
+.period-btn.active{background:rgba(37,99,235,.22);color:var(--white);font-weight:600;}
+.period-btn:hover:not(.active){color:var(--white);}
+.page-header > div:last-child{display:flex;align-items:center;gap:10px;flex-wrap:wrap;max-width:100%;}
+@media(max-width:1024px){.page-header{align-items:flex-start;}}
+@media(max-width:760px){.page-header{flex-direction:column;align-items:stretch;gap:10px;}.page-header h1{font-size:19px;}.page-header > div:last-child{justify-content:space-between;width:100%;}.period-tabs{flex:1;justify-content:flex-start;}}
+@media(max-width:480px){.page-header h1{font-size:17px;}.page-header p{font-size:12px;}.date-chip{font-size:10px;padding:4px 10px;}.period-btn{font-size:11px;padding:5px 10px;}.page-header > div:last-child{flex-direction:row;gap:8px;}}
+body.ef-xs .page-header,body.ef-sm .page-header{flex-direction:column;align-items:stretch;}
+body.ef-xs .page-header > div:last-child,body.ef-sm .page-header > div:last-child{width:100%;justify-content:space-between;}
+body.ef-md .page-header{align-items:flex-start;}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;transition:.2s;position:relative;overflow:hidden;}
+.kpi:hover{transform:translateY(-2px);border-color:var(--border-h);background:var(--card-h);}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.kpi-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;}
+.kpi-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+.kpi-chip{font-size:10px;padding:3px 8px;border-radius:999px;font-weight:500;}
+.chip-up{background:rgba(16,185,129,.10);color:var(--green);}
+.chip-neu{background:rgba(245,158,11,.10);color:var(--amber);}
+.chip-blue{background:rgba(96,165,250,.10);color:var(--blue-l);}
+.kpi-val{font-size:28px;font-weight:800;font-family:'Syne',sans-serif;line-height:1.1;margin-bottom:4px;}
+.kpi-lbl{font-size:12px;color:var(--gray);}
+.kpi-progress{margin-top:10px;height:3px;background:rgba(255,255,255,.05);border-radius:2px;overflow:hidden;}
+.kpi-progress-fill{height:3px;border-radius:2px;transition:width .8s ease;}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:18px;}
+.card:hover{border-color:rgba(96,165,250,.14);}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+.card-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;color:var(--white);}
+.card-title svg{width:16px;height:16px;stroke:var(--blue-l);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+.card-actions{display:flex;align-items:center;gap:7px;}
+
+.view-toggle{display:flex;gap:4px;background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:999px;padding:3px;}
+.vt-btn{background:transparent;border:none;color:var(--gray);font-size:11px;padding:5px 11px;border-radius:999px;cursor:pointer;font-weight:500;transition:.2s;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:5px;}
+.vt-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;}
+.vt-btn.active{background:rgba(37,99,235,.22);color:var(--white);}
+.vt-btn:hover:not(.active){color:var(--white);}
+
+.charts-row{display:grid;grid-template-columns:3fr 2fr;gap:16px;margin-bottom:18px;}
+.chart-wrap{height:250px;position:relative;overflow:hidden;}
+.chart-wrap canvas,.chart-box canvas{max-width:100%;height:100%;}
+
+.stock-rings{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px;}
+.ring-item{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;}
+.ring-wrap{position:relative;width:80px;height:80px;max-width:100%;}
+.ring-wrap canvas{position:absolute;inset:0;width:100% !important;height:100% !important;}
+.ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.ring-pct{font-size:15px;font-weight:700;font-family:'Syne',sans-serif;}
+.ring-name{font-size:11px;color:var(--gray);text-align:center;max-width:100px;line-height:1.3;}
+.ring-qty{font-size:10px;color:var(--gray);}
+
+.tbl-wrap{overflow-x:auto;}
+.tbl{width:100%;border-collapse:collapse;}
+.tbl th{text-align:left;padding:9px 8px;font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);}
+.tbl td{padding:10px 8px;font-size:13px;border-bottom:1px solid rgba(96,165,250,.05);}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:rgba(96,165,250,.025);}
+.badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:500;}
+.b-ok{background:rgba(16,185,129,.11);color:var(--green);}
+.b-warn{background:rgba(245,158,11,.11);color:var(--amber);}
+.b-err{background:rgba(239,68,68,.11);color:var(--red);}
+.b-info{background:rgba(96,165,250,.11);color:var(--blue-l);}
+.b-purple{background:rgba(139,92,246,.11);color:var(--purple);}
+
+.empty-state{text-align:center;padding:44px 20px;color:var(--gray);}
+.empty-icon{display:flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:14px;background:rgba(37,99,235,.08);border:1px solid var(--border);margin:0 auto 14px;}
+.empty-icon svg{width:24px;height:24px;stroke:var(--gray);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
+.empty-state strong{display:block;font-size:13px;color:var(--white);margin-bottom:5px;font-weight:600;}
+.empty-state span{font-size:12px;line-height:1.6;}
+
+.stk-bar{width:70px;height:4px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;margin-top:4px;}
+.stk-bar-fill{height:4px;border-radius:3px;transition:width .5s ease;}
+
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px;}
+.stat-mini{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;display:flex;align-items:center;gap:12px;transition:.2s;}
+.stat-mini:hover{border-color:var(--border-h);}
+.stat-mini-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.stat-mini-icon svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+.stat-mini-val{font-size:18px;font-weight:700;font-family:'Syne',sans-serif;line-height:1.1;}
+.stat-mini-lbl{font-size:11px;color:var(--gray);}
+
+.sale-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:.5px solid rgba(96,165,250,.05);}
+.sale-row:last-child{border-bottom:none;}
+.sale-client{font-size:13px;font-weight:500;}
+.sale-num{font-size:11px;color:var(--gray);}
+.sale-amt{font-size:13px;font-weight:600;color:var(--blue-l);}
+.sale-date{font-size:11px;color:var(--gray);}
+
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(10px);z-index:300;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-bg.show{display:flex;}
+.modal-box{background:rgba(6,10,28,.98);border:1px solid var(--border);border-radius:20px;padding:26px;width:100%;max-width:490px;max-height:88vh;overflow-y:auto;animation:popIn .25s ease;}
+.modal-box.wide{max-width:640px;}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.modal-head h3{font-size:17px;font-weight:700;}
+.modal-close{background:none;border:none;color:var(--gray);cursor:pointer;width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:.15s;}
+.modal-close:hover{background:rgba(255,255,255,.07);color:var(--white);}
+.modal-close svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap;}
+.pm-batch-list{max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:8px;}
+.pm-batch-item{display:flex;align-items:center;justify-content:space-between;padding:9px 11px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;}
+.pm-batch-item span{display:flex;align-items:center;gap:8px;}
+
+#companyPanel{position:fixed;inset:0;z-index:250;background:rgba(4,6,18,.82);backdrop-filter:blur(12px);display:none;justify-content:flex-end;}
+#companyPanel.show{display:flex;}
+.cp-box{width:100%;max-width:420px;height:100vh;background:rgba(6,10,28,.98);border-left:1px solid var(--border);padding:26px;overflow-y:auto;animation:fadein .3s ease;}
+.cp-section{margin-bottom:20px;}
+.cp-section-title{font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+
+#toastContainer{position:fixed;bottom:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:7px;}
+.toast{padding:11px 15px;border-radius:10px;font-size:13px;color:#fff;display:flex;align-items:center;gap:9px;max-width:310px;backdrop-filter:blur(14px);transform:translateX(150%);transition:transform .3s cubic-bezier(.2,.9,.4,1.1);}
+.toast.visible{transform:translateX(0);}
+.toast svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.toast.success{background:rgba(16,185,129,.14);border:1px solid rgba(16,185,129,.35);}
+.toast.error{background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.35);}
+.toast.info{background:rgba(37,99,235,.14);border:1px solid rgba(37,99,235,.35);}
+.toast.warn{background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.35);}
+
+.insight-card{display:flex;align-items:flex-start;gap:12px;padding:13px;background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.14);border-radius:var(--radius-sm);margin-bottom:12px;}
+.insight-icon{width:30px;height:30px;border-radius:8px;background:rgba(37,99,235,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.insight-icon svg{width:15px;height:15px;stroke:var(--blue-l);fill:none;stroke-width:1.8;stroke-linecap:round;}
+.insight-text{font-size:12px;color:var(--gray);line-height:1.5;}
+.insight-text strong{color:var(--white);display:block;margin-bottom:2px;font-size:12px;}
+
+.top-prod-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:.5px solid rgba(96,165,250,.05);}
+.top-prod-row:last-child{border-bottom:none;}
+.tp-rank{font-size:11px;font-weight:700;color:var(--gray-d);width:18px;flex-shrink:0;}
+.tp-bar-wrap{flex:1;height:5px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden;}
+.tp-bar{height:5px;border-radius:3px;}
+.tp-name{font-size:12px;font-weight:500;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tp-qty{font-size:12px;color:var(--gray);min-width:40px;text-align:right;}
+
+/* SALE BUILDER (panier) */
+.cart-row{display:grid;grid-template-columns:1fr 70px 90px auto;gap:8px;margin-bottom:8px;align-items:center;}
+.cart-row select,.cart-row input{padding:9px 10px;border-radius:8px;border:1px solid var(--border);background:rgba(4,6,18,.65);color:var(--white);font-size:12.5px;font-family:'DM Sans',sans-serif;outline:none;}
+.cart-row .rm-btn{width:30px;height:34px;border-radius:7px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.09);color:var(--red);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.cart-row .new-prod-form{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:rgba(37,99,235,.1);border:1px solid var(--border);border-radius:8px;padding:6px 8px;grid-column:1;}
+.cart-row .new-prod-form input,.cart-row .new-prod-form select{padding:7px 8px;border-radius:6px;border:1px solid var(--border);background:rgba(4,6,18,.65);color:var(--white);font-size:12px;font-family:'DM Sans',sans-serif;outline:none;}
+.cart-row .new-prod-form input[type="text"]{flex:1 1 120px;min-width:100px;}
+.cart-row .new-prod-form select{width:auto;min-width:70px;}
+.cart-row .new-prod-form input[type="number"]{width:80px;}
+
+/* AVIS / STARS */
+.star-rating{display:flex;gap:6px;margin:14px 0;}
+.star-btn{width:38px;height:38px;cursor:pointer;background:none;border:none;padding:0;}
+.star-btn svg{width:100%;height:100%;stroke:var(--gray-d);fill:none;stroke-width:1.6;transition:.15s;}
+.star-btn.filled svg{stroke:var(--amber);fill:var(--amber);}
+.star-display{display:inline-flex;gap:2px;}
+.star-display svg{width:13px;height:13px;}
+
+#avisPrompt{position:fixed;bottom:24px;right:24px;z-index:400;width:340px;background:rgba(6,10,28,.98);border:1px solid var(--border);border-radius:18px;padding:22px;box-shadow:0 24px 60px -10px rgba(0,0,0,.6);animation:popIn .4s cubic-bezier(.16,1,.3,1);display:none;}
+#avisPrompt.show{display:block;}
+
+/* CONTACT ADMIN PANEL */
+#contactPanel{position:fixed;inset:0;z-index:260;background:rgba(4,6,18,.82);backdrop-filter:blur(12px);display:none;align-items:center;justify-content:center;padding:20px;}
+#contactPanel.show{display:flex;}
+
+/* DEVIS BUILDER */
+.quote-preview{background:#fff;color:#0F172A;border-radius:12px;padding:24px;font-size:12px;max-height:400px;overflow-y:auto;}
+
+/* SIGNATURE PAD */
+#signaturePad{border:1.5px dashed var(--border);border-radius:10px;background:rgba(255,255,255,.03);touch-action:none;cursor:crosshair;width:100%;height:140px;}
+
+@media(max-width:1200px){.kpi-grid{grid-template-columns:repeat(2,1fr);}.charts-row{grid-template-columns:1fr;}.stats-row{grid-template-columns:1fr 1fr;}.home-lower-grid{grid-template-columns:1fr 1fr !important;}.quick-actions-grid{grid-template-columns:1fr 1fr !important;}}
+@media(max-width:1024px){
+  .charts-row{grid-template-columns:1fr;}
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .home-lower-grid{grid-template-columns:1fr 1fr !important;}
+  .quick-actions-grid{grid-template-columns:1fr 1fr !important;}
+  .row2,.row3{grid-template-columns:1fr;}
+}
+.home-lower-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;}
+.quick-actions-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;}
+.qa-stack{display:flex;flex-direction:column;gap:10px;}
+.qa-item{display:flex;align-items:center;gap:12px;padding:14px 14px;border-radius:var(--radius-sm);background:rgba(255,255,255,.03);border:1px solid var(--border);color:var(--white);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:.18s;text-align:left;}
+.qa-item svg{flex-shrink:0;width:20px;height:20px;stroke:var(--blue-l);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.qa-item:hover{background:rgba(96,165,250,.07);border-color:var(--border-h);transform:translateY(-1px);}
+.qa-item.primary{background:rgba(37,99,235,.10);border-color:rgba(37,99,235,.20);}
+.qa-item.primary svg{stroke:#fff;}
+.qa-item .qa-label{display:flex;flex-direction:column;gap:2px;}
+.qa-item .qa-sublbl{font-size:11px;color:var(--gray);font-weight:400;}
+@media(max-width:760px){
+  .sidebar{transform:translateX(-256px);pointer-events:none;visibility:hidden;}
+  .sidebar.ef-open{transform:translateX(0);pointer-events:auto;visibility:visible;}
+  .sidebar.collapsed{transform:translateX(-256px);pointer-events:none;visibility:hidden;}
+  .topbar{left:0;}
+  .main{margin-left:0;overflow-x:hidden;}
+  .kpi-grid{grid-template-columns:1fr 1fr !important;}
+  .charts-row{grid-template-columns:1fr !important;}
+  .chart-wrap{height:200px !important;}
+  .stats-row{grid-template-columns:1fr;}
+  .quick-actions-grid{grid-template-columns:1fr !important;}
+  .qa-item{padding:12px 12px;}
+  .qa-item svg{width:18px;height:18px;}
+  .qa-item .qa-sublbl{font-size:10px;}
+  .home-lower-grid{grid-template-columns:1fr !important;}
+  .row2,.row3{grid-template-columns:1fr;}
+  .stock-rings{grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;overflow-x:auto;padding-bottom:4px;}
+  .ring-wrap{width:52px;height:52px;}
+  .ring-wrap canvas{width:100% !important;height:100% !important;}
+  .ring-pct{font-size:12px;}
+  .ring-name{font-size:9px;max-width:75px;}
+  .ring-qty{font-size:9px;}
+  .cart-row{grid-template-columns:1fr;}
+  #avisPrompt{width:calc(100% - 32px);right:16px;bottom:16px;}
+}
+@media(max-width:480px){
+  .kpi-grid{grid-template-columns:1fr;}
+  .stats-row{grid-template-columns:1fr;}
+  .main{overflow-x:hidden;}
+  .modal-box{padding:16px;border-radius:14px;max-height:92vh;}
+  .topbar{padding:0 12px;height:52px;}
+  .nav-item{padding:8px 10px;font-size:12px;}
+  .sidebar{width:85vw;max-width:280px;}
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .tbl{font-size:12px;white-space:nowrap;}
+  .btn-submit{padding:10px 16px;font-size:13px;}
+  .user-av,.icon-btn{width:30px;height:30px;font-size:11px;}
+  .user-av svg,.icon-btn svg{width:14px;height:14px;}
+  .menu-btn{width:30px;height:30px;}
+  .menu-btn svg{width:14px;height:14px;}
+  .kpi-icon,.stat-mini-icon{width:32px;height:32px;}
+  .kpi-icon svg,.stat-mini-icon svg{width:15px;height:15px;}
+  .toast{max-width:calc(100vw - 24px);font-size:12px;}
+  .stock-rings{grid-template-columns:repeat(2,1fr);gap:8px;}
+  .ring-wrap{width:48px;height:48px;}
+  .ring-pct{font-size:11px;}
+  .ring-name{font-size:9px;max-width:70px;}
+  .ring-qty{display:none;}
+  .tp-rank{width:16px;font-size:10px;}
+  .tp-qty{min-width:32px;font-size:11px;}
+  .stk-bar{width:50px;}
+  .sb-company-name{max-width:90px;font-size:11px;}
+  .sale-client{font-size:12px;}
+  .sale-amt{font-size:12px;}
+  .sale-num{font-size:10px;}
+  .sale-date{font-size:10px;}
+  .sale-row{padding:8px 0;}
+  .insight-card{flex-direction:column;gap:8px;padding:10px;}
+  .insight-icon{width:26px;height:26px;}
+  .qa-stack{gap:8px;}
+  .qa-item{padding:11px 11px;gap:10px;}
+  .qa-item svg{width:17px;height:17px;}
+  .qa-item .qa-label{font-size:12px;}
+  .qa-item .qa-sublbl{font-size:10px;}
+}
+@media(max-width:380px){
+  .kpi-icon,.stat-mini-icon{width:28px;height:28px;}
+  .kpi-icon svg,.stat-mini-icon svg{width:13px;height:13px;}
+  .nav-item{font-size:11px;padding:6px 8px;}
+  .btn-submit{padding:8px 14px;font-size:12px;}
+  .tbl{font-size:11px;}
+  .modal-box{padding:12px;border-radius:12px;}
+}
+@media(min-width:1600px){
+  .main{max-width:1440px;margin-left:auto;margin-right:auto;}
+}
+.pm-block{display:none;margin:6px 0 10px;padding:10px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:12px;}
+.pm-block.is-active{display:block;}
+.hint{display:block;font-size:11px;color:var(--gray);margin-top:4px;}
+
+
+body.ef-xs .sidebar, body.ef-sm .sidebar {
+  transform: translateX(-100%);
+  width: min(86vw, 300px);
+  z-index: 110;
+  box-shadow: 0 0 50px rgba(4,6,18,.55);
+  transition: transform .26s cubic-bezier(.4,0,.2,1);
+}
+body.ef-xs .sidebar.ef-open, body.ef-sm .sidebar.ef-open {
+  transform: translateX(0);
+}
+body.ef-md .sidebar, body.ef-lg .sidebar, body.ef-xl .sidebar {
+  transform: translateX(0) !important;
+}
+
+body.ef-sidebar-veil::before{
+  content:''; position:fixed; inset:0; background:rgba(4,6,18,.55);
+  z-index:70; animation:ef-fadein .2s ease;
+}
+@keyframes ef-fadein{from{opacity:0}to{opacity:1}}
+
+body.ef-xs .topbar, body.ef-sm .topbar { left:0 !important; padding:0 12px; }
+body.ef-xs .main,   body.ef-sm .main   { margin-left:0 !important; padding:66px 12px 32px; }
+body.ef-md .main { padding:76px 18px 40px; }
+body.ef-lg .main, body.ef-xl .main { padding:78px 24px 48px; }
+
+body.ef-xs .kpi-grid, body.ef-sm .kpi-grid { grid-template-columns: 1fr !important; gap:10px; }
+body.ef-md .kpi-grid { grid-template-columns: repeat(2,1fr) !important; gap:12px; }
+body.ef-lg .kpi-grid, body.ef-xl .kpi-grid { grid-template-columns: repeat(4,1fr) !important; }
+
+body.ef-xs .stats-row, body.ef-sm .stats-row { grid-template-columns: 1fr !important; }
+body.ef-md .stats-row { grid-template-columns: repeat(2,1fr) !important; }
+body.ef-lg .stats-row, body.ef-xl .stats-row { grid-template-columns: repeat(3,1fr) !important; }
+
+body.ef-xs .charts-row, body.ef-sm .charts-row, body.ef-md .charts-row { grid-template-columns: 1fr !important; }
+body.ef-lg .charts-row, body.ef-xl .charts-row { grid-template-columns: 3fr 2fr !important; }
+
+body.ef-xs .row2, body.ef-sm .row2, body.ef-xs .row3, body.ef-sm .row3 { grid-template-columns: 1fr !important; }
+
+body.ef-xs .cart-row, body.ef-sm .cart-row { grid-template-columns: 1fr !important; gap:6px; }
+
+[data-ef-cols]{ display:grid; gap:12px; }
+body.ef-xs [data-ef-cols], body.ef-sm [data-ef-cols] { grid-template-columns: 1fr !important; }
+body.ef-md [data-ef-cols="2"], body.ef-md [data-ef-cols="3"], body.ef-md [data-ef-cols="4"] { grid-template-columns: repeat(2,1fr) !important; }
+body.ef-lg [data-ef-cols="3"], body.ef-xl [data-ef-cols="3"] { grid-template-columns: repeat(3,1fr) !important; }
+body.ef-lg [data-ef-cols="4"], body.ef-xl [data-ef-cols="4"] { grid-template-columns: repeat(4,1fr) !important; }
+
+body.ef-xs .tbl-wrap, body.ef-sm .tbl-wrap, body.ef-md .tbl-wrap {
+  overflow-x:auto; -webkit-overflow-scrolling:touch;
+}
+body.ef-xs .tbl, body.ef-sm .tbl { min-width:560px; }
+body.ef-xs .tbl th, body.ef-xs .tbl td,
+body.ef-sm .tbl th, body.ef-sm .tbl td { padding:8px 6px; font-size:12px; }
+
+body.ef-xs .modal-box, body.ef-sm .modal-box {
+  max-width:94vw !important; max-height:88vh; padding:18px;
+  overflow-y:auto;
+}
+body.ef-xs .modal-box.wide, body.ef-sm .modal-box.wide { max-width:94vw !important; }
+body.ef-xs .modal-actions, body.ef-sm .modal-actions { flex-direction:column; }
+body.ef-xs .modal-actions .btn, body.ef-sm .modal-actions .btn,
+body.ef-xs .modal-actions [class*="btn-"], body.ef-sm .modal-actions [class*="btn-"] { width:100%; }
+
+body.ef-xs .cp-box, body.ef-sm .cp-box,
+body.ef-xs .sp-box, body.ef-sm .sp-box { max-width:100% !important; padding:18px; }
+
+.ef-fluid-h1 { font-size: clamp(17px, 3vw, 23px) !important; }
+.page-header h1 { font-size: 22px; }
+.ef-fluid-title, .card-title  { font-size: clamp(12.5px, 1.6vw, 14px) !important; }
+.ef-fluid-val, .kpi-val       { font-size: clamp(20px, 3vw, 28px) !important; }
+
+body.ef-xs #toastContainer, body.ef-sm #toastContainer,
+body.ef-xs .toast-wrap, body.ef-sm .toast-wrap {
+  left:10px !important; right:10px !important; bottom:10px !important; max-width:none !important;
+}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+  }
+}
+
+/* MOBILE : empêcher le scroll horizontal et forcer 2 colonnes lisibles */
+@media (max-width: 768px) {
+  .kpi-grid, .grid-2 { grid-template-columns: 1fr 1fr !important; gap: 10px; }
+  .charts-row { grid-template-columns: 1fr !important; }
+  .chart-box, .chart-wrap { min-width: 0; overflow: hidden; }
+  .chart-box canvas, .chart-wrap canvas { max-width: 100% !important; height: auto !important; }
+  .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .page-header { flex-wrap: wrap; }
+  body.ef-xs .kpi-grid, body.ef-sm .kpi-grid { grid-template-columns: 1fr 1fr !important; }
+}
+@media (max-width: 480px) {
+  .chart-wrap { height: 190px !important; }
+  .kpi-val { font-size: 22px !important; }
+  .kpi { padding: 12px !important; }
+  .card { padding: 12px !important; }
+}
+</style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+<div id="toastContainer"></div>
+<div id="loadingScreen">
+  <div class="spinner"></div>
+  <p style="color:var(--gray);font-size:13px">Chargement de votre espace…</p>
+</div>
+
+<div id="setupScreen">
+  <div class="setup-box">
+    <div class="setup-logo">
+      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+      <span class="logo-text">EntreFlow</span>
+    </div>
+    <h2 class="setup-title">Bienvenue ! Configurez votre entreprise</h2>
+    <p class="setup-sub">Ces informations apparaîtront sur vos devis et factures.</p>
+    <div class="fg"><label>Nom de l'entreprise *</label><input id="s-name" type="text" placeholder="Ex : SARL KANDE, Pharmacie Moderne…"></div>
+    <div class="row2">
+      <div class="fg"><label>Téléphone</label><input id="s-phone" type="tel" placeholder="+229 XX XX XX XX"></div>
+      <div class="fg"><label>Email professionnel</label><input id="s-email" type="email" placeholder="contact@…"></div>
+    </div>
+    <div class="fg"><label>Adresse complète</label><input id="s-address" type="text" placeholder="Rue, quartier, ville…"></div>
+    <div class="row2">
+      <div class="fg"><label>NIF (optionnel)</label><input id="s-nif" type="text" placeholder="Numéro fiscal"></div>
+      <div class="fg"><label>RCCM (optionnel)</label><input id="s-rccm" type="text" placeholder="RB/AB/…"></div>
+    </div>
+    <div class="fg"><label>Devise</label>
+      <select id="s-currency">
+        <option value="XOF">F CFA (XOF)</option><option value="XAF">F CFA (XAF)</option><option value="EUR">Euro</option><option value="USD">Dollar</option>
+      </select>
+    </div>
+    <div class="row2">
+      <div class="fg"><label>Logo (optionnel)</label><input id="s-logo" type="file" accept="image/*"><div id="s-logoPrev" style="margin-top:6px;height:44px;"></div></div>
+      <div class="fg"><label>Signature (optionnel)</label><input id="s-sig" type="file" accept="image/*"><div id="s-sigPrev" style="margin-top:6px;height:36px;"></div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;margin-top:22px;gap:12px;">
+      <button class="btn btn-primary btn-full" id="setupSaveBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Créer mon espace professionnel
+      </button>
+      <button id="setupSkipBtn" type="button" style="align-self:center;color:var(--gray);background:none;border:none;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;">Passer pour l'instant</button>
+    </div>
+  </div>
+</div>
+
+<!-- PANNEAU ENTREPRISE -->
+<div id="companyPanel" onclick="if(event.target===this)closePanel()">
+  <div class="cp-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
+      <h3 style="font-size:16px">Paramètres entreprise</h3>
+      <button class="modal-close" onclick="closePanel()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="cp-section">
+      <div class="cp-section-title">Identité</div>
+      <div class="fg"><label>Nom *</label><input id="cp-name" type="text"></div>
+      <div class="row2">
+        <div class="fg"><label>Téléphone</label><input id="cp-phone" type="tel"></div>
+        <div class="fg"><label>Email</label><input id="cp-email" type="email"></div>
+      </div>
+      <div class="fg"><label>Adresse</label><input id="cp-address" type="text"></div>
+      <div class="row2">
+        <div class="fg"><label>NIF</label><input id="cp-nif" type="text"></div>
+        <div class="fg"><label>RCCM</label><input id="cp-rccm" type="text"></div>
+      </div>
+    </div>
+    <div class="cp-section">
+      <div class="cp-section-title">Préférences</div>
+      <div class="row2">
+        <div class="fg"><label>Devise</label><select id="cp-currency"><option value="XOF">F CFA (XOF)</option><option value="XAF">F CFA (XAF)</option><option value="EUR">Euro</option><option value="USD">Dollar</option></select></div>
+        <div class="fg"><label>TVA (%)</label><input id="cp-tva" type="number" min="0" max="100" step="0.5"></div>
+      </div>
+      <div class="fg"><label>Préfixe devis</label><input id="cp-prefix" type="text" placeholder="EF-"></div>
+      <div class="fg"><label>Logo (apparaît sur devis/factures)</label><input id="cp-logo" type="file" accept="image/*"><div id="logoPreview" style="margin-top:8px;height:56px;"></div></div>
+      <div class="fg"><label>Signature (apparaît sur devis signés)</label><input id="cp-signature" type="file" accept="image/*"><div id="signaturePreview" style="margin-top:8px;height:46px;"></div></div>
+    </div>
+    <button class="btn btn-primary btn-full" id="saveCompanyBtn" onclick="saveCompanySettings()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Enregistrer les modifications
+    </button>
+    <div class="cp-section" style="margin-top:18px;">
+      <div class="cp-section-title">Support</div>
+      <button class="btn btn-outline btn-full" onclick="openContactPanel()" style="margin-bottom:10px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+        Contacter le support
+      </button>
+    </div>
+    <div class="cp-section">
+      <div class="cp-section-title">Compte</div>
+      <button class="btn btn-outline btn-full" onclick="doLogout()" style="color:var(--red);border-color:rgba(239,68,68,.25);">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Déconnexion
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- CONTACT ADMIN -->
+<div id="contactPanel" onclick="if(event.target===this)closeContactPanel()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>Contacter le support EntreFlow</h3>
+      <button class="modal-close" onclick="closeContactPanel()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="fg"><label>Sujet</label><input id="contact-subject" type="text" placeholder="Ex : Problème de connexion"></div>
+    <div class="fg"><label>Votre message</label><textarea id="contact-message" placeholder="Décrivez votre demande…" style="min-height:120px"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeContactPanel()">Annuler</button>
+      <button class="btn btn-primary" onclick="submitContactAdmin()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Envoyer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- AVIS PROMPT (apparaît J+7) -->
+<div id="avisPrompt">
+  <button onclick="dismissAvisPrompt()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--gray);cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  <h3 style="font-size:15px;margin-bottom:4px;">Comment trouvez-vous EntreFlow ?</h3>
+  <p style="font-size:12px;color:var(--gray);margin-bottom:14px;">Votre avis nous aide à améliorer l'application.</p>
+  <div class="star-rating" id="avisStars">
+    <button class="star-btn" data-val="1" onclick="setAvisStar(1)"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
+    <button class="star-btn" data-val="2" onclick="setAvisStar(2)"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
+    <button class="star-btn" data-val="3" onclick="setAvisStar(3)"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
+    <button class="star-btn" data-val="4" onclick="setAvisStar(4)"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
+    <button class="star-btn" data-val="5" onclick="setAvisStar(5)"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
+  </div>
+  <select id="avisCategorie" style="width:100%;padding:9px 11px;background:rgba(4,6,18,.65);border:1px solid var(--border);border-radius:9px;color:var(--white);font-size:12.5px;margin-bottom:10px;">
+    <option value="general">Avis général</option>
+    <option value="interface">Interface</option>
+    <option value="stock">Gestion stock</option>
+    <option value="ventes">Ventes</option>
+    <option value="support">Support</option>
+  </select>
+  <textarea id="avisComment" placeholder="Un commentaire (optionnel)…" style="width:100%;padding:10px 12px;background:rgba(4,6,18,.65);border:1px solid var(--border);border-radius:9px;color:var(--white);font-size:12.5px;min-height:64px;margin-bottom:12px;font-family:'DM Sans',sans-serif;"></textarea>
+  <button class="btn btn-primary btn-full" onclick="submitAvisPrompt()">Envoyer mon avis</button>
+</div>
+
+<!-- MODAL PRODUIT BATCH -->
+<div class="modal-bg" id="productModal">
+  <div class="modal-box wide">
+    <div class="modal-head"><h3 id="productModalTitle">Nouveau produit</h3><button class="modal-close" onclick="closeModal('productModal')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <input type="hidden" id="pm-id">
+    <div class="fg"><label>Nom du produit *</label><input id="pm-name" type="text" placeholder="Ex : Riz 25 kg"></div>
+    <div class="row2">
+      <div class="fg"><label>Agence de stock *</label><select id="pm-branch"><option value="">-- Choisir --</option></select></div>
+      <div class="fg"><label>Unité de vente</label>
+        <select id="pm-unit">
+          <option value="pièce">Pièce</option>
+          <option value="kg">Kg</option>
+          <option value="litre">Litre</option>
+          <option value="carton">Carton</option>
+          <option value="boîte">Boîte</option>
+        </select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label>Quantité par conditionnement</label><input id="pm-pack" type="number" min="1" value="1"></div>
+      <div class="fg"><label>Prix d'achat du conditionnement</label><input id="pm-buy-pack" type="number" min="0" placeholder="Ex: 15000"></div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label>Prix de vente par unité</label><input id="pm-unit-sell" type="number" min="0" placeholder="Ex: 300"></div>
+      <div class="fg"><label>Seuil d'alerte</label><input id="pm-thresh" type="number" min="0" value="5"></div>
+    </div>
+    <div class="fg"><label>Stock initial</label><input id="pm-stock" type="number" min="0" value="0"></div>
+    <button class="btn btn-outline btn-full" id="addAnotherBtn" style="border-style:dashed;margin-top:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Ajouter ce produit et continuer</button>
+    <div id="pmBatchList" style="margin-top:14px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('productModal')">Annuler</button>
+      <button class="btn btn-primary" id="saveProductBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Enregistrer X</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RÉAPPROVISIONNEMENT -->
+<div class="modal-bg" id="restockModal">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Réapprovisionner le stock</h3><button class="modal-close" onclick="closeModal('restockModal')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <input type="hidden" id="rs-pid">
+    <input type="hidden" id="rs-cur">
+    <input type="hidden" id="rs-thresh">
+    <div class="fg"><label>Quantité actuelle</label><input id="rs-cur-display" type="text" disabled style="opacity:.7"></div>
+    <div class="fg"><label>Quantité à ajouter *</label><input id="rs-qty" type="number" min="1" step="1" placeholder="Ex: 20"></div>
+    <div id="rs-result" style="margin-top:10px;font-size:12px;color:var(--gray);display:none;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('restockModal')">Annuler</button>
+      <button class="btn btn-primary" id="submitRestockBtn" disabled onclick="submitRestock()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CLIENT -->
+<div class="modal-bg" id="clientModal">
+  <div class="modal-box">
+    <div class="modal-head"><h3 id="clientModalTitle">Nouveau client</h3><button class="modal-close" onclick="closeModal('clientModal')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <input type="hidden" id="cm-id">
+    <div class="fg"><label>Nom complet / Entreprise *</label><input id="cm-name" type="text" placeholder="Nom du client"></div>
+    <div class="row2">
+      <div class="fg"><label>Téléphone</label><input id="cm-phone" type="tel" placeholder="+229 XX XX XX XX"></div>
+      <div class="fg"><label>Email</label><input id="cm-email" type="email" placeholder="client@email.com"></div>
+    </div>
+    <div class="fg"><label>Ville / Adresse</label><input id="cm-city" type="text"></div>
+    <div class="fg"><label>Notes</label><textarea id="cm-notes"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('clientModal')">Annuler</button>
+      <button class="btn btn-primary" id="saveClientBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EMPLOYÉ -->
+<div class="modal-bg" id="employeeModal">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Nouvel employé</h3><button class="modal-close" onclick="closeModal('employeeModal')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="fg"><label>Nom complet *</label><input id="em-name" type="text"></div>
+    <div class="row2">
+      <div class="fg"><label>Boutique *</label><select id="em-branch"></select></div>
+      <div class="fg"><label>Poste</label><input id="em-poste" type="text" placeholder="Vendeur, Caissier…"></div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label>Téléphone</label><input id="em-phone" type="tel"></div>
+      <div class="fg"><label>Email</label><input id="em-email" type="email"></div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label>WhatsApp</label><input id="em-whatsapp" type="tel"></div>
+      <div class="fg"><label>Salaire (F CFA)</label><input id="em-salaire" type="number" min="0" placeholder="0"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('employeeModal')">Annuler</button>
+      <button class="btn btn-primary" id="saveEmployeeBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SUPPRESSION DEFINITIVE EMPLOYE -->
+<div class="modal-bg" id="permDelEmpModal">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Suppression définitive</h3><button class="modal-close" onclick="closeModal('permDelEmpModal')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div style="padding:6px 2px 12px">
+      <div style="display:flex;gap:10px;align-items:center;padding:12px;border-radius:10px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.22);color:var(--red)">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span style="font-weight:600;font-size:13px">Cette action est irréversible. L'employé perdra immédiatement tout accès.</span>
+      </div>
+      <p style="margin-top:10px;font-size:13px;color:var(--gray)">Voulez-vous vraiment supprimer définitivement cet employé ?</p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('permDelEmpModal')">Annuler</button>
+      <button class="btn btn-primary" id="confirmPermDelEmpBtn" style="background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.35);color:var(--danger)">Supprimer définitivement</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VENTE -->
+<div class="modal-bg" id="saleModal">
+  <div class="modal-box wide">
+    <div class="modal-head"><h3>Enregistrer une vente</h3><button class="modal-close" onclick="closeModal('saleModal')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="row2">
+      <div class="fg"><label>Client (optionnel)</label><select id="sl-client"><option value="">-- Sélectionner --</option></select></div>
+      <div class="fg"><label>Email client (pour facture)</label><input id="sl-client-email" type="email" placeholder="client@email.com"></div>
+    </div>
+    <div style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <label style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.06em">Produits vendus *</label>
+        <button class="btn-sm" onclick="addSaleRow()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Ajouter</button>
+      </div>
+      <div id="saleRows"></div>
+    </div>
+    <div style="background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.14);border-radius:11px;padding:14px;margin:14px 0;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:12px;color:var(--gray)">Total de la vente</span>
+        <strong style="font-size:20px;font-weight:700;color:var(--blue-l);font-family:'Syne',sans-serif" id="saleTotal">0 F CFA</strong>
+      </div>
+    </div>
+    <div class="row3">
+      <div class="fg"><label>Mode de paiement</label>
+        <select id="sl-method"><option value="cash">Espèces</option><option value="mobile_money_wave">Wave</option><option value="mobile_money_mtn">MTN Money</option><option value="mobile_money_moov">Moov Money</option><option value="card">Carte bancaire</option><option value="bank_transfer">Virement</option></select>
+      </div>
+      <div class="fg"><label>Montant reçu</label><input id="sl-paid" type="number" min="0" placeholder="0"></div>
+      <div class="fg"><label>Monnaie à rendre</label><input id="sl-change" type="text" value="0 F CFA" disabled style="opacity:.7"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('saleModal')">Annuler</button>
+      <button class="btn btn-primary" id="saveSaleBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Enregistrer la vente</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DEVIS -->
+<div class="modal-bg" id="quoteModal">
+  <div class="modal-box wide">
+    <div class="modal-head"><h3>Créer un devis</h3><button class="modal-close" onclick="closeModal('quoteModal')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="fg">
+      <label>Client *</label>
+      <select id="qt-client-select" onchange="onQuoteClientChange()">
+        <option value="">-- Nouveau client --</option>
+      </select>
+    </div>
+    <div id="qt-new-client-block">
+      <div class="row2">
+        <div class="fg">
+          <label>Nom du client *</label>
+          <input id="qt-client-name" type="text" placeholder="Nom du nouveau client">
+        </div>
+        <div class="fg">
+          <label>Téléphone (WhatsApp)</label>
+          <input id="qt-client-phone" type="tel" placeholder="+229 XX XX XX XX">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="fg">
+          <label>Email client</label>
+          <input id="qt-client-email" type="email" placeholder="client@email.com">
+        </div>
+        <div class="fg">
+          <label>Validité (jours)</label>
+          <input id="qt-validite" type="number" min="1" value="7">
+        </div>
+      </div>
+    </div>
+    <div style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <label style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.06em">Articles du devis *</label>
+        <button class="btn-sm" onclick="addQuoteRow()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Ajouter</button>
+      </div>
+      <div id="quoteRows"></div>
+    </div>
+    <div class="row2">
+      <div class="fg">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="qt-tva-enabled" style="width:auto;" onchange="toggleQuoteTva()"> Appliquer la TVA (non obligatoire)
+        </label>
+        <input id="qt-tva-rate" type="number" min="0" max="100" value="18" style="margin-top:8px;display:none;" placeholder="Taux TVA %">
+      </div>
+      <div class="fg" style="text-align:right;">
+        <label>Total estimé</label>
+        <div style="font-size:22px;font-weight:800;color:var(--blue-l);font-family:'Syne',sans-serif;" id="quoteTotal">0 F CFA</div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('quoteModal')">Annuler</button>
+      <button class="btn btn-primary" id="saveQuoteBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Créer le devis</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ENVOI / SIGNATURE DEVIS -->
+<div class="modal-bg" id="quoteSendModal">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Devis créé !</h3><button class="modal-close" onclick="closeModal('quoteSendModal')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <p style="font-size:13px;color:var(--gray);margin-bottom:16px;">N° <strong id="qsNumber" style="color:var(--white)"></strong> — Total <strong id="qsTotal" style="color:var(--blue-l)"></strong></p>
+    <div class="fg">
+      <label style="display:block;margin-bottom:8px;">Envoyer ce devis</label>
+      <p style="font-size:13px;color:var(--gray);">Un email avec le PDF et le lien de signature a été envoyé automatiquement au client.</p>
+    </div>
+    <div class="modal-actions" style="flex-direction:column;align-items:stretch;gap:10px;">
+      <button class="btn btn-green btn-full" onclick="closeModal('quoteSendModal')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Compris
+      </button>
+      <button class="btn btn-outline btn-full" onclick="sendQuoteVia('whatsapp')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+        Ouvrir WhatsApp
+      </button>
+    </div>
+  </div>
+</div>
+<div id="dashboard">
+  <nav class="sidebar" id="sidebar">
+    <div class="sb-header">
+      <div class="sb-logo">
+        <div class="logo-icon" id="sbLogoIcon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+        <span class="logo-text" id="sbLogoText">EntreFlow</span>
+      </div>
+      <div class="sb-company" onclick="openPanel()">
+        <div style="display:flex;align-items:center;gap:9px;">
+          <div class="sb-company-av" id="sbAv">E</div>
+          <div><div class="sb-company-name" id="sbName">Chargement…</div><div class="sb-company-edit">Configurer l'entreprise</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="sb-nav">
+      <div class="nav-group">Principal</div>
+      <div class="nav-item active" onclick="goTo('home')"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Tableau de bord</span></div>
+      <div class="nav-item" onclick="goTo('analytics')"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Analytiques</span></div>
+      <div class="nav-item" onclick="goTo('products')"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg><span>Produits</span></div>
+      <div class="nav-item" onclick="goTo('stock')"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg><span>Stock</span><span class="nav-badge" id="stockBadge" style="display:none">0</span></div>
+      <div class="nav-item" onclick="goTo('sales')"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><span>Ventes</span></div>
+      <div class="nav-item" onclick="goTo('quotes')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Devis</span></div>
+      <div class="nav-item" onclick="goTo('clients')"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span>Clients</span></div>
+      <div class="nav-item" onclick="goTo('employees')"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><span>Employés</span></div>
+      <div class="nav-item" onclick="goTo('trash')"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg><span>Corbeille</span></div>
+      <div class="nav-group">Compte</div>
+      <div class="nav-item" onclick="openPanel()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06A1.65 1.65 0 0015 19.4a1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg><span>Paramètres</span></div>
+    </div>
+    <div class="sb-footer">
+      <div class="nav-item" onclick="doLogout()" style="color:var(--red)"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>Déconnexion</span></div>
+    </div>
+  </nav>
+
+  <div class="topbar" id="topbar">
+    <div class="topbar-left">
+      <button class="menu-btn" onclick="toggleSidebar()"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+      <div id="topbarLogo" style="width:28px;height:28px;border-radius:7px;overflow:hidden;background:rgba(255,255,255,.05);flex-shrink:0;"></div>
+      <span class="topbar-title" id="topbarTitle">Tableau de bord</span>
+    </div>
+    <div class="topbar-right">
+      <div class="icon-btn" title="Notifications" id="notifBellBtn" aria-expanded="false">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span class="notif-badge" id="notifBadge" style="display:none">0</span>
+        <div class="notif-dot" id="notifDot" style="display:none"></div>
+        <div class="notif-panel" id="notifPanel" style="display:none">
+          <div class="notif-panel-head"><div class="notif-panel-title">Notifications</div><button class="btn-sm" onclick="markAllNotificationsRead()">Tout lire</button></div>
+          <div id="notifList" class="notif-list"></div>
+        </div>
+      </div>
+      <div class="icon-btn" title="Actualiser" onclick="refreshCurrentPage()"><svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg></div>
+      <div class="user-av" id="userAv" onclick="openPanel()" title="Paramètres">K</div>
+    </div>
+  </div>
+
+  <div id="sidebarVeil" onclick="toggleSidebar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:45;opacity:0;transition:opacity .28s;"></div>
+
+  <div class="main" id="mainContent">
+
+    <!-- HOME -->
+    <div class="page active" id="page-home">
+      <div class="page-header">
+        <div><h1 id="ownerGreeting">Bonjour —</h1><p id="welcomeSub">Voici l'état de votre activité</p></div>
+        <div>
+          <span class="date-chip" id="dateChip"></span>
+          <div class="period-tabs">
+            <button class="period-btn" data-period="day" onclick="setPeriod('day',this)">Jour</button>
+            <button class="period-btn active" data-period="month" onclick="setPeriod('month',this)">Mois</button>
+            <button class="period-btn" data-period="week" onclick="setPeriod('week',this)">Semaine</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-top"><div class="kpi-icon" style="background:rgba(37,99,235,.12)"><svg style="stroke:var(--blue-l)" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg></div><span class="kpi-chip chip-blue" id="k1chip">actifs</span></div><div class="kpi-val" id="k1">—</div><div class="kpi-lbl">Produits actifs</div><div class="kpi-progress"><div class="kpi-progress-fill" id="k1bar" style="background:var(--blue-l);width:0%"></div></div></div>
+        <div class="kpi"><div class="kpi-top"><div class="kpi-icon" style="background:rgba(16,185,129,.10)"><svg style="stroke:var(--green)" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><span class="kpi-chip chip-up" id="k2chip">total</span></div><div class="kpi-val" id="k2">—</div><div class="kpi-lbl">Clients enregistrés</div><div class="kpi-progress"><div class="kpi-progress-fill" id="k2bar" style="background:var(--green);width:0%"></div></div></div>
+        <div class="kpi"><div class="kpi-top"><div class="kpi-icon" style="background:rgba(139,92,246,.10)"><svg style="stroke:var(--purple)" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><span class="kpi-chip" id="k3chip" style="background:rgba(139,92,246,.10);color:var(--purple)">ventes</span></div><div class="kpi-val" id="k3">—</div><div class="kpi-lbl">Ventes sur la période</div><div class="kpi-progress"><div class="kpi-progress-fill" id="k3bar" style="background:var(--purple);width:0%"></div></div></div>
+        <div class="kpi"><div class="kpi-top"><div class="kpi-icon" style="background:rgba(245,158,11,.10)"><svg style="stroke:var(--amber)" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div><span class="kpi-chip chip-neu" id="k4chip">F CFA</span></div><div class="kpi-val" id="k4">—</div><div class="kpi-lbl">Chiffre d'affaires</div><div class="kpi-progress"><div class="kpi-progress-fill" id="k4bar" style="background:var(--amber);width:0%"></div></div></div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-mini"><div class="stat-mini-icon" style="background:rgba(16,185,129,.10)"><svg style="stroke:var(--green)" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div><div class="stat-mini-val" id="sm1">—</div><div class="stat-mini-lbl">Devis en attente</div></div></div>
+        <div class="stat-mini"><div class="stat-mini-icon" style="background:rgba(96,165,250,.10)"><svg style="stroke:var(--blue-l)" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div><div><div class="stat-mini-val" id="sm2">—</div><div class="stat-mini-lbl">Panier moyen</div></div></div>
+        <div class="stat-mini"><div class="stat-mini-icon" style="background:rgba(245,158,11,.10)"><svg style="stroke:var(--amber)" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="stat-mini-val" id="sm3">—</div><div class="stat-mini-lbl">Alertes stock actives</div></div></div>
+      </div>
+
+      <div class="charts-row">
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Évolution des ventes</div></div>
+          <div class="chart-wrap"><canvas id="chartRevenue"></canvas></div>
+        </div>
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>Top produits</div></div>
+          <div class="chart-wrap"><canvas id="chartTopProducts"></canvas></div>
+        </div>
+      </div>
+
+      <div class="home-lower-grid">
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>Stock critique</div><button class="btn-sm" onclick="goTo('stock')">Gérer</button></div>
+          <div id="stockRingsDiv"><div class="empty-state"><div class="empty-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><strong>Tout est OK</strong><span>Aucun produit en rupture</span></div></div>
+        </div>
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Stock faible</div><button class="btn-sm" onclick="goTo('stock')">Voir stock</button></div>
+          <div id="lowStockCard"><div class="empty-state"><div class="empty-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><strong>Tout est OK</strong><span>Aucun produit sous le seuil</span></div></div>
+        </div>
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Dernières ventes</div><button class="btn-sm" onclick="goTo('sales')">Voir tout</button></div>
+          <div id="recentSalesDiv"><div class="empty-state"><div class="empty-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><strong>Aucune vente</strong><span>Enregistrez votre première vente</span></div></div>
+        </div>
+      </div>
+
+      <div class="quick-actions-grid">
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Insights</div></div>
+          <div id="insightsDiv"></div>
+        </div>
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Actions rapides</div></div>
+          <div class="qa-stack">
+            <button class="qa-item primary" onclick="openSaleModal()">
+              <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+              <span class="qa-label">Nouvelle vente<span class="qa-sublbl">Enregistrer une transaction</span></span>
+            </button>
+            <button class="qa-item" onclick="openQuoteModal()">
+              <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span class="qa-label">Créer devis<span class="qa-sublbl">Nouvelle proposition</span></span>
+            </button>
+            <button class="qa-item" onclick="openProductModal()">
+              <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+              <span class="qa-label">Ajouter produit<span class="qa-sublbl">Catalogue et stock</span></span>
+            </button>
+            <button class="qa-item" onclick="openClientModal()">
+              <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span class="qa-label">Ajouter client<span class="qa-sublbl">Votre carnet CRM</span></span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="page" id="page-analytics">
+      <div class="page-header"><div><h1>Analytiques</h1><p>Vue détaillée de vos performances</p></div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="showAnalyticsView('chart')" id="btnAnalyticsChart" class="btn btn-primary" style="font-size:13px;padding:8px 18px;">Graphique</button>
+          <button onclick="showAnalyticsView('table')" id="btnAnalyticsTable" class="btn" style="font-size:13px;padding:8px 18px;background:#1e293b;color:#fff;border:none;border-radius:8px;">Tableau Points de vente</button>
+        </div>
+      </div>
+      <div id="analyticsChartView" class="card"><div class="chart-wrap" style="height:320px"><canvas id="chartPayment"></canvas></div></div>
+      <div id="analyticsTableView" style="display:none;">
+        <div class="card"><div class="tbl-wrap"><table class="tbl"><thead>
+          <tr><th>Agence</th><th>CA</th><th>Nb ventes</th><th>Stock moyen</th></tr>
+        </thead><tbody id="pvTbody"></tbody></table></div></div>
+      </div>
+    </div>
+
+    <!-- PRODUCTS -->
+    <div class="page" id="page-products">
+      <div class="page-header"><div><h1>Produits</h1><p>Votre catalogue</p></div><button class="btn btn-primary" onclick="openProductModal()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nouveau produit</button></div>
+      <div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Produit</th><th>Unité</th><th>Prix achat carton</th><th>Prix vente unitaire</th><th>Statut</th><th>Actions</th></tr></thead><tbody id="productsTbody"></tbody></table></div></div>
+    </div>
+
+    <!-- STOCK -->
+    <div class="page" id="page-stock">
+      <div class="page-header"><div><h1>Stock</h1><p id="stockTitle">Niveaux par agence</p></div></div>
+      <div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Produit</th><th>Quantité</th><th>Seuil</th><th>Niveau</th><th>Statut</th><th>Action</th></tr></thead><tbody id="stockTbody"></tbody></table></div></div>
+    </div>
+
+    <!-- EMPLOYEES -->
+    <div class="page" id="page-employees">
+      <div class="page-header"><div><h1>Employés</h1><p>Gérez vos équipes</p></div><button class="btn btn-primary" onclick="openEmployeeModal()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nouvel employé</button></div>
+      <div class="card" style="margin-bottom:12px">
+        <div style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted)">
+          <span id="empDayTotal">Employés : 0</span>
+          <span id="empSalesGlobal" style="margin-left:auto">Total ventes : 0 F</span>
+        </div>
+      </div>
+      <div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Employé</th><th>Poste</th><th>Téléphone</th><th>Ventes</th><th>CA du jour</th><th>Actions</th></tr></thead><tbody id="employeesTbody"></tbody></table></div></div>
+      <div class="card" id="employeeDetail" style="display:none">
+        <div class="page-header"><div><h2 id="empDetailName">Détail</h2><p id="empDetailSub">Aujourd'hui</p></div><button class="btn btn-outline" onclick="document.getElementById('employeeDetail').style.display='none'">Fermer</button></div>
+        <div class="tbl-wrap"><table class="tbl"><thead><tr><th>N°</th><th>Client</th><th>Produits</th><th>Total</th><th>Paiement</th><th>Date</th></tr></thead><tbody id="empDetailBody"></tbody></table></div>
+      </div>
+      <div class="card" id="dailySalesCard" style="margin-top:12px">
+        <div class="page-header"><div><h2>Ventes du jour</h2><p>Récapitulatif par employé</p></div></div>
+        <div id="dailySalesContent"><div class="empty-state">Chargement...</div></div>
+      </div>
+    </div>
+
+    <!-- SALES -->
+    <div class="page" id="page-sales">
+      <div class="page-header"><div><h1>Ventes</h1><p>Historique complet</p></div><button class="btn btn-primary" onclick="openSaleModal()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nouvelle vente</button></div>
+      <div class="card" style="margin-bottom:14px;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <label style="font-size:12px;color:var(--gray);">Période :</label>
+          <select id="salesDayFilter" onchange="loadSalesPage(false)" style="background:rgba(4,6,18,.65);border:1px solid var(--border);color:var(--white);padding:7px 10px;border-radius:8px;font-size:13px;">
+            <option value="today">Aujourd'hui</option><option value="yesterday">Hier</option><option value="dayBefore">Avant-hier</option><option value="all">Toutes les ventes</option>
+          </select>
+          <span id="salesDayTotal" style="margin-left:auto;font-size:13px;color:var(--gray);">Total : 0 F</span>
+        </div>
+      </div>
+      <div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>N° Vente</th><th>Client</th><th>Total</th><th>Paiement</th><th>Date</th><th></th></tr></thead><tbody id="salesTbody"></tbody></table></div></div>
+    </div>
+
+    <!-- QUOTES -->
+    <div class="page" id="page-quotes">
+      <div class="page-header"><div><h1>Devis</h1><p>Créez et envoyez vos devis</p></div><button class="btn btn-primary" onclick="openQuoteModal()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nouveau devis</button></div>
+      <div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>N° Devis</th><th>Client</th><th>Total</th><th>Validité</th><th>Statut</th><th>Date</th><th></th></tr></thead><tbody id="quotesTbody"></tbody></table></div></div>
+    </div>
+
+    <!-- CLIENTS -->
+    <div class="page" id="page-clients">
+      <div class="page-header"><div><h1>Clients</h1><p>Votre carnet de clients (CRM)</p></div><button class="btn btn-primary" onclick="openClientModal()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nouveau client</button></div>
+      <div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Nom</th><th>Téléphone</th><th>Email</th><th>Ville</th><th>Total dépensé</th><th></th></tr></thead><tbody id="clientsTbody"></tbody></table></div></div>
+    </div>
+
+    <!-- TRASH -->
+    <div class="page" id="page-trash">
+      <div class="page-header"><div><h1>Corbeille</h1><p>Éléments supprimés</p></div></div>
+      <div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Type</th><th>Nom</th><th>Supprimé le</th><th>Action</th></tr></thead><tbody id="trashTbody"></tbody></table></div></div>
+    </div>
+
+    <!-- EMPLOYEE ISOLATED VIEW -->
+    <div class="page" id="page-employee_view">
+      <div class="page-header"><div><h1>Mes ventes</h1><p>Espace employé</p></div><button class="btn btn-primary" onclick="openSaleModal()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nouvelle vente</button></div>
+      <div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>N°</th><th>Client</th><th>Total</th><th>Mode</th><th>Date</th></tr></thead><tbody id="empSalesTbody"></tbody></table></div></div>
+    </div>
+
+  </div>
+</div>
+<script>
+/* ══ CONFIG ══════════ */
+
+let U=null, CO=null, BR=null, charts={}, currentPage='home';
+let quoteTvaEnabled=false;
+window._chartPeriod='month';
+
+/* ══ API ═ */
+const STALE_ACTIONS = new Set(['listSales','listClients','listStock','listProducts','listEmployees','listQuotes','getDailySalesByEmployee','getEmployeeStats','listBranches']);
+const STALE_TTL = 60 * 1000;
+function cacheKey(action){ return 'ef_cache_' + action; }
+function readCache(action){
+  try {
+    const raw = localStorage.getItem(cacheKey(action));
+    if (!raw) return null;
+    const entry = JSON.parse(raw);
+    if (!entry || !entry.ts || Date.now() - entry.ts > STALE_TTL) {
+      localStorage.removeItem(cacheKey(action));
+      return null;
+    }
+    return entry.data;
+  } catch (e) { return null; }
+}
+function writeCache(action, data){
+  try { localStorage.setItem(cacheKey(action), JSON.stringify({ ts: Date.now(), data })); } catch (e) {}
+}
+async function api(action, payload={}, opts={}){
+  const API_SECRET = 'bb9581756e1377c23a3f471181b4b76031b771dbfb9d7dd263f2960cb3e1b62a';
+  const isMutation = ['signQuote','createSale','createQuote','updateCompany','createProduct','updateProduct','deleteProduct','createClient','createEmployee','sendQuoteVia','cancelSale','createBranch'].includes(action);
+  const silent = opts.silent === true;
+  if (!isMutation) {
+    const cached = readCache(action);
+    if (cached) {
+      if (!silent) {
+        // For explicit actions, still fire network in background if stale data could be outdated
+        void (async () => {
+          try {
+            const r = await fetch('https://script.google.com/macros/s/AKfycbzy8sUmoTDlbYfzgqadT6ébW15lZqAp-MINJHdsqpecxkR5ZM-AuyA7JpX01J3WmS8j/exec', {
+              method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+              body: JSON.stringify({ action, ...payload })
+            });
+            const clean = (await r.text().catch(()=>'')).replace(/^[\s\S]*?<html[\s\S]*?<body[^>]*>/i,'').replace(/<\/body>[\s\S]*$/i,'');
+            const data = clean ? JSON.parse(clean) : {};
+            if (r.ok && !data.error && data.result !== undefined) {
+              writeCache(action, data.result);
+            }
+          } catch (e) {}
+        })();
+      }
+      return cached;
+    }
+  }
+  const stored = localStorage.getItem('entreflowUser');
+  const session = stored ? JSON.parse(stored) : null;
+  if (session && session.token) payload.token = session.token;
+  else payload.token = API_SECRET;
+  const r = await fetch('https://script.google.com/macros/s/AKfycbzy8sUmoTDlbYfzgqadT6ébW15lZqAp-MINJHdsqpecxkR5ZM-AuyA7JpX01J3WmS8j/exec', {
+    method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({ action, ...payload })
+  });
+  const text = await r.text().catch(()=>'');
+  const clean = text.replace(/^[\s\S]*?<html[\s\S]*?<body[^>]*>/i,'').replace(/<\/body>[\s\S]*$/i,'');
+  const data = clean ? JSON.parse(clean) : {};
+  if(!r.ok || data.error) throw new Error(data.error || 'Erreur API');
+  const result = data.result !== undefined ? data.result : data;
+  if (!isMutation && r.ok) {
+    writeCache(action, result);
+  }
+  return result;
+}
+function clearApiCache(){
+  Object.keys(localStorage).forEach(k => { if (k.startsWith('ef_cache_')) localStorage.removeItem(k); });
+  window._ENTREFLOW_INIT = null;
+}
+function invalidateCacheFor(action){
+  localStorage.removeItem(cacheKey(action));
+}
+
+/* ══ TOAST ══ */
+const ICONS={success:'<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>',error:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',info:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'};
+function toast(msg,type='info'){
+  const c=document.getElementById('toastContainer');
+  const el=document.createElement('div');el.className=`toast ${type}`;
+  el.innerHTML=`${ICONS[type]||''}<span>${msg}</span>`;c.appendChild(el);
+  requestAnimationFrame(()=>el.classList.add('visible'));
+  setTimeout(()=>{el.classList.remove('visible');setTimeout(()=>el.remove(),400);},4200);
+}
+
+/* ══ REAL-TIME NOTIFICATIONS ═ */
+window._entRealState = window._entRealState || { firstLoad: true, seenSaleIds: new Set(), seenClientIds: new Set(), alertedLowStock: new Set() };
+let _notifTimer = null;
+async function openNotifPanel(){
+  const panel = document.getElementById('notifPanel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  document.getElementById('notifBellBtn').setAttribute('aria-expanded', panel.style.display === 'block');
+  if(panel.style.display === 'block') loadNotifications();
+}
+async function loadNotifications(){
+  if(!CO) return;
+  try{
+    const r = await api('listNotifications', { companyId: CO.id }, { silent: true });
+    const data = r && r.notifications ? r : { notifications: r && r.notifications ? r.notifications : [] };
+    const list = document.getElementById('notifList');
+    const rows = (data.notifications || []).slice(0, 40);
+    const unread = (data.unread_count || 0);
+    const badge = document.getElementById('notifBadge');
+    const dot = document.getElementById('notifDot');
+    if(badge){badge.textContent = unread; badge.style.display = unread ? 'flex' : 'none';}
+    if(dot){dot.style.display = unread ? 'block' : 'none';}
+    if(!rows.length){list.innerHTML = '<div class="notif-empty">Aucune notification</div>'; return;}
+    const map = { LOW_STOCK: { bg:'rgba(245,158,11,.12)', color:'#F59E0B', label:'Stock faible' }, NEW_SALE: { bg:'rgba(16,185,129,.12)', color:'#10B981', label:'Vente' }, NEW_QUOTE: { bg:'rgba(37,99,235,.12)', color:'#3B82F6', label:'Devis' }, QUOTE_SIGNED: { bg:'rgba(139,92,246,.12)', color:'#8B5CF6', label:'Devis signé' } };
+    list.innerHTML = rows.map(n => {
+      const m = map[n.type] || { bg:'rgba(255,255,255,.05)', color:'#9CA3AF', label:n.type||'Info' };
+      const icon = n.type==='LOW_STOCK' ? '<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:'+m.color+';fill:none;stroke-width:2.2;stroke-linecap:round;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' : '<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:'+m.color+';fill:none;stroke-width:2.2;stroke-linecap:round;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>';
+      return '<div class="notif-item" data-type="'+escAttr(n.type||'')+'" data-id="'+escAttr(n.id||'')+'"><div class="notif-icon" style="background:'+m.bg+';color:'+m.color+'">'+icon+'</div><div class="notif-body"><div class="notif-title">'+esc(n.titre||m.label)+'</div><div class="notif-msg">'+esc(n.message||'')+'</div></div><div class="notif-time">'+(n.created_at ? fmtDateTime(n.created_at) : '')+'</div></div>';
+    }).join('');
+    list.querySelectorAll('.notif-item').forEach((el, idx) => {
+      el.addEventListener('click', () => {
+        const type = el.getAttribute('data-type');
+        if (type === 'LOW_STOCK') goTo('stock');
+        api('markNotificationsRead', { ids: rows[idx].id ? [rows[idx].id] : [] });
+        const nid = rows[idx] && rows[idx].id;
+        loadNotifications();
+      });
+    });
+  }catch(e){}
+}
+async function markAllNotificationsRead(){
+  if(!CO) return;
+  await api('markNotificationsRead', { all: true });
+  const badge = document.getElementById('notifBadge');
+  const dot = document.getElementById('notifDot');
+  if(badge){badge.style.display='none';}
+  if(dot){dot.style.display='none';}
+  loadNotifications();
+}
+document.getElementById('notifBellBtn').addEventListener('click', openNotifPanel);
+async function silentRefreshCurrentPage(){
+  if (!CO) return;
+  try {
+    const page = currentPage;
+    if (page === 'home') await loadHomePage(true);
+    else if (page === 'sales') await loadSalesPage(true);
+    else if (page === 'clients') await loadClientsPage(true);
+    else if (page === 'stock') await loadStockPage(true);
+    else if (page === 'products') await loadProductsPage(true);
+    else if (page === 'employees') await loadEmployeesPage(true);
+    try { await loadNotifications(); } catch (e) {}
+  } catch (e) { console.error('silentRefresh error', e); }
+}
+async function checkRealtimeNotifications(){
+  if (!CO || window._entRealState.firstLoad) { window._entRealState.firstLoad = false; return; }
+  try {
+    const [sales, clients, stock] = await Promise.all([
+      api('listSales', { companyId: CO.id }, { silent: true }),
+      api('listClients', { companyId: CO.id }, { silent: true }),
+      api('listStock', { branchId: BR.id }, { silent: true })
+    ]);
+    // New sales
+    const saleIds = new Set((sales || []).map(s => s.id));
+    const newSales = (sales || []).filter(s => !window._entRealState.seenSaleIds.has(s.id));
+    newSales.forEach(s => {
+      window._entRealState.seenSaleIds.add(s.id);
+      const who = s.client?.name || s.client_name || 'Client';
+      toast(`Nouvelle vente : ${who} — ${fmtAmt(parseFloat(s.total)||0)} F`, 'success');
+    });
+    // New clients
+    const clientIds = new Set((clients || []).map(c => c.id));
+    const newClients = (clients || []).filter(c => !window._entRealState.seenClientIds.has(c.id));
+    newClients.forEach(c => {
+      window._entRealState.seenClientIds.add(c.id);
+      toast(`Nouveau client ajouté : ${c.name}`, 'info');
+    });
+    // Low stock alerts
+    const lowStock = (stock || []).filter(s => (parseFloat(s.quantity)||0) <= (parseFloat(s.min_threshold||5)||5));
+    const lowStockNames = new Set(lowStock.map(s => s.product_id));
+    lowStock.forEach(s => {
+      if (!window._entRealState.alertedLowStock.has(s.product_id)) {
+        window._entRealState.alertedLowStock.add(s.product_id);
+        const prodName = s.products?.name || 'Produit';
+        toast(`Stock faible : ${prodName} (${parseFloat(s.quantity)||0} restants)`, 'warn');
+      }
+    });
+    // Remove from alerted if back to normal
+    window._entRealState.alertedLowStock.forEach(id => {
+      if (!lowStockNames.has(id)) window._entRealState.alertedLowStock.delete(id);
+    });
+  } catch (e) {}
+}
+
+/* ══ NAV ══ */
+const pageTitles={home:'Tableau de bord',analytics:'Analytiques',products:'Produits',stock:'Stock',sales:'Ventes',quotes:'Devis',clients:'Clients',employees:'Employés',trash:'Corbeille',employee_view:'Mes ventes'};
+function goTo(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById(`page-${page}`)?.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes(`'${page}'`))n.classList.add('active');});
+  document.getElementById('topbarTitle').textContent=pageTitles[page]||page;
+  currentPage=page;
+  if(page==='home')loadHomePage(false);
+  if(page==='analytics')loadAnalyticsPage();
+  if(page==='products')loadProductsPage(false);
+  if(page==='stock')loadStockPage(false);
+  if(page==='sales')loadSalesPage(false);
+  if(page==='quotes')loadQuotesPage(false);
+  if(page==='clients')loadClientsPage(false);
+  if(page==='employees')loadEmployeesPage(false);
+  if(page==='trash')loadTrashPage(false);
+  if(window.innerWidth<760){
+    const sb=document.getElementById('sidebar'),veil=document.getElementById('sidebarVeil');
+    sb.classList.remove('ef-open');
+    veil.style.display='none'; veil.style.opacity='0';
+    sb.style.boxShadow='none';
+  }
+}
+function refreshCurrentPage(){goTo(currentPage);}
+function toggleSidebar(){
+  const sb=document.getElementById('sidebar'),tb=document.getElementById('topbar'),mc=document.getElementById('mainContent'),veil=document.getElementById('sidebarVeil');
+  if(window.innerWidth<760){
+    const open = sb.classList.toggle('ef-open');
+    veil.style.display = open ? 'block' : 'none';
+    requestAnimationFrame(()=>{ if(open){ veil.style.opacity='1'; sb.style.boxShadow='12px 0 30px rgba(0,0,0,.35)';} else { veil.style.opacity='0'; sb.style.boxShadow='none';}});
+  } else {
+    sb.classList.toggle('collapsed');
+    tb.classList.toggle('expanded');
+    mc.classList.toggle('expanded');
+  }
+}
+
+/* ══ LOADING ══ */
+function setBtnLoading(id, on){
+  const el = typeof id === 'string' ? document.getElementById(id) : id;
+  if (!el) return;
+  el.classList.toggle('btn-loading', !!on);
+  el.dataset.loading = on ? '1' : '0';
+}
+
+/* ══ MODALS ══ */
+function openModal(id){document.getElementById(id).classList.add('show');}
+function closeModal(id){
+  document.getElementById(id).classList.remove('show');
+  document.querySelectorAll(`#${id} input:not([type=hidden]):not([type=checkbox]),#${id} textarea`).forEach(el=>el.value='');
+  document.querySelectorAll(`#${id} select`).forEach(el=>el.selectedIndex=0);
+  const hid=document.querySelector(`#${id} input[type=hidden]`);if(hid)hid.value='';
+  if(id==='productModal'){productBatch=[];renderProductBatch();const addBtn=document.getElementById('addAnotherBtn');if(addBtn)addBtn.style.display='';}
+  if(id==='saleModal'){document.getElementById('saleRows').innerHTML='';document.getElementById('saleTotal').textContent='0 F CFA';}
+  if(id==='quoteModal'){document.getElementById('quoteRows').innerHTML='';document.getElementById('quoteTotal').textContent='0 F CFA';}
+}
+
+/* ══ COMPANY PANEL ══ */
+function openPanel(){
+  if(CO){
+    document.getElementById('cp-name').value=CO.name||'';
+    document.getElementById('cp-phone').value=CO.phone||'';
+    document.getElementById('cp-email').value=CO.email||'';
+    document.getElementById('cp-address').value=CO.address||'';
+    document.getElementById('cp-nif').value=CO.tax_id||'';
+    document.getElementById('cp-rccm').value=CO.rccm||'';
+    document.getElementById('cp-currency').value=CO.currency||'XOF';
+    document.getElementById('cp-tva').value=CO.tva_rate||18;
+    document.getElementById('cp-prefix').value=CO.quote_prefix||'EF-';
+    if(CO.logo_data) document.getElementById('logoPreview').innerHTML=`<img src="${CO.logo_data}" style="max-height:56px;border-radius:9px;border:1px solid var(--border)">`;
+    if(CO.signature_data) document.getElementById('signaturePreview').innerHTML=`<img src="${CO.signature_data}" style="max-height:46px;border-radius:6px;border:1px solid var(--border)">`;
+  }
+  document.getElementById('cp-logo').onchange=e=>{readFileAsDataURL(e.target.files[0],url=>{document.getElementById('logoPreview').innerHTML=`<img src="${url}" style="max-height:56px;border-radius:9px;border:1px solid var(--border)">`;CO._newLogo=url;saveState_();});};
+  document.getElementById('cp-signature').onchange=e=>{readFileAsDataURL(e.target.files[0],url=>{document.getElementById('signaturePreview').innerHTML=`<img src="${url}" style="max-height:46px;border-radius:6px;border:1px solid var(--border)">`;CO._newSignature=url;saveState_();});};
+  document.getElementById('companyPanel').classList.add('show');
+}
+function closePanel(){document.getElementById('companyPanel').classList.remove('show');}
+function readFileAsDataURL(file,cb){
+  if(!file)return;
+  const r=new FileReader();
+  r.onload=async e=>{
+    try{
+      const url=e.target.result;
+      const img=await new Promise(res=>{const i=new Image();i.onload=()=>res(i);i.src=url;});
+      const MAX_W=300, QUALITY=.85;
+      const ratio=img.width>MAX_W?MAX_W/img.width:1;
+      const c=document.createElement('canvas');
+      c.width=img.width*ratio; c.height=img.height*ratio;
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      cb(c.toDataURL('image/jpeg',QUALITY));
+    }catch(err){cb(e.target.result);}
+  };
+  r.readAsDataURL(file);
+}
+
+async function saveCompanySettings(){
+  if(!CO){toast('Aucune entreprise chargée','error');return;}
+  const name=document.getElementById('cp-name').value.trim();
+  if(!name){toast('Le nom est obligatoire','error');return;}
+  try{
+    const updates={name,phone:document.getElementById('cp-phone').value.trim(),email:document.getElementById('cp-email').value.trim(),address:document.getElementById('cp-address').value.trim(),tax_id:document.getElementById('cp-nif').value.trim(),rccm:document.getElementById('cp-rccm').value.trim(),currency:document.getElementById('cp-currency').value,tva_rate:parseFloat(document.getElementById('cp-tva').value)||18,quote_prefix:document.getElementById('cp-prefix').value.trim()||'EF-'};
+    if(CO._newLogo) updates.logo_data=CO._newLogo;
+    if(CO._newSignature) updates.signature_data=CO._newSignature;
+    setBtnLoading('saveCompanyBtn',true);
+    await api('updateCompany',{id:CO.id,updates});
+    clearApiCache();Object.assign(CO,updates);saveState_();
+    toast('Entreprise mise à jour','success');closePanel();
+    document.getElementById('sbName').textContent=CO.name;
+    const logoAv = CO.logo_data ? `<img src="${CO.logo_data}" style="width:100%;height:100%;object-fit:cover;border-radius:7px;">` : (CO.name||'E')[0].toUpperCase();
+    document.getElementById('sbAv').innerHTML = logoAv;
+  }catch(e){toast('Erreur : '+e.message,'error');} finally { setBtnLoading('saveCompanyBtn',false); }
+}
+
+/* ══ CONTACT ADMIN ══ */
+function openContactPanel(){document.getElementById('contactPanel').classList.add('show');}
+function closeContactPanel(){document.getElementById('contactPanel').classList.remove('show');document.getElementById('contact-subject').value='';document.getElementById('contact-message').value='';}
+async function submitContactAdmin(){
+  const subject=document.getElementById('contact-subject').value.trim();
+  const message=document.getElementById('contact-message').value.trim();
+  if(!message){toast('Veuillez écrire un message','error');return;}
+  try{
+    await api('contactAdmin',{email:U.email,subject,message});
+    toast('Message envoyé au support !','success');closeContactPanel();
+  }catch(e){toast('Erreur : '+e.message,'error');}
+}
+
+/* ══ SETUP ═ */
+let _sLogo=null,_sSig=null;
+document.getElementById('s-logo').onchange=e=>{_sLogo=null;readFileAsDataURL(e.target.files[0],url=>{_sLogo=url;document.getElementById('s-logoPrev').innerHTML=_sLogo?`<img src="${_sLogo}" style="max-height:44px;border-radius:8px;border:1px solid var(--border)">`:'';});};
+document.getElementById('s-sig').onchange=e=>{_sSig=null;readFileAsDataURL(e.target.files[0],url=>{_sSig=url;document.getElementById('s-sigPrev').innerHTML=_sSig?`<img src="${_sSig}" style="max-height:36px;border-radius:6px;border:1px solid var(--border)">`:'';});};
+async function handleSetup(){
+  const name=document.getElementById('s-name').value.trim();
+  if(!name){toast("Nom de l'entreprise requis",'error');return;}
+  const btn=document.getElementById('setupSaveBtn');
+  try{
+    setBtnLoading(btn,true);
+    const comp=await api('createCompany',{ownerId:U.id,name,phone:document.getElementById('s-phone').value.trim(),email:document.getElementById('s-email').value.trim()||U.email,address:document.getElementById('s-address').value.trim(),tax_id:document.getElementById('s-nif').value.trim(),rccm:document.getElementById('s-rccm').value.trim(),currency:document.getElementById('s-currency').value,logo_data:_sLogo,signature_data:_sSig});
+    CO=comp;await ensureBranch();
+    localStorage.setItem('entreflowSetupDone','1');
+    saveState_();
+    document.getElementById('setupScreen').classList.remove('show');
+    startDashboard();toast(`Bienvenue ${name} !`,'success');
+  }catch(err){toast('Erreur : '+err.message,'error');btn.disabled=false;btn.textContent='Créer mon espace professionnel';}
+  finally{setBtnLoading(btn,false);}
+}
+document.getElementById('setupSaveBtn').addEventListener('click',handleSetup);
+document.getElementById('setupSkipBtn').addEventListener('click',async(e)=>{
+  e.preventDefault();document.getElementById('setupScreen').classList.remove('show');
+  if(U&&!CO){try{CO=await api('createDefaultCompany',{ownerId:U.id,email:U.email});await ensureBranch();}catch(err){}}
+  startDashboard();
+});
+
+async function ensureBranch(){
+  if(!CO)return;
+  const branches=await api('listBranches',{companyId:CO.id});
+  if(branches?.length){BR=branches[0];return;}
+  BR=await api('createBranch',{companyId:CO.id,name:'Agence principale',isMain:true});
+}
+
+/* ══ START DASHBOARD ══ */
+async function startDashboard(){
+  if(!CO)return;
+  // Fallback logo/signature depuis localStorage si Sheets est vide
+  try{
+    const raw=localStorage.getItem('ef_company');
+    if(raw){
+      const s=JSON.parse(raw);
+      if(s.logo && !CO.logo_data) CO.logo_data=s.logo;
+      if(signature && !CO.signature_data) CO.signature_data=s.signature;
+    }
+  }catch(e){}
+  document.getElementById('sbName').textContent=CO.name;
+  const logoAv = CO.logo_data ? `<img src="${CO.logo_data}" style="width:100%;height:100%;object-fit:cover;border-radius:7px">` : `<div class="sb-company-av">${(CO.name||'E')[0].toUpperCase()}</div>`;
+  document.getElementById('sbAv').innerHTML = logoAv;
+  document.getElementById('sbLogoText').textContent = CO.name || 'EntreFlow';
+  const sbLogoIcon = document.getElementById('sbLogoIcon');
+  if (CO.logo_data) {
+    sbLogoIcon.innerHTML = `<img src="${CO.logo_data}" style="width:100%;height:100%;object-fit:cover;border-radius:7px">`;
+    const tbLogo = document.getElementById('topbarLogo');
+    if (tbLogo) tbLogo.innerHTML = `<img src="${CO.logo_data}" style="width:100%;height:100%;object-fit:cover;">`;
+  } else {
+    sbLogoIcon.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>`;
+  }
+  document.getElementById('dashboard').style.display='block';
+  document.getElementById('welcomeSub').textContent=`Activité de ${CO.name}`;
+  const greet=getGreeting();
+  const firstName=U.prenom||'';
+  document.getElementById('ownerGreeting').textContent=firstName?`${greet}, ${firstName}`:`${greet} !`;
+  document.getElementById('userAv').textContent=(firstName||U.email||'U')[0].toUpperCase();
+  document.getElementById('dateChip').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+  try{await api('setupSheet',{});}catch(err){console.warn(err);}
+  saveState_();
+  loadHomePage(false);
+  checkAvisPrompt();
+  // Initialize seen IDs for realtime
+  try {
+    const initSales = await api('listSales', { companyId: CO.id });
+    (initSales || []).forEach(s => window._entRealState.seenSaleIds.add(s.id));
+    const initClients = await api('listClients', { companyId: CO.id });
+    (initClients || []).forEach(c => window._entRealState.seenClientIds.add(c.id));
+  } catch (e) {}
+  // Silent background refresh every 9 seconds
+  setInterval(async () => {
+    await silentRefreshCurrentPage();
+    await checkRealtimeNotifications();
+  }, 9000);
+}
+function getGreeting(){const h=new Date().getHours();return h<12?'Bonjour':h<18?'Bon après-midi':'Bonsoir';}
+
+/* ══ HOME ═ */
+async function loadHomePage(silent){
+  if(!CO)return;
+  let products,clients,salesAll,stock,quotes;
+  const cache=window._ENTREFLOW_INIT;
+  const hasCacheData = cache && (cache.products !== undefined || cache.clients !== undefined || cache.sales !== undefined);
+  if(hasCacheData){
+    products=cache.products||[];
+    clients=cache.clients||[];
+    salesAll=(cache.sales||[]).filter(s=>s.statut==='completed');
+    stock=(cache.stock||[]).filter(s=>BR&&(!s.branch_id||String(s.branch_id)===String(BR.id)));
+    quotes=cache.quotes||[];
+  }else{
+    try{
+      ([products,clients,salesAll,stock,quotes]=await Promise.all([
+        api('listProducts',{companyId:CO.id}),
+        api('listClients',{companyId:CO.id}),
+        api('listSales',{companyId:CO.id}).then(r=>(r||[]).filter(s=>s.statut==='completed')),
+        BR?api('listStock',{branchId:BR.id}):Promise.resolve([]),
+        api('listQuotes',{companyId:CO.id})
+      ]));
+    }catch(err){console.error(err);toast('Erreur dashboard : '+err.message,'error');return;}
+  }
+  const now=new Date();
+  let periodStart;
+  const p=window._chartPeriod||'month';
+  if(p==='day')periodStart=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  else if(p==='week'){const d=new Date(now);d.setDate(d.getDate()-((d.getDay()+6)%7));periodStart=new Date(d.getFullYear(),d.getMonth(),d.getDate());}
+  else periodStart=new Date(now.getFullYear(),now.getMonth(),1);
+
+  const periodSales=salesAll.filter(s=>new Date(s.created_at)>=periodStart);
+  const revenue=periodSales.reduce((s,v)=>s+(parseFloat(v.total)||0),0);
+  const avgBasket=periodSales.length?Math.round(revenue/periodSales.length):0;
+
+  if (!silent) {
+    animCount('k1',products.length);animCount('k2',clients.length);animCount('k3',periodSales.length);
+    document.getElementById('k4').textContent=fmtAmt(revenue);
+    document.getElementById('k1chip').textContent=products.length+' actifs';
+    document.getElementById('k2chip').textContent=clients.length+' total';
+    document.getElementById('k3chip').textContent=periodSales.length+' ventes';
+    document.getElementById('k4chip').textContent=revenue>1000?(revenue/1000).toFixed(0)+'K F':'F CFA';
+    setTimeout(()=>{
+      document.getElementById('k1bar').style.width=Math.min(100,products.length*4)+'%';
+      document.getElementById('k2bar').style.width=Math.min(100,clients.length*2)+'%';
+      document.getElementById('k3bar').style.width=Math.min(100,periodSales.length*5)+'%';
+      document.getElementById('k4bar').style.width=Math.min(100,(revenue/500000)*100)+'%';
+    },200);
+  } else {
+    document.getElementById('k1').textContent=products.length.toLocaleString('fr-FR');
+    document.getElementById('k2').textContent=clients.length.toLocaleString('fr-FR');
+    document.getElementById('k3').textContent=periodSales.length.toLocaleString('fr-FR');
+    document.getElementById('k4').textContent=fmtAmt(revenue);
+    document.getElementById('k1chip').textContent=products.length+' actifs';
+    document.getElementById('k2chip').textContent=clients.length+' total';
+    document.getElementById('k3chip').textContent=periodSales.length+' ventes';
+    document.getElementById('k4chip').textContent=revenue>1000?(revenue/1000).toFixed(0)+'K F':'F CFA';
+    document.getElementById('k1bar').style.width=Math.min(100,products.length*4)+'%';
+    document.getElementById('k2bar').style.width=Math.min(100,clients.length*2)+'%';
+    document.getElementById('k3bar').style.width=Math.min(100,periodSales.length*5)+'%';
+    document.getElementById('k4bar').style.width=Math.min(100,(revenue/500000)*100)+'%';
+  }
+
+  if (!silent) {
+    document.getElementById('sm1').textContent=quotes.filter(q=>q.statut==='envoye').length;
+    document.getElementById('sm2').textContent=fmtAmt(avgBasket)+' F';
+
+    const lowStock=(stock||[]).filter(s=>{
+      const qty=parseFloat(s.quantity)||0;
+      const thresh=parseFloat(s.min_threshold||5)||5;
+      return qty<=thresh;
+    });
+    document.getElementById('sm3').textContent=lowStock.length;
+    const badge=document.getElementById('stockBadge'),dot=document.getElementById('notifDot');
+    if(lowStock.length>0){badge.textContent=lowStock.length;badge.style.display='block';dot.style.display='block';}
+    else{badge.style.display='none';dot.style.display='none';}
+
+    renderStockRings(lowStock.slice(0,8));
+    const lsCard=document.getElementById('lowStockCard');
+    if(lsCard){
+      if(!lowStock.length){lsCard.innerHTML=`<div class="empty-state"><div class="empty-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><strong>Tout est OK</strong><span>Aucun produit sous le seuil</span></div>`;}
+      else{
+        const rows=(lowStock||[]).slice(0,8).map(s=>{const qty=parseFloat(s.quantity)||0,thresh=parseFloat(s.min_threshold||5)||5;const name=s.products?.name||'—';return `<div class="sale-row" style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:600;font-size:13px">${name}</div><div style="font-size:11px;color:var(--gray)">seuil: ${thresh}</div></div><div style="font-weight:700;color:${qty===0?'var(--red)':'var(--amber)'}">${qty}</div></div>`;}).join('');
+        lsCard.innerHTML=rows||`<div class="empty-state"><div class="empty-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><strong>Tout est OK</strong><span>Aucun produit sous le seuil</span></div>`;
+      }
+    }
+  }
+
+  const recent=[...salesAll].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,6);
+  const salesDiv=document.getElementById('recentSalesDiv');
+  if (!silent || recent.length) {
+    salesDiv.innerHTML=recent.length?recent.map(s=>`
+      <div class="sale-row"><div><div class="sale-client">${s.client?.name||s.client_name||'Client anonyme'}</div><div class="sale-num">${s.sale_number||'—'}</div></div>
+      <div style="text-align:right"><div class="sale-amt">${fmtAmt(parseFloat(s.total)||0)} F</div><div class="sale-date">${fmtDateTime(s.created_at)}</div></div></div>`).join('')
+      :`<div class="empty-state"><div class="empty-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><strong>Aucune vente</strong><span>Enregistrez votre première vente</span></div>`;
+  }
+
+  if (!silent) {
+    buildInsights({revenue,salesCount:periodSales.length,avgBasket,lowStock,prodCount:products.length,clientCount:clients.length});
+    loadCharts(salesAll);
+  }
+}
+
+function renderStockRings(items){
+  const div=document.getElementById('stockRingsDiv');
+  if(!items.length){div.innerHTML=`<div class="empty-state"><div class="empty-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><strong>Tout est OK</strong><span>Aucun produit en rupture</span></div>`;return;}
+  div.innerHTML=`<div class="stock-rings" id="stockRingsGrid"></div>`;
+  const grid=document.getElementById('stockRingsGrid');
+  items.forEach(s=>{
+    const qty=parseFloat(s.quantity)||0,thresh=parseFloat(s.min_threshold)||5,max=thresh*3||15;
+    const pct=Math.min(100,Math.round((qty/max)*100));
+    const color=qty===0?'#EF4444':qty<=thresh?'#F59E0B':'#10B981';
+    const name=s.products?.name||'—';const shortName=name.length>12?name.substring(0,11)+'…':name;
+    const uid='ring_'+Math.random().toString(36).substr(2,6);
+    grid.innerHTML+=`<div class="ring-item"><div class="ring-wrap"><canvas id="${uid}"></canvas><div class="ring-center"><span class="ring-pct" style="color:${color}">${qty}</span></div></div><div class="ring-name">${shortName}</div><div class="ring-qty">seuil: ${thresh}</div></div>`;
+    setTimeout(()=>{
+      const canvas=document.getElementById(uid);if(!canvas)return;
+      new Chart(canvas.getContext('2d'),{type:'doughnut',data:{datasets:[{data:[pct,100-pct],backgroundColor:[color,'rgba(255,255,255,.05)'],borderWidth:0}]},options:{responsive:false,cutout:'72%',animation:{animateRotate:true,duration:900},plugins:{legend:{display:false},tooltip:{enabled:false}}}});
+    },50);
+  });
+}
+
+function buildInsights({revenue,salesCount,avgBasket,lowStock,prodCount,clientCount}){
+  const div=document.getElementById('insightsDiv');const insights=[];
+  if(lowStock.length>0)insights.push({icon:'<svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>',title:`${lowStock.length} produit(s) en stock critique`,text:'Pensez à réapprovisionner avant rupture.'});
+  if(salesCount===0)insights.push({icon:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>',title:'Aucune vente sur cette période',text:'Enregistrez vos premières transactions.'});
+  if(salesCount>0&&avgBasket>0)insights.push({icon:'<svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>',title:`Panier moyen : ${fmtAmt(avgBasket)} F`,text:"Pensez aux ventes groupées pour l'augmenter."});
+  if(clientCount===0)insights.push({icon:'<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>',title:'Ajoutez vos premiers clients',text:'Un carnet client fidélise et facilite le suivi.'});
+  if(!insights.length)insights.push({icon:'<svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',title:'Activité en bonne santé',text:'Continuez à enregistrer vos ventes régulièrement.'});
+  div.innerHTML=insights.map(i=>`<div class="insight-card"><div class="insight-icon">${i.icon}</div><div class="insight-text"><strong>${i.title}</strong>${i.text}</div></div>`).join('');
+}
+
+function loadCharts(salesAll){
+  const now=new Date();const labels=[],revenueData=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    labels.push(['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'][d.getMonth()]);
+    revenueData.push((salesAll||[]).filter(s=>String(s.created_at).startsWith(key)).reduce((s,v)=>s+(parseFloat(v.total)||0),0));
+  }
+  if(charts.revenue)charts.revenue.destroy();
+  charts.revenue=new Chart(document.getElementById('chartRevenue'),{type:'bar',data:{labels,datasets:[{data:revenueData,backgroundColor:'rgba(37,99,235,.3)',borderColor:'rgba(37,99,235,.7)',borderWidth:1,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>fmtAmt(ctx.raw)+' F'}}},scales:{y:{ticks:{color:'#8A9AC2',callback:v=>v>=1000?(v/1000).toFixed(0)+'K':v},grid:{color:'rgba(96,165,250,.05)'}},x:{ticks:{color:'#8A9AC2'},grid:{display:false}}}}});
+
+  const prodMap={};
+  // top produits via VenteLignes serait idéal, fallback simple
+  if(charts.top)charts.top.destroy();
+  charts.top=new Chart(document.getElementById('chartTopProducts'),{type:'doughnut',data:{labels:['Données à venir'],datasets:[{data:[1],backgroundColor:['#2563EB'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}});
+}
+
+function setPeriod(p,btn){window._chartPeriod=p;document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');loadHomePage(false);}
+function animCount(elId,target){const el=document.getElementById(elId);if(!el)return;let i=0;const steps=30;const timer=setInterval(()=>{i++;el.textContent=Math.round(target*i/steps).toLocaleString('fr-FR');if(i>=steps){el.textContent=target.toLocaleString('fr-FR');clearInterval(timer);}},16);}
+
+/* ══ ANALYTICS ══ */
+function showAnalyticsView(mode){
+  document.getElementById('analyticsChartView').style.display = mode==='chart' ? '' : 'none';
+  document.getElementById('analyticsTableView').style.display = mode==='table' ? '' : 'none';
+  document.getElementById('btnAnalyticsChart').className = mode==='chart' ? 'btn btn-primary' : 'btn';
+  document.getElementById('btnAnalyticsTable').className = mode==='table' ? 'btn btn-primary' : 'btn';
+  if(mode==='table') loadPVTable();
+}
+async function loadPVTable(silent){
+  if(!CO) return;
+  const branches = await api('listBranches', {companyId: CO.id});
+  const sales = await api('listSales', {companyId: CO.id}).then(r=>(r||[]).filter(s=>s.statut==='completed'));
+  const rows = branches.map(b => {
+    const bs = sales.filter(s => s.branch_id === b.id);
+    const ca = bs.reduce((a,b)=>a+(parseFloat(b.total)||0),0);
+    return `<tr><td>${b.name}</td><td>${fmtAmt(ca)} F</td><td>${bs.length}</td><td>—</td></tr>`;
+  }).join('');
+  document.getElementById('pvTbody').innerHTML = rows || '<tr><td colspan="4"><div class="empty-state"><strong>Aucune donnée</strong></div></td></tr>';
+}
+async function loadAnalyticsPage(silent){
+  if(!CO)return;
+  showAnalyticsView('chart');
+  const sales=await api('listSales',{companyId:CO.id}).then(r=>(r||[]).filter(s=>s.statut==='completed'));
+  const payMap={};sales.forEach(s=>{const pm=s.payment_method||'cash';payMap[pm]=(payMap[pm]||0)+(parseFloat(s.total)||0);});
+  const payLabels={cash:'Espèces',mobile_money_wave:'Wave',mobile_money_mtn:'MTN',mobile_money_moov:'Moov',card:'Carte',bank_transfer:'Virement'};
+  const payData=Object.entries(payMap);
+  if(charts.payment)charts.payment.destroy();
+  const ctx=document.getElementById('chartPayment');
+  if(payData.length){
+    charts.payment=new Chart(ctx,{type:'pie',data:{labels:payData.map(([k])=>payLabels[k]||k),datasets:[{data:payData.map(([,v])=>v),backgroundColor:['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6','#EC4899'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#EEF2FF'}}}}});}
+  else{
+    ctx.parentElement.innerHTML=`<div class="empty-state"><strong>Aucune vente</strong></div>`;
+  }
+}
+
+/* ══ PRODUCTS ══ */
+async function loadProductsPage(silent){
+  if(!CO)return;
+  const products=await api('listProducts',{companyId:CO.id});
+  let stockMap={};
+  if(BR){const stocks=await api('listStock',{branchId:BR.id});(stocks||[]).forEach(s=>stockMap[s.product_id]=parseFloat(s.quantity)||0);}
+  const tbody=document.getElementById('productsTbody');
+  if(!products?.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><strong>Aucun produit</strong><span>Ajoutez votre premier produit</span></div></td></tr>`;return;}
+  const rowsHtml=products.map(p=>{
+    const qty=stockMap[p.id]??0;const thresh=parseFloat(p.min_threshold)||5;
+    const status=qty===0?'err':qty<=thresh?'warn':'ok';const label={ok:'En stock',warn:'Faible',err:'Rupture'}[status];
+    const badgeCls={ok:'b-ok',warn:'b-warn',err:'b-err'}[status];
+    return `<tr><td style="font-weight:500">${p.name}</td><td style="color:var(--gray)">${p.unit}</td><td style="color:var(--gray)">${fmtAmt(p.pack_buy_price||0)} F</td><td style="font-weight:500">${fmtAmt(p.unit_sell_price||0)} F</td><td><span class="badge ${badgeCls}">${label}</span></td><td><button class="btn btn-danger" onclick="softDeleteProduct('${p.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2 2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button></td></tr>`;
+  }).join('');
+  if (!silent) tbody.innerHTML = rowsHtml;
+}
+let productBatch=[];
+function openProductModal(id=null){
+  const titleEl=document.getElementById('productModalTitle');
+  if(titleEl)titleEl.textContent=id?'Modifier le produit':'Nouveau produit';
+  const idEl=document.getElementById('pm-id');if(idEl)idEl.value=id||'';
+  productBatch=[];
+  renderProductBatch();
+  if(!id)resetProductForm(); else updateProductUnitHints();
+  const addBtn=document.getElementById('addAnotherBtn');if(addBtn)addBtn.style.display=id?'none':'';
+  const branchSel=document.getElementById('pm-branch');
+  if(branchSel && !branchSel.children.length){
+    (async ()=>{
+      const branches=await api('listBranches',{companyId:CO.id});
+      branchSel.innerHTML='<option value=\"\">-- Choisir --</option>'+(branches||[]).map(b=>`<option value=\"${b.id}\">${esc(b.name)}</option>`).join('');
+    })();
+  }
+  updateProductUnitHints();
+  openModal('productModal');
+}
+function resetProductForm(){
+  ['pm-name','pm-buy-pack','pm-unit-sell','pm-pack','pm-unit','pm-buy-unit','pm-thresh','pm-stock','pm-id'].forEach(i=>{const el=document.getElementById(i);if(el)el.value=i==='pm-pack'||i==='pm-thresh'||i==='pm-unit'||i==='pm-buy-unit'?(i==='pm-pack'?'1':i==='pm-thresh'?'5':i==='pm-unit'?'pièce':'0'):'';});
+  const nameEl=document.getElementById('pm-name');if(nameEl)nameEl.focus();
+  updateProductUnitHints();
+}
+function updateProductUnitHints(){
+  const u=(document.getElementById('pm-unit')?.value||'pièce').toLowerCase();
+  const map={
+    pièce:{buyPack:'Ex: 5000 / boîte', sell:'Ex: 100 / pièce', stock:'Ex: 200 pièce'},
+    kg:{buyPack:'Ex: 15000 / carton', sell:'Ex: 300 / kg', stock:'Ex: 50 kg'},
+    litre:{buyPack:'Ex: 12000 / caisse', sell:'Ex: 200 / litre', stock:'Ex: 30 litre'},
+    carton:{buyPack:'Ex: 15000 / lot', sell:'Ex: 300 / pièce', stock:'Ex: 50 carton'},
+    boîte:{buyPack:'Ex: 5000 / lot', sell:'Ex: 100 / pièce', stock:'Ex: 200 boîte'}
+  };
+  const h=map[u]||map.pièce;
+  const buy=document.getElementById('pm-buy-pack'); if(buy)buy.placeholder=h.buyPack;
+  const sell=document.getElementById('pm-unit-sell'); if(sell)sell.placeholder=h.sell;
+  const stock=document.getElementById('pm-stock'); if(stock)stock.placeholder=h.stock;
+}
+function renderProductBatch(){
+  const btn=document.getElementById('saveProductBtn');
+  if(btn){
+    const n=productBatch.length;
+    btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Enregistrer '+(n?n+' produit(s)':'et fermer');
+  }
+  const box=document.getElementById('pmBatchList');
+  if(box)box.innerHTML=productBatch.length?`<div class="pm-batch-list">${productBatch.map((x,i)=>`<div class="pm-batch-item"><span><span>${i+1}. <strong>${x.name}</strong></span></span><span style="color:var(--gray);font-size:12px">${x.qty} ${x.unit} · stock ${x.stock}</span><button class="btn btn-icon" onclick="removeProductBatchItem(${i})" style="width:22px;height:22px;padding:0;border-radius:4px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>`).join('')}</div>`:'';
+}
+function removeProductBatchItem(i){productBatch.splice(i,1);renderProductBatch();}
+async function editProduct(id){
+  const p=await api('getProduct',{id});
+  document.getElementById('pm-id').value=p.id;document.getElementById('pm-name').value=p.name;
+  document.getElementById('pm-pack').value=p.pack_qty||1;document.getElementById('pm-buy-pack').value=p.pack_buy_price||0;
+  document.getElementById('pm-unit-sell').value=p.unit_sell_price||0;document.getElementById('pm-thresh').value=p.min_threshold||5;
+  document.getElementById('pm-unit').value=p.unit||'pièce';
+  document.getElementById('pm-buy-unit').value=p.buy_unit_price||0;
+  let stockVal=0;
+  if(BR){const stocks=await api('listStock',{branchId:BR.id});const s=(stocks||[]).find(x=>x.product_id===id);stockVal=s?.quantity??stockVal;}
+  if(!stockVal){try{const all=await api('listStock',{companyId:CO.id});const s=(all||[]).find(x=>x.product_id===id);stockVal=s?.quantity??stockVal;}catch(e){}}
+  document.getElementById('pm-stock').value=stockVal;
+  document.getElementById('productModalTitle').textContent='Modifier le produit';
+  document.getElementById('addAnotherBtn').style.display='none';
+  openModal('productModal');
+}
+document.getElementById('saveProductBtn').addEventListener('click',async()=>{
+  const btn=document.getElementById('saveProductBtn');
+  const id=document.getElementById('pm-id').value;
+  try{
+    setBtnLoading(btn,true);
+    if(id){
+      const name=document.getElementById('pm-name').value.trim();
+      const packQty=parseInt(document.getElementById('pm-pack').value)||1;
+      const packBuy=parseFloat(document.getElementById('pm-buy-pack').value)||0;
+      const unitSell=parseFloat(document.getElementById('pm-unit-sell').value)||0;
+      if(!name){toast('Nom du produit requis','error');return;}
+      if(unitSell<=0){toast('Prix de vente requis','error');return;}
+      const payload={name,pack_qty:packQty,pack_buy_price:packBuy,unit_sell_price:unitSell,buy_unit_price:packQty>0?packBuy/packQty:packBuy,min_threshold:parseFloat(document.getElementById('pm-thresh').value)||5,unit:document.getElementById('pm-unit').value};
+      await api('updateProduct',{id,updates:payload});
+      toast('"'+name+'" modifié !','success');
+    }else if(productBatch.length){
+      const branchId=document.getElementById('pm-branch')?.value;
+      if(!branchId){toast('Agence de stock requise','error');return;}
+      for(const item of productBatch){
+        const res=await api('createProduct',{company_id:CO.id,branchId,...item});
+      }
+      toast('"'+productBatch.length+' produit(s) enregistrés !','success');
+    }else{
+      const name=document.getElementById('pm-name').value.trim();
+      const packQty=parseInt(document.getElementById('pm-pack').value)||1;
+      const packBuy=parseFloat(document.getElementById('pm-buy-pack').value)||0;
+      const unitSell=parseFloat(document.getElementById('pm-unit-sell').value)||0;
+      if(!name){toast('Nom du produit requis','error');return;}
+      if(unitSell<=0){toast('Prix de vente requis','error');return;}
+      const branchId=document.getElementById('pm-branch')?.value;
+      if(!branchId){toast('Agence de stock requise','error');return;}
+      const payload={name,pack_qty:packQty,pack_buy_price:packBuy,unit_sell_price:unitSell,buy_unit_price:packQty>0?packBuy/packQty:packBuy,min_threshold:parseFloat(document.getElementById('pm-thresh').value)||5,unit:document.getElementById('pm-unit').value};
+      const stock=parseFloat(document.getElementById('pm-stock').value)||0;
+      const res=await api('createProduct',{company_id:CO.id,branchId,quantity:stock,...payload});
+      toast('"'+name+'" ajouté !','success');
+    }
+    productBatch=[];
+    clearApiCache();loadProductsPage(false);loadHomePage(false);
+    closeModal('productModal');
+  }catch(e){toast('Erreur : '+e.message,'error');}
+  finally{setBtnLoading(btn,false);}
+});
+document.getElementById('addAnotherBtn').addEventListener('click',async()=>{
+  const btn=document.getElementById('addAnotherBtn');
+  const name=document.getElementById('pm-name').value.trim();
+  if(!name){toast('Nom du produit requis','error');return;}
+  const packQty=parseInt(document.getElementById('pm-pack').value)||1;
+  const packBuy=parseFloat(document.getElementById('pm-buy-pack').value)||0;
+  const unitSell=parseFloat(document.getElementById('pm-unit-sell').value)||0;
+  if(unitSell<=0){toast('Prix de vente requis','error');return;}
+  const payload={name,pack_qty:packQty,pack_buy_price:packBuy,unit_sell_price:unitSell,buy_unit_price:packQty>0?packBuy/packQty:packBuy,min_threshold:parseFloat(document.getElementById('pm-thresh').value)||5,unit:document.getElementById('pm-unit').value};
+  const stock=parseFloat(document.getElementById('pm-stock').value)||0;
+  try{
+    setBtnLoading(btn,true);
+    productBatch.push({...payload,stock});
+    renderProductBatch();
+    resetProductForm();
+    toast('"'+name+'" ajouté à la liste','success');
+  }catch(e){toast('Erreur : '+e.message,'error');}
+  finally{setBtnLoading(btn,false);}
+});
+async function softDeleteProduct(id){if(!confirm('Supprimer ce produit ?'))return;const btn=event.target.closest('button');if(btn){setBtnLoading(btn,true);}await api('deleteProduct',{id});clearApiCache();toast('Produit supprimé','info');loadStockPage(false);loadHomePage(false);if(btn){setBtnLoading(btn,false);}}
+
+/* ══ STOCK ══ */
+async function loadStockPage(silent){
+  if(!CO||!BR)return;
+  const [rows,products]=await Promise.all([api('listStock',{branchId:BR.id}),api('listProducts',{companyId:CO.id})]);
+  console.log('[EntreFlow] loadStockPage company=' + (CO.id||'') + ' branch=' + (BR.id||'') + ' stockRows=' + (rows||[]).length + ' products=' + (products||[]).length);
+  if (!silent) { const st = document.getElementById('stockTitle'); if(st) st.textContent = 'Stock (' + (BR.id||'') + ') — ' + (rows||[]).length + ' lignes'; }
+  const tbody=document.getElementById('stockTbody');
+  const actives=(products||[]).filter(x=>x.statut!=='inactif');
+  const stockMap=new Map((rows||[]).map(r=>[String(r.product_id),r]));
+  const missing=actives.filter(p=>!stockMap.has(String(p.id))).map(p=>({product_id:p.id,quantity:0,min_threshold:p.min_threshold||5}));
+  if(!rows?.length && !missing?.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><strong>Aucun stock enregistré pour cette agence</strong><span>Ajoutez du stock ou réapprovisionnez un produit</span></div></td></tr>`;return;}
+  const merged=[...(rows||[]),...missing];
+  if(!merged.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><strong>Aucun produit</strong></div></td></tr>`;return;}
+  const rowsHtml=merged.map(r=>{
+    const prod=actives.find(p=>p.id===r.product_id)||{name:'—',unit:'',min_threshold:5};
+    const qty=parseFloat(r.quantity)||0,thresh=parseFloat(r.min_threshold||prod.min_threshold)||5;
+    const status=qty===0?'err':qty<=thresh?'warn':'ok';const label={ok:'En stock',warn:'Faible',err:'Rupture'}[status];
+    const barCol={ok:'var(--green)',warn:'var(--amber)',err:'var(--red)'}[status];
+    const barPct=Math.max(0,Math.min(100,(qty/(thresh*3||1))*100));
+    const actionBtn=status==='err'||status==='warn'?`<button class="btn btn-sm" style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.35);color:var(--green)" onclick="restockPrompt('${r.product_id}',${qty},${thresh})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Réappro.</button>`:`<span style="color:var(--gray);font-size:12px">—</span>`;
+    return `<tr><td style="font-weight:500">${prod?.name||'—'}</td><td>${qty}</td><td>${thresh}</td><td><div class="stk-bar" style="width:80px"><div class="stk-bar-fill" style="width:${barPct}%;background:${barCol}"></div></div></td><td><span class="badge b-${status}">${label}</span></td><td>${actionBtn}</td></tr>`;
+  }).join('');
+  if (!silent) tbody.innerHTML = rowsHtml;
+}
+function restockPrompt(pid,curQty,thresh){
+  openModal('restockModal');
+  document.getElementById('rs-pid').value=pid;
+  document.getElementById('rs-cur').value=curQty;
+  document.getElementById('rs-thresh').value=thresh;
+  document.getElementById('rs-cur-display').value=String(curQty||0);
+  const qEl=document.getElementById('rs-qty');
+  const btn=document.getElementById('submitRestockBtn');
+  if(qEl && btn){
+    qEl.value='';
+    const check=()=>{ btn.disabled=!(parseFloat(qEl.value||'0')>0); };
+    qEl.oninput=check;
+    check();
+    qEl.focus();
+  }
+}
+async function submitRestock(){
+  const pid=document.getElementById('rs-pid').value;
+  const curQty=parseFloat(document.getElementById('rs-cur').value)||0;
+  const delta=parseFloat(document.getElementById('rs-qty').value)||0;
+  const resultEl=document.getElementById('rs-result');
+  const btn=document.getElementById('submitRestockBtn');
+  if(!delta||delta<=0){toast('Quantité invalide','error');return;}
+  try{
+    if(btn){btn.disabled=true;btn.innerHTML=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Enregistrement...`;}
+    let res;
+    try{
+      res=await api('restockProduct',{company_id:CO.id, companyId:CO.id, branch_id:BR.id, branchId:BR.id, product_id:pid, productId:pid, addQty:delta});
+    }catch(err){
+      if(String(err.message).includes('action inconnue')){
+        res={before:curQty, after:curQty+delta};
+        await api('updateStock',{companyId:CO.id, branchId:BR.id, productId:pid, quantity:curQty+delta});
+      } else if(String(err.message).includes('identifiants invalides') || String(err.message).includes('refusé')){
+        throw new Error('Session expirée. Rechargez la page et reconnectez-vous.');
+      } else throw err;
+    }
+    const after=Number(res.after||curQty+delta);
+    const before=Number(res.before||curQty);
+    if(resultEl){resultEl.style.display='block';resultEl.innerHTML=`Stock : <strong style="color:var(--white)">${before}</strong> → <strong style="color:var(--green)">${after}</strong>`;}
+    toast(`Stock mis à jour : ${before} → ${after}`,'success');
+    clearApiCache();
+    await loadStockPage(false); loadHomePage(false);
+    setTimeout(()=>{closeModal('restockModal');if(resultEl)resultEl.style.display='none';}, 600);
+  }catch(e){
+    toast('Erreur : '+e.message,'error');
+  }finally{
+    if(btn){
+      btn.disabled=false;
+      btn.innerHTML=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Ajouter`;
+    }
+  }
+}
+
+/* ══ CLIENTS ══ */
+async function loadClientsPage(silent){
+  if(!CO)return;
+  const data=await api('listClients',{companyId:CO.id});
+  const tbody=document.getElementById('clientsTbody');
+  if(!data?.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><strong>Aucun client</strong><span>Ajoutez vos premiers clients</span></div></td></tr>`;return;}
+  const rows=data.map(c=>`<tr><td style="font-weight:500">${c.name}</td><td>${c.phone||'—'}</td><td>${c.email||'—'}</td><td>${c.city||'—'}</td><td style="color:var(--blue-l)">${fmtAmt(parseFloat(c.total_revenue)||0)} F</td>
+  <td style="display:flex;gap:5px"><button class="btn btn-icon" onclick="editClient('${c.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M17 3a2.8 2.8 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg></button><button class="btn btn-danger" onclick="softDeleteClient('${c.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2 2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button></td></tr>`).join('');
+  if (!silent) tbody.innerHTML = rows;
+}
+function openClientModal(id=null){document.getElementById('clientModalTitle').textContent=id?'Modifier le client':'Nouveau client';document.getElementById('cm-id').value=id||'';openModal('clientModal');}
+async function editClient(id){
+  const c=await api('getClient',{id});
+  document.getElementById('cm-id').value=c.id;document.getElementById('cm-name').value=c.name||'';document.getElementById('cm-phone').value=c.phone||'';document.getElementById('cm-email').value=c.email||'';document.getElementById('cm-city').value=c.city||'';document.getElementById('cm-notes').value=c.notes||'';
+  document.getElementById('clientModalTitle').textContent='Modifier le client';openModal('clientModal');
+}
+document.getElementById('saveClientBtn').addEventListener('click',async()=>{
+  const id=document.getElementById('cm-id').value;const name=document.getElementById('cm-name').value.trim();
+  if(!name){toast('Nom du client requis','error');return;}
+  const payload={name,phone:document.getElementById('cm-phone').value.trim(),email:document.getElementById('cm-email').value.trim(),city:document.getElementById('cm-city').value.trim(),notes:document.getElementById('cm-notes').value.trim()};
+  try{
+    setBtnLoading('saveClientBtn',true);
+    if(id){await api('updateClient',{id,updates:payload});toast(`"${name}" modifié !`,'success');}
+    else{await api('createClient',{company_id:CO.id,...payload});toast(`Client "${name}" ajouté !`,'success');}
+    clearApiCache();closeModal('clientModal');loadClientsPage(false);loadHomePage(false);
+  }catch(e){toast('Erreur : '+e.message,'error');}
+  finally{setBtnLoading('saveClientBtn',false);}
+});
+async function softDeleteClient(id){if(!confirm('Déplacer dans la corbeille ?'))return;const btn=event.target.closest('button');if(btn){setBtnLoading(btn,true);}await api('deleteClient',{id});clearApiCache();toast('Client supprimé','info');loadClientsPage(false);loadHomePage(false);if(btn){setBtnLoading(btn,false);}}
+
+/* ══ EMPLOYEES ══ */
+async function openEmployeeModal(){
+  const sel=document.getElementById('em-branch');
+  if(BR){const branches=await api('listBranches',{companyId:CO.id});sel.innerHTML=(branches||[]).map(b=>`<option value="${b.id}">${b.name}</option>`).join('');}
+  openModal('employeeModal');
+}
+document.getElementById('saveEmployeeBtn').addEventListener('click',async()=>{
+  const name=document.getElementById('em-name').value.trim();const branchId=document.getElementById('em-branch').value;
+  if(!name||!branchId){toast('Nom et boutique requis','error');return;}
+  try{
+    setBtnLoading('saveEmployeeBtn',true);
+    await api('createEmployee',{companyId:CO.id,branchId,fullName:name,poste:document.getElementById('em-poste').value.trim(),phone:document.getElementById('em-phone').value.trim(),email:document.getElementById('em-email').value.trim(),whatsapp:document.getElementById('em-whatsapp').value.trim(),salaire:parseFloat(document.getElementById('em-salaire').value)||0});
+    clearApiCache();toast('Employé ajouté','success');closeModal('employeeModal');loadEmployeesPage(false);loadHomePage(false);
+  }catch(e){toast('Erreur : '+e.message,'error');}
+  finally{setBtnLoading('saveEmployeeBtn',false);}
+});
+async function loadEmployeesPage(silent){
+  if(!CO)return;
+  const emps=await api('listEmployees',{companyId:CO.id});
+  const tbody=document.getElementById('employeesTbody');
+  if (!silent) document.getElementById('empDayTotal').textContent='Employés : '+(emps?.length||0);
+  let gCA=0, gSales=0;
+  if(!emps?.length){tbody.innerHTML=`<tr><td colspan="7"><div class="empty-state"><strong>Aucun employé</strong></div></td></tr>`;document.getElementById('dailySalesContent').innerHTML=`<div class="empty-state">Aucun employé</div>`;return;}
+  const rows=await Promise.all(emps.map(async e=>{
+    const st = await api('getEmployeeStats',{employeeId:e.id}).catch(()=>({sales_today:0,ca_today:0}));
+    const ca = parseFloat(st.ca_today)||0; gCA+=ca; gSales+=parseInt(st.sales_today)||0;
+    return { ...e, _salesToday: st.sales_today||0, _caToday: ca };
+  }));
+  if (!silent) {
+    document.getElementById('empSalesGlobal').textContent='Total ventes : '+fmtAmt(gCA)+' F';
+    tbody.innerHTML=rows.map(e=>`<tr>
+      <td style="font-weight:500">${e.full_name||'—'}</td>
+      <td>${e.poste||'—'}</td>
+      <td>${e.phone||'—'}</td>
+      <td style="font-weight:600">${e._salesToday}</td>
+      <td>${fmtAmt(e._caToday)} F</td>
+      <td><button class="btn btn-primary" onclick="showEmployeeDetail('${e.id}')">Détail</button> <button class="btn btn-outline" style="border-color:rgba(245,158,11,.35);color:var(--amber)" onclick="suspendEmployee('${e.id}',this)">Suspendre</button> <button class="btn btn-outline" style="border-color:rgba(239,68,68,.35);color:var(--danger)" onclick="openPermanentDeleteEmployee('${e.id}',this)">Supprimer définitivement</button></td>
+    </tr>`).join('');
+  }
+  const daily = await api('getDailySalesByEmployee',{companyId:CO.id}).catch(()=>null);
+  const dsEl=document.getElementById('dailySalesContent');
+  if(!daily||!daily.by_employee?.length){dsEl.innerHTML=`<div class="empty-state">Aucune vente aujourd'hui</div>`;return;}
+  const topProducts=(daily.products_sold_company||[]).slice(0,5);
+  if (!silent) {
+    dsEl.innerHTML=`
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;font-size:13px;color:var(--muted)">
+        <span>Ventes : ${daily.total_sales}</span>
+        <span style="font-weight:600;color:var(--white)">CA : ${fmtAmt(daily.total_ca||0)} F</span>
+      </div>
+      <div class="tbl-wrap"><table class="tbl">
+        <thead><tr><th>Employé</th><th>Ventes</th><th>CA</th><th>Top produits vendus</th></tr></thead>
+        <tbody>${daily.by_employee.map(e=>`<tr><td style="font-weight:500">${e.full_name||'—'}</td><td>${e.sales_count}</td><td style="font-weight:600">${fmtAmt(e.total_ca||0)} F</td><td>${(e.products_sold||[]).slice(0,3).map(p=>`<div style="font-size:12px;color:var(--muted)">${p.name} x${p.quantity}</div>`).join('')}</td></tr>`).join('')}</tbody>
+      </table></div>
+      ${topProducts.length?`<div style="margin-top:10px;font-size:12px;color:var(--muted)"><strong style="color:var(--white)">Top produits vendus (tous employés) :</strong> ${topProducts.map(p=>`${p.name} x${p.quantity} (${fmtAmt(p.total||0)} F)`).join(' · ')}</div>`:''}
+    `;
+  }
+}
+async function showEmployeeDetail(empId, silent){
+  const data = await api('getEmployeeStats',{employeeId:empId});
+  const list = (data.recent_sales||[]).slice(0,25);
+  document.getElementById('empDetailName').textContent=data.employee?.full_name||'Employé';
+  document.getElementById('empDetailSub').textContent='CA total : '+fmtAmt(data.ca_total||0)+' F';
+  const tbody=document.getElementById('empDetailBody');
+  document.getElementById('employeeDetail').style.display='';
+  if(!list.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state">Aucune vente</div></td></tr>`;return;}
+  tbody.innerHTML=list.map(s=>`<tr><td style="font-weight:500">${s.sale_number||'—'}</td><td>${s.client_name||'Client anonyme'}</td><td><button class="btn-sm" onclick="showSaleDetail('${s.id}')">Voir</button></td><td style="font-weight:600">${fmtAmt(parseFloat(s.total)||0)} F</td><td>${s.payment_method||'—'}</td><td>${fmtDate(s.created_at)}</td></tr>`).join('');
+}
+async function removeEmployee(id,el){if(!confirm('Supprimer cet employé ?'))return;const btn=el||(event&&event.target.closest('button'));if(btn){setBtnLoading(btn,true);}await api('deleteEmployee',{id});clearApiCache();toast('Employé supprimé','info');loadEmployeesPage(false);loadHomePage(false);if(btn){setBtnLoading(btn,false);}}
+async function suspendEmployee(id,el){if(!confirm('Suspendre cet employé ? Il disparaîtra de la liste active mais restera récupérable.'))return;const btn=el||(event&&event.target.closest('button'));if(btn){setBtnLoading(btn,true);}await api('deleteEmployee',{id});clearApiCache();toast('Employé suspendu','info');loadEmployeesPage(false);loadHomePage(false);if(btn){setBtnLoading(btn,false);}}
+let _permDelTarget=null;
+function openPermanentDeleteEmployee(id,el){_permDelTarget={id,el};openModal('permDelEmpModal');}
+document.getElementById('confirmPermDelEmpBtn').addEventListener('click',async()=>{if(!_permDelTarget)return;const btn=document.getElementById('confirmPermDelEmpBtn');if(btn){setBtnLoading(btn,true);}try{await api('permanentDeleteEmployee',{id:_permDelTarget.id});clearApiCache();toast('Employé supprimé définitivement','warn');loadEmployeesPage(false);loadHomePage(false);closeModal('permDelEmpModal');}catch(e){toast('Erreur : '+e.message,'error');}finally{if(btn){setBtnLoading(btn,false);}_permDelTarget=null;}});
+function showEmployeeDetail(empId, silent){
+async function loadSalesPage(silent){
+  if(!CO)return;
+  const filter=document.getElementById('salesDayFilter')?.value||'all';
+  const data=await api('listSales',{companyId:CO.id,filter});
+  const payLabels={cash:'Espèces',mobile_money_wave:'Wave',mobile_money_mtn:'MTN',mobile_money_moov:'Moov',card:'Carte',bank_transfer:'Virement'};
+  const tbody=document.getElementById('salesTbody');
+  let total=0;
+  if(!data?.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><strong>Aucune vente</strong></div></td></tr>`;}
+  else{
+    const rows=data.map(s=>{const t=parseFloat(s.total)||0;total+=t;return `<tr><td style="color:var(--blue-l);font-weight:500">${s.sale_number||'—'}</td><td>${s.client?.name||s.client_name||'—'}</td><td style="font-weight:600">${fmtAmt(t)} F</td><td><span class="badge b-info">${payLabels[s.payment_method]||s.payment_method}</span></td><td style="color:var(--gray)">${fmtDateTime(s.created_at)}</td><td><button class="btn btn-danger" onclick="softDeleteSale('${s.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2 2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button></td></tr>`;}).join('');
+    if (!silent) tbody.innerHTML = rows;
+  }
+  if (!silent) document.getElementById('salesDayTotal').textContent='Total : '+fmtAmt(total)+' F' + ' | company=' + (CO.id||'') + ' ventes=' + data.length;
+}
+
+let saleRowIdx=0,saleProductCache=[];
+async function openSaleModal(){
+  saleRowIdx=0;document.getElementById('saleRows').innerHTML='';document.getElementById('saleTotal').textContent='0 F CFA';
+  const [clients,products]=await Promise.all([api('listClients',{companyId:CO.id}),api('listProducts',{companyId:CO.id})]);
+  document.getElementById('sl-client').innerHTML='<option value="">-- Client (optionnel) --</option>'+(clients||[]).map(c=>`<option value="${c.id}" data-email="${c.email||''}">${c.name}</option>`).join('');
+  document.getElementById('sl-client').onchange=function(){document.getElementById('sl-client-email').value=this.options[this.selectedIndex]?.getAttribute('data-email')||'';};
+  saleProductCache=products||[];
+  openModal('saleModal');addSaleRow();
+}
+function addSaleRow(){
+  const idx=saleRowIdx++;const wrap=document.getElementById('saleRows');const div=document.createElement('div');
+  div.className='cart-row';div.id=`srow-${idx}`;
+  div.innerHTML=`<select id="sp-${idx}" onchange="calcSaleTotal()"><option value="">-- Produit --</option>${saleProductCache.map(p=>`<option value="${p.id}" data-price="${p.unit_sell_price}" data-name="${p.name}">${p.name} — ${fmtAmt(p.unit_sell_price||0)} F</option>`).join('')}</select>
+  <input id="sq-${idx}" type="number" min="1" value="1" placeholder="Qté" onchange="calcSaleTotal()" oninput="calcSaleTotal()" style="text-align:center"/>
+  <input type="text" value="0 F" disabled style="opacity:.6;text-align:right" id="sline-${idx}"/>
+  <button class="rm-btn" onclick="document.getElementById('srow-${idx}').remove();calcSaleTotal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
+  wrap.appendChild(div);
+}
+function calcSaleTotal(){
+  let total=0;
+  document.querySelectorAll('[id^="srow-"]').forEach(div=>{
+    const idx=div.id.split('-')[1];const sel=document.getElementById(`sp-${idx}`);const qty=parseFloat(document.getElementById(`sq-${idx}`)?.value)||0;
+    const price=parseFloat(sel?.options[sel?.selectedIndex]?.getAttribute('data-price'))||0;
+    const lineTotal=price*qty;total+=lineTotal;
+    const lineEl=document.getElementById(`sline-${idx}`);if(lineEl)lineEl.value=fmtAmt(lineTotal)+' F';
+  });
+  document.getElementById('saleTotal').textContent=fmtAmt(total)+' F CFA';
+  document.getElementById('sl-paid').value=total||'';
+  updateChange();
+}
+document.getElementById('sl-paid')?.addEventListener('input',updateChange);
+function updateChange(){
+  const total=parseFloat(document.getElementById('saleTotal').textContent.replace(/[^\d]/g,''))||0;
+  const paid=parseFloat(document.getElementById('sl-paid').value)||0;
+  document.getElementById('sl-change').value=fmtAmt(Math.max(0,paid-total))+' F CFA';
+}
+
+document.getElementById('saveSaleBtn').addEventListener('click',async()=>{
+  if(!BR){toast('Aucune agence configurée','error');return;}
+  const clientId=document.getElementById('sl-client').value||null;
+  const clientName=document.getElementById('sl-client').options[document.getElementById('sl-client').selectedIndex]?.text||'';
+  const clientEmail=document.getElementById('sl-client-email').value.trim();
+  const method=document.getElementById('sl-method').value;const paid=parseFloat(document.getElementById('sl-paid').value)||0;
+  const items=[];
+  document.querySelectorAll('[id^="srow-"]').forEach(div=>{
+    const idx=div.id.split('-')[1];const sel=document.getElementById(`sp-${idx}`);const qty=parseFloat(document.getElementById(`sq-${idx}`)?.value);
+    const price=parseFloat(sel?.options[sel?.selectedIndex]?.getAttribute('data-price'));const name=sel?.options[sel?.selectedIndex]?.getAttribute('data-name')||'';
+    if(sel?.value&&qty>0)items.push({product_id:sel.value,quantity:qty,unit_price:price,name});
+  });
+  if(items.length===0){toast('Ajoutez au moins un produit','error');return;}
+  const btn=document.getElementById('saveSaleBtn');
+  try{
+    setBtnLoading(btn,true);
+    const res=await api('createSale',{company_id:CO.id,branch_id:BR.id,client_id:clientId,client_name:clientId?'':clientName,client_email:clientEmail,payment_method:method,amount_paid:paid,items,created_by:U.email});
+    clearApiCache();toast(`Vente de ${fmtAmt(res.total)} F enregistrée !`+(clientEmail?' Facture envoyée par email.':''),'success');
+    closeModal('saleModal');loadSalesPage(false);loadHomePage(false);
+  }catch(err){toast('Erreur : '+err.message,'error');}
+  finally{setBtnLoading(btn,false);}
+});
+async function softDeleteSale(id){if(!confirm('Annuler cette vente ?'))return;const btn=event.target.closest('button');if(btn){setBtnLoading(btn,true);}await api('cancelSale',{id});clearApiCache();toast('Vente annulée','info');loadSalesPage(false);loadHomePage(false);if(btn){setBtnLoading(btn,false);}}
+
+/* ══ QUOTES ══ */
+let quoteRowIdx=0,quoteProductCache=[],lastQuoteId=null,lastQuotePhone=null;
+async function openQuoteModal(){
+  quoteRowIdx=0;document.getElementById('quoteRows').innerHTML='';document.getElementById('quoteTotal').textContent='0 F CFA';
+  quoteTvaEnabled=false;document.getElementById('qt-tva-enabled').checked=false;document.getElementById('qt-tva-rate').style.display='none';
+  quoteProductCache=await api('listProducts',{companyId:CO.id});
+  const sel=document.getElementById('qt-client-select');
+  sel.innerHTML='<option value="">-- Nouveau client --</option>';
+  try{
+    const clients=await api('listClients',{companyId:CO.id});
+    (clients||[]).forEach(c=>{ const opt=document.createElement('option'); opt.value=c.id; opt.textContent=c.name + (c.phone?' ('+c.phone+')':''); sel.appendChild(opt); });
+  }catch(e){}
+  document.getElementById('qt-client-name').value='';
+  document.getElementById('qt-client-phone').value='';
+  document.getElementById('qt-client-email').value='';
+  document.getElementById('qt-new-client-block').style.display='block';
+  openModal('quoteModal');addQuoteRow();
+}
+function onQuoteClientChange(){
+  const id=document.getElementById('qt-client-select').value;
+  document.getElementById('qt-new-client-block').style.display=id?'none':'block';
+  if(id){
+    document.getElementById('qt-client-name').value='';
+    document.getElementById('qt-client-phone').value='';
+    document.getElementById('qt-client-email').value='';
+  }
+}
+function toggleQuoteTva(){quoteTvaEnabled=document.getElementById('qt-tva-enabled').checked;document.getElementById('qt-tva-rate').style.display=quoteTvaEnabled?'block':'none';calcQuoteTotal();}
+function addQuoteRow(){
+  const idx=quoteRowIdx++;const wrap=document.getElementById('quoteRows');const div=document.createElement('div');
+  div.className='cart-row';div.id=`qrow-${idx}`;
+  const prodOpts=quoteProductCache.map(p=>`<option value="${p.id}" data-price="${p.unit_sell_price}" data-name="${p.name}">${p.name}</option>`).join('');
+  div.innerHTML=`
+    <div style="grid-column:1;">
+      <select id="qp-${idx}" onchange="onQuoteProductChange(this,${idx})"><option value="">-- Sélectionner un produit --</option>${prodOpts}<option value="__new__">+ Nouveau produit</option></select>
+      <div class="new-prod-form" id="npf-${idx}" style="display:none;">
+        <input type="text" class="new-prod-name" placeholder="Nom du nouveau produit" autofocus/>
+        <select class="new-prod-unit">
+          <option value="pièce">Pièce</option>
+          <option value="kg">Kg</option>
+          <option value="litre">Litre</option>
+          <option value="carton">Carton</option>
+          <option value="boîte">Boîte</option>
+        </select>
+        <input type="number" class="new-prod-price" placeholder="Prix unitaire" min="0" step="1"/>
+        <button type="button" class="btn-sm" onclick="saveNewProductForQuote(${idx})">OK</button>
+        <button type="button" class="btn-sm btn-outline" onclick="cancelNewProductForQuote(${idx})" style="border:1px solid var(--border);background:transparent;color:var(--gray);">Annuler</button>
+      </div>
+    </div>
+    <input id="qq-${idx}" type="number" min="1" value="1" placeholder="Qté" onchange="calcQuoteTotal()" oninput="calcQuoteTotal()" style="text-align:center"/>
+    <input id="qprice-${idx}" type="number" min="0" step="1" placeholder="Prix" onchange="calcQuoteTotal()" oninput="calcQuoteTotal()" style="text-align:right"/>
+    <button class="rm-btn" onclick="document.getElementById('qrow-${idx}').remove();calcQuoteTotal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  `;
+  wrap.appendChild(div);
+  document.getElementById(`qp-${idx}`).addEventListener('change',function(){const price=this.options[this.selectedIndex]?.getAttribute('data-price');document.getElementById(`qprice-${idx}`).value=price||0;calcQuoteTotal();});
+}
+function cancelNewProductForQuote(idx){
+  const sel=document.getElementById(`qp-${idx}`);
+  sel.value='';sel.style.display='';
+  document.getElementById(`npf-${idx}`).style.display='none';
+}
+function onQuoteProductChange(sel,idx){
+  if(sel.value==='__new__'){
+    sel.value='';
+    sel.style.display='none';
+    document.getElementById(`npf-${idx}`).style.display='flex';
+  }
+}
+async function saveNewProductForQuote(idx){
+  const form=document.getElementById(`npf-${idx}`);
+  const name=(form.querySelector('.new-prod-name')?.value||'').trim();
+  const unit=form.querySelector('.new-prod-unit')?.value||'pièce';
+  const priceStr=form.querySelector('.new-prod-price')?.value||'0';
+  if(!name){toast('Nom du produit requis','error');return;}
+  try{
+    const id=await addNewProductForQuote(name,unit,priceStr);
+    const sel=document.getElementById(`qp-${idx}`);
+    const opt=document.createElement('option');opt.value=id;opt.textContent=name;opt.setAttribute('data-price',(parseFloat(priceStr)||0).toString());opt.setAttribute('data-name',name);
+    sel.appendChild(opt);sel.value=id;sel.style.display='';
+    form.style.display='none';
+    const ev=new Event('change');sel.dispatchEvent(ev);
+  }catch(e){toast('Erreur création produit','error');}
+}
+async function addNewProductForQuote(name,unit,priceStr){
+  const tempId = 'temp_q_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+  quoteProductCache.push({id:tempId,name,unit_sell_price:parseFloat(priceStr)||0});
+  return tempId;
+}
+function calcQuoteTotal(){
+  let subtotal=0;
+  document.querySelectorAll('[id^="qrow-"]').forEach(div=>{
+    const idx=div.id.split('-')[1];
+    const sel=document.getElementById(`qp-${idx}`);
+    const qty=parseFloat(document.getElementById(`qq-${idx}`)?.value)||0;
+    const price=parseFloat(document.getElementById(`qprice-${idx}`)?.value)||0;
+    const productPrice=parseFloat(sel?.options[sel?.selectedIndex]?.getAttribute('data-price'))||0;
+    const unitPrice = (sel?.value && productPrice>0) ? productPrice : price;
+    subtotal += qty * unitPrice;
+  });
+  const tvaRate=quoteTvaEnabled?(parseFloat(document.getElementById('qt-tva-rate').value)||0):0;
+  const total=subtotal+(subtotal*tvaRate/100);
+  document.getElementById('quoteTotal').textContent=fmtAmt(total)+' F CFA';
+}
+document.getElementById('saveQuoteBtn').addEventListener('click',async()=>{
+  const clientSelect=document.getElementById('qt-client-select');
+  const clientId=clientSelect.value;
+  const clientName=(document.getElementById('qt-client-name').value||'').trim();
+  const clientEmail=(document.getElementById('qt-client-email').value||'').trim();
+  const clientPhone=(document.getElementById('qt-client-phone').value||'').trim();
+  if(!clientId && !clientName){toast('Nom du client requis','error');return;}
+  const items=[];
+  document.querySelectorAll('[id^="qrow-"]').forEach(div=>{
+    const idx=div.id.split('-')[1];const sel=document.getElementById(`qp-${idx}`);const qty=parseFloat(document.getElementById(`qq-${idx}`)?.value);
+    const price=parseFloat(document.getElementById(`qprice-${idx}`)?.value);
+    const name=sel?.options[sel?.selectedIndex]?.getAttribute('data-name')||'';
+    if(sel?.value && qty>0) items.push({product_id:sel.value,quantity:qty,unit_price:price,name});
+  });
+  if(items.length===0){toast('Ajoutez au moins un article','error');return;}
+  const btn=document.getElementById('saveQuoteBtn');
+  try{
+    setBtnLoading(btn,true);
+    const payload={company_id:CO.id,validite_jours:parseInt(document.getElementById('qt-validite').value)||7,tva_rate:quoteTvaEnabled?(parseFloat(document.getElementById('qt-tva-rate').value)||0):0,prefix:CO.quote_prefix||'EF-',items,created_by:U.email};
+    if(clientId){ payload.client_id=clientId; payload.client_email=clientEmail; payload.client_name=clientName; payload.client_phone=clientPhone; }
+    else { payload.client_name=clientName; payload.client_email=clientEmail; payload.client_phone=clientPhone; }
+    const res=await api('createQuote',payload);
+    clearApiCache();closeModal('quoteModal');
+    lastQuoteId=res.id;lastQuotePhone=clientPhone;
+    document.getElementById('qsNumber').textContent=res.quoteNumber;
+    document.getElementById('qsTotal').textContent=fmtAmt(res.total)+' F CFA';
+    openModal('quoteSendModal');
+    toast('Devis créé !','success');loadQuotesPage(false);
+  }catch(e){toast('Erreur : '+e.message,'error');}
+  finally{setBtnLoading(btn,false);}
+});
+
+async function loadQuotesPage(silent){
+  if(!CO)return;
+  const data=await api('listQuotes',{companyId:CO.id});
+  const tbody=document.getElementById('quotesTbody');
+  if(!data?.length){tbody.innerHTML=`<tr><td colspan="7"><div class="empty-state"><strong>Aucun devis</strong></div></td></tr>`;return;}
+  const statusLabels={envoye:['b-info','Envoyé'],signe:['b-ok','Signé'],accepte:['b-ok','Accepté']};
+  tbody.innerHTML=data.map(q=>{const[cls,label]=statusLabels[q.statut]||['b-info',q.statut];
+    return `<tr><td style="color:var(--blue-l);font-weight:500">${q.quote_number}</td><td>${q.client_name}</td><td style="font-weight:600">${fmtAmt(q.total)} F</td><td>${q.validite_jours}j</td><td><span class="badge ${cls}">${label}</span></td><td style="color:var(--gray)">${fmtDate(q.created_at)}</td>
+    <td><button class="btn-sm" onclick="resendQuote('${q.id}','${q.client_phone||''}')">Renvoyer</button><button class="btn-sm btn-danger" onclick="deleteQuote('${q.id}')" style="margin-left:4px;">Suppr.</button></td></tr>`;}).join('');
+}
+function deleteQuote(id){if(!confirm('Supprimer ce devis ?'))return;const btn=event.target.closest('button');if(btn){setBtnLoading(btn,true);}api('deleteQuote',{id}).then(()=>{clearApiCache();toast('Devis supprimé','info');loadQuotesPage(false);loadHomePage(false);}).catch(err=>toast('Erreur : '+err.message,'error')).finally(()=>{if(btn)setBtnLoading(btn,false);});}
+function resendQuote(id,phone){lastQuoteId=id;lastQuotePhone=phone;openModal('quoteSendModal');initSignaturePad();}
+
+/* ══ SIGNATURE PAD ══ */
+let sigCtx,sigDrawing=false,sigHasContent=false;
+function initSignaturePad(){
+  const canvas=document.getElementById('signaturePad');
+  if(!canvas)return;
+  sigCtx=canvas.getContext('2d');
+  if(!sigCtx)return;
+  sigCtx.clearRect(0,0,canvas.width,canvas.height);sigHasContent=false;
+  sigCtx.strokeStyle='#60A5FA';sigCtx.lineWidth=2;sigCtx.lineCap='round';
+  const pos=e=>{const r=canvas.getBoundingClientRect();const t=e.touches?e.touches[0]:e;return{x:(t.clientX-r.left)*(canvas.width/r.width),y:(t.clientY-r.top)*(canvas.height/r.height)};};
+  const start=e=>{sigDrawing=true;const p=pos(e);sigCtx.beginPath();sigCtx.moveTo(p.x,p.y);};
+  const move=e=>{if(!sigDrawing)return;const p=pos(e);sigCtx.lineTo(p.x,p.y);sigCtx.stroke();sigHasContent=true;e.preventDefault();};
+  const end=()=>{sigDrawing=false;};
+  canvas.onmousedown=start;canvas.onmousemove=move;canvas.onmouseup=end;
+  canvas.ontouchstart=start;canvas.ontouchmove=move;canvas.ontouchend=end;
+}
+function clearSignature(){const c=document.getElementById('signaturePad');if(!c||!c.getContext)return;const ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);sigHasContent=false;}
+
+async function sendQuoteVia(channel){
+  const signatureData=sigHasContent?document.getElementById('signaturePad').toDataURL():'';
+  if(signatureData)await api('signQuote',{quoteId:lastQuoteId,signatureData});
+  try{
+    const res=await api('generateQuotePDF',{quoteId:lastQuoteId,signatureData,sendEmail:channel==='email',sendWhatsapp:channel==='whatsapp'});
+    if(channel==='email'){toast('Devis envoyé par email avec PDF !','success');}
+    if(channel==='whatsapp'&&res.whatsappLink){window.open(res.whatsappLink,'_blank');toast('WhatsApp ouvert','success');}
+    closeModal('quoteSendModal');
+  }catch(e){toast('Erreur : '+e.message,'error');}
+}
+
+/* ══ TRASH ══ */
+async function loadTrashPage(silent){
+  if(!CO)return;
+  try{
+    const data=await api('listTrash');
+    const tbody=document.getElementById('trashTbody');
+    if(!data?.length){tbody.innerHTML=`<tr><td colspan="4"><div class="empty-state"><strong>Corbeille vide</strong><span>Les éléments supprimés apparaîtront ici</span></div></td></tr>`;return;}
+    tbody.innerHTML=data.map(t=>`<tr><td>${t.type}</td><td>${t.name}</td><td>${fmtDate(t.date)}</td><td><button class="btn-sm" onclick="restoreTrashItem('${t.type}','${t.id}')">Restaurer</button></td></tr>`).join('');
+  }catch(err){console.error(err);}
+}
+async function restoreTrashItem(type,id){if(!confirm('Restaurer cet élément ?'))return;try{await api('restoreTrash',{type,id});toast('Élément restauré','success');loadTrashPage(false);}catch(err){toast('Erreur : '+err.message,'error');}}
+
+/* ══ AVIS (étoiles J+7) ══ */
+let selectedAvisStars=0;
+function setAvisStar(n){
+  selectedAvisStars=n;
+  document.querySelectorAll('#avisStars .star-btn').forEach(b=>b.classList.toggle('filled',parseInt(b.dataset.val)<=n));
+}
+function dismissAvisPrompt(){document.getElementById('avisPrompt').classList.remove('show');localStorage.setItem('entreflow_avis_dismissed',Date.now());}
+async function submitAvisPrompt(){
+  if(!selectedAvisStars){toast('Sélectionnez une note','error');return;}
+  try{
+    await api('submitAvis',{companyId:CO.id,email:U.email,note:selectedAvisStars,commentaire:document.getElementById('avisComment').value.trim(),categorie:document.getElementById('avisCategorie').value});
+    toast('Merci pour votre avis !','success');dismissAvisPrompt();
+  }catch(e){toast('Erreur : '+e.message,'error');}
+}
+async function checkAvisPrompt(){
+  try{
+    const cache=window._ENTREFLOW_INIT;
+    const r=cache&&cache.avis?cache.avis:{show:false};
+    const dismissed=localStorage.getItem('entreflow_avis_dismissed');
+    const dismissedRecently=dismissed&&(Date.now()-parseInt(dismissed))<7*86400000;
+    if(r.show&&!dismissedRecently)setTimeout(()=>document.getElementById('avisPrompt').classList.add('show'),3000);
+  }catch(e){}
+}
+
+/* ══ EMPLOYEE VIEW ══ */
+async function loadEmployeeView(){
+  const token=new URLSearchParams(location.search).get('token');
+  let emp=null;
+  if(token)emp=await api('findEmployeeByToken',{token});
+  if(!emp){document.getElementById('empSalesTbody').innerHTML=`<tr><td colspan="5"><div class="empty-state"><strong>Accès employé requis</strong></div></td></tr>`;return;}
+  const sales=await api('listSalesByEmployee',{employeeId:emp.id});
+  document.getElementById('empSalesTbody').innerHTML=(sales||[]).map(s=>`<tr><td>${s.sale_number}</td><td>${s.client_name||'—'}</td><td style="font-weight:600">${fmtAmt(s.total)} F</td><td>${s.payment_method}</td><td>${fmtDate(s.created_at)}</td></tr>`).join('')||`<tr><td colspan="5"><div class="empty-state"><strong>Aucune vente</strong></div></td></tr>`;
+}
+
+/* ══ LOGOUT ═ */
+async function doLogout(){
+  if(!confirm('Se déconnecter ?'))return;
+  localStorage.removeItem('entreflowUser');
+  localStorage.removeItem('entreflowEmpToken');
+  try{await api('logout',{email:U?.email,token:U?.token});}catch(e){}
+  location.href = location.origin + location.pathname.replace(/\/[^/]*$/, '/') + 'entreflow-auth.html';
+}
+
+/* ══ PERSISTANCE LOCAL STORAGE ═ */
+function saveState_(){
+  try{
+    const s={company:CO,branch:BR,logo:CO.logo_data,signature:CO.signature_data,setup:!!localStorage.getItem('entreflowSetupDone')};
+    localStorage.setItem('ef_company',JSON.stringify(s));
+  }catch(e){}
+}
+function restoreState_(){
+  try{
+    const raw=localStorage.getItem('ef_company');
+    if(!raw)return;
+    const s=JSON.parse(raw);
+    if(s.company)CO=s.company;
+    if(s.branch)BR=s.branch;
+  }catch(e){}
+}
+
+/* ══ UTILS ═ */
+function fmtAmt(v){return Math.round(v).toLocaleString('fr-FR');}
+function fmtDate(d){return new Date(d).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'});}
+function fmtDateTime(d){return new Date(d).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}) + ', ' + new Date(d).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});}
+
+
+/* ══ INIT ═ */
+async function init(){
+  try{
+    restoreState_();
+    const stored=localStorage.getItem('entreflowUser');
+    const session=stored?JSON.parse(stored):null;
+    if(!session){location.href=location.origin+location.pathname.replace(/\/[^/]*$/, '/')+'entreflow-login.html';return;}
+    U=session;
+    document.getElementById('dateChip').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+
+    const r=await api('init',{email:U.email});
+    const comp=r.company||null;
+    if(!comp&&!localStorage.getItem('entreflowSetupDone')){
+      document.getElementById('loadingScreen').classList.add('hide');
+      setTimeout(()=>{
+        document.getElementById('loadingScreen').style.display='none';
+        if(U.email)document.getElementById('s-email').value=U.email;
+        document.getElementById('setupScreen').classList.add('show');
+      },400);
+      return;
+    }
+    CO=comp||{ id: U.company_id || '', name: U.prenom || U.nom || 'Mon entreprise', email: U.email };
+    BR=(r.branches&&r.branches.length)?r.branches[0]:{ id: r.branchId || '', name: 'Agence principale' };
+    window._ENTREFLOW_INIT = r; // on garde les données en cache
+    document.getElementById('loadingScreen').classList.add('hide');
+    setTimeout(()=>document.getElementById('loadingScreen').style.display='none',400);
+    startDashboard();
+
+    if(new URLSearchParams(location.search).get('token')){goTo('employee_view');loadEmployeeView();}
+  }catch(err){
+    console.error(err);
+    try{localStorage.removeItem('entreflowUser');}catch(e){}
+    location.href=location.origin+location.pathname.replace(/\/[^/]*$/, '/')+'entreflow-login.html';
+  }
+}
+
+/* ══ FOND ANIMÉ ══ */
+const bgC=document.getElementById('bgCanvas'),bgX=bgC?bgC.getContext('2d'):null;
+if(bgX){
+  let BW,BH,BT=0;
+  function bgResize(){BW=bgC.width=window.innerWidth;BH=bgC.height=window.innerHeight;}
+  bgResize();window.addEventListener('resize',bgResize);
+const bgBlobs=[{x:.1,y:.2,vx:.0003,vy:.0002,r:.45,h:218},{x:.88,y:.75,vx:-.0002,vy:.0003,r:.4,h:228},{x:.5,y:.9,vx:.0002,vy:-.0002,r:.35,h:205}];
+const bgNodes=Array.from({length:35},()=>({x:Math.random(),y:Math.random(),vx:(Math.random()-.5)*.0006,vy:(Math.random()-.5)*.0005,r:.8+Math.random()*1.4,a:.15+Math.random()*.3,h:212+Math.random()*25,p:Math.random()*Math.PI*2}));
+function bgDraw(){
+  BT+=.007;bgX.clearRect(0,0,BW,BH);
+  const g=bgX.createLinearGradient(0,0,BW*.7,BH);g.addColorStop(0,'#040810');g.addColorStop(1,'#020614');bgX.fillStyle=g;bgX.fillRect(0,0,BW,BH);
+  bgBlobs.forEach(b=>{b.x+=b.vx;b.y+=b.vy;if(b.x<0||b.x>1)b.vx*=-1;if(b.y<0||b.y>1)b.vy*=-1;const gd=bgX.createRadialGradient(b.x*BW,b.y*BH,0,b.x*BW,b.y*BH,b.r*Math.min(BW,BH));gd.addColorStop(0,`hsla(${b.h},72%,50%,.08)`);gd.addColorStop(1,'transparent');bgX.fillStyle=gd;bgX.fillRect(0,0,BW,BH);});
+  const LK=BW*.09;
+  bgNodes.forEach((n,i)=>{n.x+=n.vx;n.y+=n.vy;if(n.x<0||n.x>1)n.vx*=-1;if(n.y<0||n.y>1)n.vy*=-1;n.p+=.016;const px=n.x*BW,py=n.y*BH,pa=n.a*(.6+.4*Math.sin(n.p));for(let j=i+1;j<bgNodes.length;j++){const m=bgNodes[j];const dx=(n.x-m.x)*BW,dy=(n.y-m.y)*BH,d=Math.sqrt(dx*dx+dy*dy);if(d<LK){bgX.beginPath();bgX.moveTo(px,py);bgX.lineTo(m.x*BW,m.y*BH);bgX.strokeStyle=`rgba(96,165,250,${(1-d/LK)*.06})`;bgX.lineWidth=.5;bgX.stroke();}}bgX.beginPath();bgX.arc(px,py,n.r,0,Math.PI*2);bgX.fillStyle=`hsla(${n.h},70%,65%,${pa})`;bgX.fill();});
+  requestAnimationFrame(bgDraw);
+}
+bgDraw();
+}
+document.getElementById('pm-unit').addEventListener('change', updateProductUnitHints);
+init();
+</script>
+
+<script id="ef-responsive-engine">
+  const BREAKPOINTS = { xs: 480, sm: 760, md: 1024, lg: 1400 };
+
+  function getSizeClass(width){
+    if (width <= BREAKPOINTS.xs) return 'ef-xs';
+    if (width <= BREAKPOINTS.sm) return 'ef-sm';
+    if (width <= BREAKPOINTS.md) return 'ef-md';
+    if (width <= BREAKPOINTS.lg) return 'ef-lg';
+    return 'ef-xl';
+  }
+
+  function applyResponsiveClasses(){
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const sizeClass = getSizeClass(w);
+
+    ['ef-xs','ef-sm','ef-md','ef-lg','ef-xl'].forEach(c => document.body.classList.remove(c));
+    document.body.classList.add(sizeClass);
+
+    const isLandscapeShort = w > h && h <= 500;
+    document.body.classList.toggle('ef-landscape-short', isLandscapeShort);
+
+    if (sizeClass === 'ef-md' || sizeClass === 'ef-lg' || sizeClass === 'ef-xl') {
+      closeMobileSidebar();
+    }
+  }
+
+  function openMobileSidebar(){
+    const sb = document.querySelector('.sidebar');
+    if (!sb) return;
+    sb.classList.add('ef-open');
+    document.body.classList.add('ef-sidebar-veil');
+  }
+
+  function closeMobileSidebar(){
+    const sb = document.querySelector('.sidebar');
+    if (!sb) return;
+    sb.classList.remove('ef-open');
+    document.body.classList.remove('ef-sidebar-veil');
+  }
+
+  function isMobileSidebarOpen(){
+    const sb = document.querySelector('.sidebar');
+    return sb && sb.classList.contains('ef-open');
+  }
+
+  window.efToggleSidebar = function(){
+    const w = window.innerWidth;
+    if (w <= BREAKPOINTS.sm) {
+      isMobileSidebarOpen() ? closeMobileSidebar() : openMobileSidebar();
+    } else {
+      const sb = document.querySelector('.sidebar');
+      const tb = document.querySelector('.topbar');
+      const mc = document.querySelector('.main') || document.getElementById('mainContent');
+      sb && sb.classList.toggle('collapsed');
+      tb && tb.classList.toggle('expanded');
+      mc && mc.classList.toggle('expanded');
+    }
+  };
+
+  document.addEventListener('click', function(e){
+    if (window.innerWidth > BREAKPOINTS.sm) return;
+    if (!isMobileSidebarOpen()) return;
+    const sb = document.querySelector('.sidebar');
+    const clickedInside = sb && sb.contains(e.target);
+    const clickedToggleBtn = e.target.closest('.menu-btn');
+    if (!clickedInside && !clickedToggleBtn) closeMobileSidebar();
+  });
+
+  document.addEventListener('click', function(e){
+    if (window.innerWidth > BREAKPOINTS.sm) return;
+    if (e.target.closest('.nav-item')) {
+      setTimeout(closeMobileSidebar, 120);
+    }
+  });
+
+  let resizeTimer;
+  window.addEventListener('resize', function(){
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(applyResponsiveClasses, 120);
+  });
+  window.addEventListener('orientationchange', function(){
+    setTimeout(applyResponsiveClasses, 200);
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyResponsiveClasses);
+  } else {
+    applyResponsiveClasses();
+  }
+</script>
+</body>
+</html>

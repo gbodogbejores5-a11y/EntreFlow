@@ -1,0 +1,56 @@
+<div class="modal-bg" id="quoteModal">
+  <div class="modal-box wide">
+    <div class="modal-head"><h3>Créer un devis</h3><button class="modal-close" onclick="closeModal('quoteModal')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="fg">
+      <label>Client *</label>
+      <select id="qt-client-select" onchange="onQuoteClientChange()">
+        <option value="">-- Nouveau client --</option>
+      </select>
+    </div>
+    <div id="qt-new-client-block">
+      <div class="row2">
+        <div class="fg">
+          <label>Nom du client *</label>
+          <input id="qt-client-name" type="text" placeholder="Nom du nouveau client">
+        </div>
+        <div class="fg">
+          <label>Téléphone (WhatsApp)</label>
+          <input id="qt-client-phone" type="tel" placeholder="+229 XX XX XX XX">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="fg">
+          <label>Email client</label>
+          <input id="qt-client-email" type="email" placeholder="client@email.com">
+        </div>
+        <div class="fg">
+          <label>Validité (jours)</label>
+          <input id="qt-validite" type="number" min="1" value="7">
+        </div>
+      </div>
+    </div>
+    <div style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <label style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.06em">Articles du devis *</label>
+        <button class="btn-sm" onclick="addQuoteRow()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Ajouter</button>
+      </div>
+      <div id="quoteRows"></div>
+    </div>
+    <div class="row2">
+      <div class="fg">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="qt-tva-enabled" style="width:auto;" onchange="toggleQuoteTva()"> Appliquer la TVA (non obligatoire)
+        </label>
+        <input id="qt-tva-rate" type="number" min="0" max="100" value="18" style="margin-top:8px;display:none;" placeholder="Taux TVA %">
+      </div>
+      <div class="fg" style="text-align:right;">
+        <label>Total estimé</label>
+        <div style="font-size:22px;font-weight:800;color:var(--blue-l);font-family:'Syne',sans-serif;" id="quoteTotal">0 F CFA</div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('quoteModal')">Annuler</button>
+      <button class="btn btn-primary" id="saveQuoteBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Créer le devis</button>
+    </div>
+  </div>
+</div>

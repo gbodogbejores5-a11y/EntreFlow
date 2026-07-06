@@ -1,0 +1,33 @@
+<div class="modal-bg" id="saleModal">
+  <div class="modal-box wide">
+    <div class="modal-head"><h3>Enregistrer une vente</h3><button class="modal-close" onclick="closeModal('saleModal')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="row2">
+      <div class="fg"><label>Client (optionnel)</label><select id="sl-client"><option value="">-- Sélectionner --</option></select></div>
+      <div class="fg"><label>Email client (pour facture)</label><input id="sl-client-email" type="email" placeholder="client@email.com"></div>
+    </div>
+    <div style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <label style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.06em">Produits vendus *</label>
+        <button class="btn-sm" onclick="addSaleRow()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Ajouter</button>
+      </div>
+      <div id="saleRows"></div>
+    </div>
+    <div style="background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.14);border-radius:11px;padding:14px;margin:14px 0;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:12px;color:var(--gray)">Total de la vente</span>
+        <strong style="font-size:20px;font-weight:700;color:var(--blue-l);font-family:'Syne',sans-serif" id="saleTotal">0 F CFA</strong>
+      </div>
+    </div>
+    <div class="row3">
+      <div class="fg"><label>Mode de paiement</label>
+        <select id="sl-method"><option value="cash">Espèces</option><option value="mobile_money_wave">Wave</option><option value="mobile_money_mtn">MTN Money</option><option value="mobile_money_moov">Moov Money</option><option value="card">Carte bancaire</option><option value="bank_transfer">Virement</option></select>
+      </div>
+      <div class="fg"><label>Montant reçu</label><input id="sl-paid" type="number" min="0" placeholder="0"></div>
+      <div class="fg"><label>Monnaie à rendre</label><input id="sl-change" type="text" value="0 F CFA" disabled style="opacity:.7"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('saleModal')">Annuler</button>
+      <button class="btn btn-primary" id="saveSaleBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Enregistrer la vente</button>
+    </div>
+  </div>
+</div>

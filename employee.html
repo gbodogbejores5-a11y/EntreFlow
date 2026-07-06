@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mon espace — EntreFlow</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src fonts.gstatic.com; connect-src 'self' http://127.0.0.1:4000 https://script.google.com https://script.googleusercontent.com https://cdn.jsdelivr.net; img-src 'self' data: blob: *;" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+
+:root{
+  --bg:#040810; --navy:#060D25; --sidebar-bg:rgba(4,6,18,.97);
+  --blue:#2563EB; --blue-m:#3B82F6; --blue-l:#60A5FA; --blue-xs:rgba(96,165,250,.08);
+  --white:#EEF2FF; --gray:#8A9AC2; --gray-d:#3A4568;
+  --border:rgba(96,165,250,.10); --border-h:rgba(96,165,250,.22);
+  --card:rgba(6,10,28,.70); --card-h:rgba(8,14,36,.85);
+  --green:#10B981; --amber:#F59E0B; --red:#EF4444; --purple:#8B5CF6;
+  --sb-w:256px; --radius:14px; --radius-sm:9px; --radius-xs:6px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--white);font-family:'DM Sans',sans-serif;overflow-x:hidden;font-size:14px;}
+canvas#bgCanvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+h1,h2,h3,h4{font-family:'Syne',sans-serif;letter-spacing:-.02em;}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-thumb{background:var(--border-h);border-radius:4px;}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadein{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes popIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:none}}
+@keyframes float-y{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes pulse-ring{0%{box-shadow:0 0 0 0 rgba(37,99,235,.4)}70%{box-shadow:0 0 0 9px rgba(37,99,235,0)}100%{box-shadow:0 0 0 0 rgba(37,99,235,0)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+
+#loadingScreen{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .4s;}
+#loadingScreen.hide{opacity:0;pointer-events:none;}
+.spinner{width:42px;height:42px;border:2.5px solid rgba(96,165,250,.12);border-top-color:var(--blue-l);border-radius:50%;animation:spin .75s linear infinite;}
+
+#setupScreen{position:fixed;inset:0;background:rgba(4,6,18,.98);backdrop-filter:blur(16px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
+#setupScreen.show{display:flex;}
+.setup-box{max-width:520px;width:100%;background:rgba(6,10,30,.96);border:1px solid var(--border);border-radius:24px;padding:36px;max-height:92vh;overflow-y:auto;animation:popIn .35s ease;}
+.setup-logo{display:flex;align-items:center;gap:12px;margin-bottom:26px;}
+.logo-icon{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#1D4ED8,#60A5FA);display:flex;align-items:center;justify-content:center;flex-shrink:0;animation:pulse-ring 3s ease-in-out infinite, float-y 4.5s ease-in-out infinite;}
+.logo-icon svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.logo-text{font-size:22px;font-weight:800;font-family:'Syne',sans-serif;background:linear-gradient(90deg,#fff 30%,var(--blue-l));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.setup-title{font-size:20px;font-weight:700;margin-bottom:6px;}
+.setup-sub{font-size:13px;color:var(--gray);margin-bottom:26px;line-height:1.65;}
+
+.fg{margin-bottom:14px;}
+.fg label{display:block;font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 13px;background:rgba(4,6,18,.65);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--white);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:.2s;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:rgba(96,165,250,.45);background:rgba(37,99,235,.05);box-shadow:0 0 0 3px rgba(37,99,235,.08);}
+.fg input::placeholder,.fg textarea::placeholder{color:var(--gray-d);}
+.fg select option{background:#060D25;}
+.fg textarea{resize:vertical;min-height:68px;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;border-radius:999px;font-size:13px;font-weight:500;transition:.2s;text-decoration:none;position:relative;overflow:hidden;}
+.btn svg{flex-shrink:0;}
+.btn-primary{background:linear-gradient(108deg,#1D4ED8,var(--blue-m));color:#fff;padding:11px 22px;box-shadow:0 4px 18px rgba(29,78,216,.28);}
+.btn-primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 26px rgba(29,78,216,.4);}
+.btn-primary:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+.btn-outline{background:rgba(255,255,255,.035);border:1px solid var(--border);color:var(--white);padding:9px 18px;}
+.btn-outline:hover{background:rgba(96,165,250,.07);border-color:var(--border-h);}
+.btn-sm{background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.22);color:var(--blue-l);padding:6px 13px;font-size:12px;border-radius:999px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:.2s;}
+.btn-sm:hover{background:rgba(37,99,235,.24);border-color:rgba(37,99,235,.4);}
+.btn-sm.active-tab{background:rgba(37,99,235,.3);border-color:rgba(37,99,235,.5);color:#fff;}
+.btn-danger{background:rgba(239,68,68,.09);border:1px solid rgba(239,68,68,.25);color:var(--red);padding:6px 10px;border-radius:var(--radius-xs);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:.2s;}
+.btn-danger:hover{background:rgba(239,68,68,.18);}
+.btn-icon{background:rgba(59,130,246,.09);border:1px solid rgba(59,130,246,.18);color:var(--blue-l);padding:6px 10px;border-radius:var(--radius-xs);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:.2s;}
+.btn-icon:hover{background:rgba(59,130,246,.18);}
+.btn-full{width:100%;padding:12px;}
+.btn-green{background:linear-gradient(108deg,#059669,var(--green));color:#fff;padding:11px 22px;box-shadow:0 4px 18px rgba(16,185,129,.28);}
+.btn-green:hover{transform:translateY(-1px);box-shadow:0 8px 26px rgba(16,185,129,.4);}
+.btn-loading{opacity:.45;pointer-events:none;filter:grayscale(.25);}
+
+#dashboard{display:none;min-height:100vh;position:relative;z-index:1;}
+
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sb-w);background:var(--sidebar-bg);backdrop-filter:blur(24px);border-right:1px solid var(--border);z-index:50;display:flex;flex-direction:column;transition:transform .28s cubic-bezier(.4,0,.2,1);}
+.sidebar.collapsed{transform:translateX(-256px);}
+.sb-header{padding:18px 16px 14px;border-bottom:1px solid var(--border);}
+.sb-logo{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.sb-logo .logo-icon{width:30px;height:30px;border-radius:9px;}
+.sb-logo .logo-icon svg{width:16px;height:16px;}
+.sb-logo .logo-text{font-size:16px;}
+.sb-company{padding:9px 11px;background:rgba(96,165,250,.05);border:1px solid var(--border);border-radius:11px;cursor:pointer;transition:.18s;}
+.sb-company:hover{background:rgba(96,165,250,.10);border-color:var(--border-h);}
+.sb-company-av{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--blue-m),var(--blue-l));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;overflow:hidden;flex-shrink:0;}
+.sb-company-av img{width:100%;height:100%;object-fit:cover;}
+.sb-company-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;}
+.sb-company-edit{font-size:10px;color:var(--gray);}
+.sb-nav{flex:1;overflow-y:auto;padding:12px 8px;}
+.nav-group{font-size:9px;font-weight:600;color:rgba(138,154,194,.35);padding:0 9px;margin:14px 0 5px;text-transform:uppercase;letter-spacing:.09em;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:10px;color:var(--gray);cursor:pointer;transition:.16s;margin-bottom:2px;font-size:13px;position:relative;}
+.nav-item:hover{background:rgba(96,165,250,.06);color:var(--white);}
+.nav-item.active{background:rgba(37,99,235,.16);color:var(--blue-l);font-weight:500;}
+.nav-item.active::before{content:'';position:absolute;left:0;top:25%;bottom:25%;width:2.5px;background:var(--blue-l);border-radius:2px;}
+.nav-item svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.nav-badge{margin-left:auto;font-size:10px;background:var(--red);color:#fff;padding:1px 6px;border-radius:999px;font-weight:600;min-width:18px;text-align:center;}
+.sb-footer{padding:10px 8px;border-top:1px solid var(--border);}
+
+.topbar{position:fixed;top:0;left:var(--sb-w);right:0;height:60px;z-index:40;background:rgba(4,8,22,.90);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;transition:left .28s cubic-bezier(.4,0,.2,1);}
+.topbar.expanded{left:0;}
+.topbar-left{display:flex;align-items:center;gap:12px;}
+.menu-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--gray);transition:.18s;}
+.menu-btn:hover{background:rgba(96,165,250,.08);color:var(--white);border-color:var(--border-h);}
+.menu-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;}
+.topbar-title{font-size:14px;font-weight:600;font-family:'Syne',sans-serif;}
+.topbar-right{display:flex;align-items:center;gap:9px;}
+.icon-btn{width:34px;height:34px;border-radius:9px;border:1px solid var(--border);background:rgba(255,255,255,.025);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:.18s;}
+.icon-btn:hover{background:rgba(96,165,250,.09);border-color:var(--border-h);}
+.icon-btn svg{width:16px;height:16px;stroke:var(--gray);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+.notif-dot{position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:50%;background:var(--red);border:1.5px solid var(--bg);}
+.user-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--blue-l));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;cursor:pointer;overflow:hidden;border:2px solid rgba(96,165,250,.2);}
+.user-av img{width:100%;height:100%;object-fit:cover;}
+
+.main{margin-left:var(--sb-w);padding:78px 24px 48px;transition:margin .28s cubic-bezier(.4,0,.2,1);min-height:100vh;}
+.main.expanded{margin-left:0;}
+
+.page{display:none;}
+.page.active{display:block;animation:fadein .35s ease;}
+.page-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px;flex-wrap:wrap;gap:12px;}
+.page-header h1{font-size:22px;font-weight:700;word-break:break-word;overflow-wrap:anywhere;}
+.page-header p{font-size:13px;color:var(--gray);margin-top:3px;}
+.date-chip{font-size:11px;padding:5px 13px;background:rgba(37,99,235,.09);border:1px solid var(--border);border-radius:999px;color:var(--blue-l);font-weight:500;white-space:nowrap;flex-shrink:0;}
+.period-tabs{display:flex;gap:5px;background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:999px;padding:3px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.period-tabs::-webkit-scrollbar{display:none;}
+.period-btn{background:transparent;border:none;color:var(--gray);font-size:12px;padding:6px 13px;border-radius:999px;cursor:pointer;font-weight:500;transition:.2s;font-family:'DM Sans',sans-serif;white-space:nowrap;flex-shrink:0;}
+.period-btn.active{background:rgba(37,99,235,.22);color:var(--white);font-weight:600;}
+.period-btn:hover:not(.active){color:var(--white);}
+.page-header > div:last-child{display:flex;align-items:center;gap:10px;flex-wrap:wrap;max-width:100%;}
+@media(max-width:1024px){.page-header{align-items:flex-start;}}
+@media(max-width:760px){.page-header{flex-direction:column;align-items:stretch;gap:10px;}.page-header h1{font-size:19px;}.page-header > div:last-child{justify-content:space-between;width:100%;}.period-tabs{flex:1;justify-content:flex-start;}}
+@media(max-width:480px){.page-header h1{font-size:17px;}.page-header p{font-size:12px;}.date-chip{font-size:10px;padding:4px 10px;}.period-btn{font-size:11px;padding:5px 10px;}.page-header > div:last-child{flex-direction:row;gap:8px;}}
+body.ef-xs .page-header,body.ef-sm .page-header{flex-direction:column;align-items:stretch;}
+body.ef-xs .page-header > div:last-child,body.ef-sm .page-header > div:last-child{width:100%;justify-content:space-between;}
+body.ef-md .page-header{align-items:flex-start;}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;transition:.2s;position:relative;overflow:hidden;}
+.kpi:hover{transform:translateY(-2px);border-color:var(--border-h);background:var(--card-h);}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.kpi-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;}
+.kpi-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+.kpi-chip{font-size:10px;padding:3px 8px;border-radius:999px;font-weight:500;}
+.chip-up{background:rgba(16,185,129,.10);color:var(--green);}
+.chip-neu{background:rgba(245,158,11,.10);color:var(--amber);}
+.chip-blue{background:rgba(96,165,250,.10);color:var(--blue-l);}
+.kpi-val{font-size:28px;font-weight:800;font-family:'Syne',sans-serif;line-height:1.1;margin-bottom:4px;}
+.kpi-lbl{font-size:12px;color:var(--gray);}
+.kpi-progress{margin-top:10px;height:3px;background:rgba(255,255,255,.05);border-radius:2px;overflow:hidden;}
+.kpi-progress-fill{height:3px;border-radius:2px;transition:width .8s ease;}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:18px;}
+.card:hover{border-color:rgba(96,165,250,.14);}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+.card-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;color:var(--white);}
+.card-title svg{width:16px;height:16px;stroke:var(--blue-l);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+.card-actions{display:flex;align-items:center;gap:7px;}
+
+.view-toggle{display:flex;gap:4px;background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:999px;padding:3px;}
+.vt-btn{background:transparent;border:none;color:var(--gray);font-size:11px;padding:5px 11px;border-radius:999px;cursor:pointer;font-weight:500;transition:.2s;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:5px;}
+.vt-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;}
+.vt-btn.active{background:rgba(37,99,235,.22);color:var(--white);}
+.vt-btn:hover:not(.active){color:var(--white);}
+
+.charts-row{display:grid;grid-template-columns:3fr 2fr;gap:16px;margin-bottom:18px;}
+.chart-wrap{height:250px;position:relative;overflow:hidden;}
+.chart-wrap canvas,.chart-box canvas{max-width:100%;height:100%;}
+
+.stock-rings{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px;}
+.ring-item{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;}
+.ring-wrap{position:relative;width:80px;height:80px;max-width:100%;}
+.ring-wrap canvas{position:absolute;inset:0;width:100% !important;height:100% !important;}
+.ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.ring-pct{font-size:15px;font-weight:700;font-family:'Syne',sans-serif;}
+.ring-name{font-size:11px;color:var(--gray);text-align:center;max-width:100px;line-height:1.3;}
+.ring-qty{font-size:10px;color:var(--gray);}
+
+.tbl-wrap{overflow-x:auto;}
+.tbl{width:100%;border-collapse:collapse;}
+.tbl th{text-align:left;padding:9px 8px;font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);}
+.tbl td{padding:10px 8px;font-size:13px;border-bottom:1px solid rgba(96,165,250,.05);}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:rgba(96,165,250,.025);}
+.badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:500;}
+.b-ok{background:rgba(16,185,129,.11);color:var(--green);}
+.b-warn{background:rgba(245,158,11,.11);color:var(--amber);}
+.b-err{background:rgba(239,68,68,.11);color:var(--red);}
+.b-info{background:rgba(96,165,250,.11);color:var(--blue-l);}
+.b-purple{background:rgba(139,92,246,.11);color:var(--purple);}
+
+.empty-state{text-align:center;padding:44px 20px;color:var(--gray);}
+.empty-icon{display:flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:14px;background:rgba(37,99,235,.08);border:1px solid var(--border);margin:0 auto 14px;}
+.empty-icon svg{width:24px;height:24px;stroke:var(--gray);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
+.empty-state strong{display:block;font-size:13px;color:var(--white);margin-bottom:5px;font-weight:600;}
+.empty-state span{font-size:12px;line-height:1.6;}
+
+.stk-bar{width:70px;height:4px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;margin-top:4px;}
+.stk-bar-fill{height:4px;border-radius:3px;transition:width .5s ease;}
+
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px;}
+.stat-mini{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;display:flex;align-items:center;gap:12px;transition:.2s;}
+.stat-mini:hover{border-color:var(--border-h);}
+.stat-mini-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.stat-mini-icon svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+.stat-mini-val{font-size:18px;font-weight:700;font-family:'Syne',sans-serif;line-height:1.1;}
+.stat-mini-lbl{font-size:11px;color:var(--gray);}
+
+.sale-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:.5px solid rgba(96,165,250,.05);}
+.sale-row:last-child{border-bottom:none;}
+.sale-client{font-size:13px;font-weight:500;}
+.sale-num{font-size:11px;color:var(--gray);}
+.sale-amt{font-size:13px;font-weight:600;color:var(--blue-l);}
+.sale-date{font-size:11px;color:var(--gray);}
+
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(10px);z-index:300;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-bg.show{display:flex;}
+.modal-box{background:rgba(6,10,28,.98);border:1px solid var(--border);border-radius:20px;padding:26px;width:100%;max-width:490px;max-height:88vh;overflow-y:auto;animation:popIn .25s ease;}
+.modal-box.wide{max-width:640px;}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.modal-head h3{font-size:17px;font-weight:700;}
+.modal-close{background:none;border:none;color:var(--gray);cursor:pointer;width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:.15s;}
+.modal-close:hover{background:rgba(255,255,255,.07);color:var(--white);}
+.modal-close svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap;}
+.pm-batch-list{max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:8px;}
+.pm-batch-item{display:flex;align-items:center;justify-content:space-between;padding:9px 11px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;}
+.pm-batch-item span{display:flex;align-items:center;gap:8px;}
+
+#companyPanel{position:fixed;inset:0;z-index:250;background:rgba(4,6,18,.82);backdrop-filter:blur(12px);display:none;justify-content:flex-end;}
+#companyPanel.show{display:flex;}
+.cp-box{width:100%;max-width:420px;height:100vh;background:rgba(6,10,28,.98);border-left:1px solid var(--border);padding:26px;overflow-y:auto;animation:fadein .3s ease;}
+.cp-section{margin-bottom:20px;}
+.cp-section-title{font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+
+#toastContainer{position:fixed;bottom:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:7px;}
+.toast{padding:11px 15px;border-radius:10px;font-size:13px;color:#fff;display:flex;align-items:center;gap:9px;max-width:310px;backdrop-filter:blur(14px);transform:translateX(150%);transition:transform .3s cubic-bezier(.2,.9,.4,1.1);}
+.toast.visible{transform:translateX(0);}
+.toast svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.toast.success{background:rgba(16,185,129,.14);border:1px solid rgba(16,185,129,.35);}
+.toast.error{background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.35);}
+.toast.info{background:rgba(37,99,235,.14);border:1px solid rgba(37,99,235,.35);}
+
+.insight-card{display:flex;align-items:flex-start;gap:12px;padding:13px;background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.14);border-radius:var(--radius-sm);margin-bottom:12px;}
+.insight-icon{width:30px;height:30px;border-radius:8px;background:rgba(37,99,235,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.insight-icon svg{width:15px;height:15px;stroke:var(--blue-l);fill:none;stroke-width:1.8;stroke-linecap:round;}
+.insight-text{font-size:12px;color:var(--gray);line-height:1.5;}
+.insight-text strong{color:var(--white);display:block;margin-bottom:2px;font-size:12px;}
+
+.top-prod-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:.5px solid rgba(96,165,250,.05);}
+.top-prod-row:last-child{border-bottom:none;}
+.tp-rank{font-size:11px;font-weight:700;color:var(--gray-d);width:18px;flex-shrink:0;}
+.tp-bar-wrap{flex:1;height:5px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden;}
+.tp-bar{height:5px;border-radius:3px;}
+.tp-name{font-size:12px;font-weight:500;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tp-qty{font-size:12px;color:var(--gray);min-width:40px;text-align:right;}
+
+/* SALE BUILDER (panier) */
+.cart-row{display:grid;grid-template-columns:1fr 70px 90px auto;gap:8px;margin-bottom:8px;align-items:center;}
+.cart-row select,.cart-row input{padding:9px 10px;border-radius:8px;border:1px solid var(--border);background:rgba(4,6,18,.65);color:var(--white);font-size:12.5px;font-family:'DM Sans',sans-serif;outline:none;}
+.cart-row .rm-btn{width:30px;height:34px;border-radius:7px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.09);color:var(--red);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.cart-row .new-prod-form{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:rgba(37,99,235,.1);border:1px solid var(--border);border-radius:8px;padding:6px 8px;grid-column:1;}
+.cart-row .new-prod-form input,.cart-row .new-prod-form select{padding:7px 8px;border-radius:6px;border:1px solid var(--border);background:rgba(4,6,18,.65);color:var(--white);font-size:12px;font-family:'DM Sans',sans-serif;outline:none;}
+.cart-row .new-prod-form input[type="text"]{flex:1 1 120px;min-width:100px;}
+.cart-row .new-prod-form select{width:auto;min-width:70px;}
+.cart-row .new-prod-form input[type="number"]{width:80px;}
+
+/* AVIS / STARS */
+.star-rating{display:flex;gap:6px;margin:14px 0;}
+.star-btn{width:38px;height:38px;cursor:pointer;background:none;border:none;padding:0;}
+.star-btn svg{width:100%;height:100%;stroke:var(--gray-d);fill:none;stroke-width:1.6;transition:.15s;}
+.star-btn.filled svg{stroke:var(--amber);fill:var(--amber);}
+.star-display{display:inline-flex;gap:2px;}
+.star-display svg{width:13px;height:13px;}
+
+#avisPrompt{position:fixed;bottom:24px;right:24px;z-index:400;width:340px;background:rgba(6,10,28,.98);border:1px solid var(--border);border-radius:18px;padding:22px;box-shadow:0 24px 60px -10px rgba(0,0,0,.6);animation:popIn .4s cubic-bezier(.16,1,.3,1);display:none;}
+#avisPrompt.show{display:block;}
+
+/* CONTACT ADMIN PANEL */
+#contactPanel{position:fixed;inset:0;z-index:260;background:rgba(4,6,18,.82);backdrop-filter:blur(12px);display:none;align-items:center;justify-content:center;padding:20px;}
+#contactPanel.show{display:flex;}
+
+/* DEVIS BUILDER */
+.quote-preview{background:#fff;color:#0F172A;border-radius:12px;padding:24px;font-size:12px;max-height:400px;overflow-y:auto;}
+
+/* SIGNATURE PAD */
+#signaturePad{border:1.5px dashed var(--border);border-radius:10px;background:rgba(255,255,255,.03);touch-action:none;cursor:crosshair;width:100%;height:140px;}
+
+@media(max-width:1200px){.kpi-grid{grid-template-columns:repeat(2,1fr);}.charts-row{grid-template-columns:1fr;}.stats-row{grid-template-columns:1fr 1fr;}.home-lower-grid{grid-template-columns:1fr 1fr !important;}.quick-actions-grid{grid-template-columns:1fr 1fr !important;}}
+@media(max-width:1024px){
+  .charts-row{grid-template-columns:1fr;}
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .home-lower-grid{grid-template-columns:1fr 1fr !important;}
+  .quick-actions-grid{grid-template-columns:1fr 1fr !important;}
+  .row2,.row3{grid-template-columns:1fr;}
+}
+.home-lower-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;}
+.quick-actions-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;}
+.qa-stack{display:flex;flex-direction:column;gap:10px;}
+.qa-item{display:flex;align-items:center;gap:12px;padding:14px 14px;border-radius:var(--radius-sm);background:rgba(255,255,255,.03);border:1px solid var(--border);color:var(--white);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:.18s;text-align:left;}
+.qa-item svg{flex-shrink:0;width:20px;height:20px;stroke:var(--blue-l);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.qa-item:hover{background:rgba(96,165,250,.07);border-color:var(--border-h);transform:translateY(-1px);}
+.qa-item.primary{background:rgba(37,99,235,.10);border-color:rgba(37,99,235,.20);}
+.qa-item.primary svg{stroke:#fff;}
+.qa-item .qa-label{display:flex;flex-direction:column;gap:2px;}
+.qa-item .qa-sublbl{font-size:11px;color:var(--gray);font-weight:400;}
+@media(max-width:760px){
+  .sidebar{transform:translateX(-256px);pointer-events:none;visibility:hidden;}
+  .sidebar.ef-open{transform:translateX(0);pointer-events:auto;visibility:visible;}
+  .sidebar.collapsed{transform:translateX(-256px);pointer-events:none;visibility:hidden;}
+  .topbar{left:0;}
+  .main{margin-left:0;overflow-x:hidden;}
+  .kpi-grid{grid-template-columns:1fr 1fr !important;}
+  .charts-row{grid-template-columns:1fr !important;}
+  .chart-wrap{height:200px !important;}
+  .stats-row{grid-template-columns:1fr;}
+  .quick-actions-grid{grid-template-columns:1fr !important;}
+  .qa-item{padding:12px 12px;}
+  .qa-item svg{width:18px;height:18px;}
+  .qa-item .qa-sublbl{font-size:10px;}
+  .home-lower-grid{grid-template-columns:1fr !important;}
+  .row2,.row3{grid-template-columns:1fr;}
+  .stock-rings{grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;overflow-x:auto;padding-bottom:4px;}
+  .ring-wrap{width:52px;height:52px;}
+  .ring-wrap canvas{width:100% !important;height:100% !important;}
+  .ring-pct{font-size:12px;}
+  .ring-name{font-size:9px;max-width:75px;}
+  .ring-qty{font-size:9px;}
+  .cart-row{grid-template-columns:1fr;}
+  #avisPrompt{width:calc(100% - 32px);right:16px;bottom:16px;}
+}
+@media(max-width:480px){
+  .kpi-grid{grid-template-columns:1fr;}
+  .stats-row{grid-template-columns:1fr;}
+  .main{overflow-x:hidden;}
+  .modal-box{padding:16px;border-radius:14px;max-height:92vh;}
+  .topbar{padding:0 12px;height:52px;}
+  .nav-item{padding:8px 10px;font-size:12px;}
+  .sidebar{width:85vw;max-width:280px;}
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .tbl{font-size:12px;white-space:nowrap;}
+  .btn-submit{padding:10px 16px;font-size:13px;}
+  .user-av,.icon-btn{width:30px;height:30px;font-size:11px;}
+  .user-av svg,.icon-btn svg{width:14px;height:14px;}
+  .menu-btn{width:30px;height:30px;}
+  .menu-btn svg{width:14px;height:14px;}
+  .kpi-icon,.stat-mini-icon{width:32px;height:32px;}
+  .kpi-icon svg,.stat-mini-icon svg{width:15px;height:15px;}
+  .toast{max-width:calc(100vw - 24px);font-size:12px;}
+  .stock-rings{grid-template-columns:repeat(2,1fr);gap:8px;}
+  .ring-wrap{width:48px;height:48px;}
+  .ring-pct{font-size:11px;}
+  .ring-name{font-size:9px;max-width:70px;}
+  .ring-qty{display:none;}
+  .tp-rank{width:16px;font-size:10px;}
+  .tp-qty{min-width:32px;font-size:11px;}
+  .stk-bar{width:50px;}
+  .sb-company-name{max-width:90px;font-size:11px;}
+  .sale-client{font-size:12px;}
+  .sale-amt{font-size:12px;}
+  .sale-num{font-size:10px;}
+  .sale-date{font-size:10px;}
+  .sale-row{padding:8px 0;}
+  .insight-card{flex-direction:column;gap:8px;padding:10px;}
+  .insight-icon{width:26px;height:26px;}
+  .qa-stack{gap:8px;}
+  .qa-item{padding:11px 11px;gap:10px;}
+  .qa-item svg{width:17px;height:17px;}
+  .qa-item .qa-label{font-size:12px;}
+  .qa-item .qa-sublbl{font-size:10px;}
+}
+@media(max-width:380px){
+  .kpi-icon,.stat-mini-icon{width:28px;height:28px;}
+  .kpi-icon svg,.stat-mini-icon svg{width:13px;height:13px;}
+  .nav-item{font-size:11px;padding:6px 8px;}
+  .btn-submit{padding:8px 14px;font-size:12px;}
+  .tbl{font-size:11px;}
+  .modal-box{padding:12px;border-radius:12px;}
+}
+@media(min-width:1600px){
+  .main{max-width:1440px;margin-left:auto;margin-right:auto;}
+}
+.pm-block{display:none;margin:6px 0 10px;padding:10px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:12px;}
+.pm-block.is-active{display:block;}
+.hint{display:block;font-size:11px;color:var(--gray);margin-top:4px;}
+
+
+body.ef-xs .sidebar, body.ef-sm .sidebar {
+  transform: translateX(-100%);
+  width: min(86vw, 300px);
+  z-index: 110;
+  box-shadow: 0 0 50px rgba(4,6,18,.55);
+  transition: transform .26s cubic-bezier(.4,0,.2,1);
+}
+body.ef-xs .sidebar.ef-open, body.ef-sm .sidebar.ef-open {
+  transform: translateX(0);
+}
+body.ef-md .sidebar, body.ef-lg .sidebar, body.ef-xl .sidebar {
+  transform: translateX(0) !important;
+}
+
+body.ef-sidebar-veil::before{
+  content:''; position:fixed; inset:0; background:rgba(4,6,18,.55);
+  z-index:70; animation:ef-fadein .2s ease;
+}
+@keyframes ef-fadein{from{opacity:0}to{opacity:1}}
+
+body.ef-xs .topbar, body.ef-sm .topbar { left:0 !important; padding:0 12px; }
+body.ef-xs .main,   body.ef-sm .main   { margin-left:0 !important; padding:66px 12px 32px; }
+body.ef-md .main { padding:76px 18px 40px; }
+body.ef-lg .main, body.ef-xl .main { padding:78px 24px 48px; }
+
+body.ef-xs .kpi-grid, body.ef-sm .kpi-grid { grid-template-columns: 1fr !important; gap:10px; }
+body.ef-md .kpi-grid { grid-template-columns: repeat(2,1fr) !important; gap:12px; }
+body.ef-lg .kpi-grid, body.ef-xl .kpi-grid { grid-template-columns: repeat(4,1fr) !important; }
+
+body.ef-xs .stats-row, body.ef-sm .stats-row { grid-template-columns: 1fr !important; }
+body.ef-md .stats-row { grid-template-columns: repeat(2,1fr) !important; }
+body.ef-lg .stats-row, body.ef-xl .stats-row { grid-template-columns: repeat(3,1fr) !important; }
+
+body.ef-xs .charts-row, body.ef-sm .charts-row, body.ef-md .charts-row { grid-template-columns: 1fr !important; }
+body.ef-lg .charts-row, body.ef-xl .charts-row { grid-template-columns: 3fr 2fr !important; }
+
+body.ef-xs .row2, body.ef-sm .row2, body.ef-xs .row3, body.ef-sm .row3 { grid-template-columns: 1fr !important; }
+
+body.ef-xs .cart-row, body.ef-sm .cart-row { grid-template-columns: 1fr !important; gap:6px; }
+
+[data-ef-cols]{ display:grid; gap:12px; }
+body.ef-xs [data-ef-cols], body.ef-sm [data-ef-cols] { grid-template-columns: 1fr !important; }
+body.ef-md [data-ef-cols="2"], body.ef-md [data-ef-cols="3"], body.ef-md [data-ef-cols="4"] { grid-template-columns: repeat(2,1fr) !important; }
+body.ef-lg [data-ef-cols="3"], body.ef-xl [data-ef-cols="3"] { grid-template-columns: repeat(3,1fr) !important; }
+body.ef-lg [data-ef-cols="4"], body.ef-xl [data-ef-cols="4"] { grid-template-columns: repeat(4,1fr) !important; }
+
+body.ef-xs .tbl-wrap, body.ef-sm .tbl-wrap, body.ef-md .tbl-wrap {
+  overflow-x:auto; -webkit-overflow-scrolling:touch;
+}
+body.ef-xs .tbl, body.ef-sm .tbl { min-width:560px; }
+body.ef-xs .tbl th, body.ef-xs .tbl td,
+body.ef-sm .tbl th, body.ef-sm .tbl td { padding:8px 6px; font-size:12px; }
+
+body.ef-xs .modal-box, body.ef-sm .modal-box {
+  max-width:94vw !important; max-height:88vh; padding:18px;
+  overflow-y:auto;
+}
+body.ef-xs .modal-box.wide, body.ef-sm .modal-box.wide { max-width:94vw !important; }
+body.ef-xs .modal-actions, body.ef-sm .modal-actions { flex-direction:column; }
+body.ef-xs .modal-actions .btn, body.ef-sm .modal-actions .btn,
+body.ef-xs .modal-actions [class*="btn-"], body.ef-sm .modal-actions [class*="btn-"] { width:100%; }
+
+body.ef-xs .cp-box, body.ef-sm .cp-box,
+body.ef-xs .sp-box, body.ef-sm .sp-box { max-width:100% !important; padding:18px; }
+
+.ef-fluid-h1 { font-size: clamp(17px, 3vw, 23px) !important; }
+.page-header h1 { font-size: 22px; }
+.ef-fluid-title, .card-title  { font-size: clamp(12.5px, 1.6vw, 14px) !important; }
+.ef-fluid-val, .kpi-val       { font-size: clamp(20px, 3vw, 28px) !important; }
+
+body.ef-xs #toastContainer, body.ef-sm #toastContainer,
+body.ef-xs .toast-wrap, body.ef-sm .toast-wrap {
+  left:10px !important; right:10px !important; bottom:10px !important; max-width:none !important;
+}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+  }
+}
+
+/* MOBILE : empêcher le scroll horizontal et forcer 2 colonnes lisibles */
+@media (max-width: 768px) {
+  .kpi-grid, .grid-2 { grid-template-columns: 1fr 1fr !important; gap: 10px; }
+  .charts-row { grid-template-columns: 1fr !important; }
+  .chart-box, .chart-wrap { min-width: 0; overflow: hidden; }
+  .chart-box canvas, .chart-wrap canvas { max-width: 100% !important; height: auto !important; }
+  .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .page-header { flex-wrap: wrap; }
+  body.ef-xs .kpi-grid, body.ef-sm .kpi-grid { grid-template-columns: 1fr 1fr !important; }
+}
+@media (max-width: 480px) {
+  .chart-wrap { height: 190px !important; }
+  .kpi-val { font-size: 22px !important; }
+  .kpi { padding: 12px !important; }
+  .card { padding: 12px !important; }
+}
+
+
+/* Employee additions */
+.emp-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 56px;
+  background: rgba(4,6,18,.97);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  z-index: 50;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0 4px;
+}
+.emp-nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: none; border: none; color: var(--gray);
+  font-size: 10px; cursor: pointer; padding: 6px 4px; flex: 1;
+  max-width: 72px; font-family: 'DM Sans', sans-serif;
+}
+.emp-nav-item svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.emp-nav-item.active {{ color: var(--blue-l); }}
+@media (max-width: 640px) {{
+  .emp-bottom-nav {{ display: flex; }}
+  .main {{ padding-bottom: 72px !important; }}
+  .sidebar {{ transform: translateX(-100%); }}
+  .sidebar.ef-open {{ transform: translateX(0); }}
+  .topbar {{ left: 0 !important; }}
+  .topbar-logo {{ display: none; }}
+}}
+
+/* EMPLOYEE LOGIN */
+.login-wrap {{
+  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: #040810; z-index: 100; padding: 20px;
+}}
+.login-box {{
+  background: rgba(6,10,28,.85); border: 1px solid var(--border); border-radius: 18px;
+  padding: 32px 28px; max-width: 400px; width: 100%; text-align: center;
+  backdrop-filter: blur(20px);
+}}
+.setup-logo {{ display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 18px; }}
+.setup-logo .logo-icon {{ animation: none; }}
+.logo-text {{ font-family: 'Syne', sans-serif; font-weight: 700; font-size: 20px; color: var(--white); letter-spacing: -0.3px; }}
+.setup-title {{ font-family: 'Syne', sans-serif; font-weight: 700; font-size: 24px; color: var(--white); margin: 0; }}
+.setup-sub {{ color: var(--gray); font-size: 13px; margin-top: 6px; margin-bottom: 20px; }}
+  </style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+<div id="toastContainer"></div>
+<div id="loadingScreen">
+  <div class="spinner"></div>
+  <p style="color:var(--gray);font-size:13px">Chargement de votre espace...</p>
+</div>
+
+<!-- EMPLOYEE LOGIN -->
+<div id="empLoginScreen" class="login-wrap">
+  <div class="login-box">
+    <div class="setup-logo">
+      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+      <span class="logo-text">EntreFlow · Employé</span>
+    </div>
+    <h2 class="setup-title">Connexion</h2>
+    <p class="setup-sub">Entrez le code reçu par email pour accéder à votre espace personnel.</p>
+    <div class="fg"><label>Code d'accès</label><input id="empCode" type="text" placeholder="Ex : A3F7K2" maxlength="6" autocomplete="one-time-code" /></div>
+    <button class="btn btn-primary btn-full" id="empCodeBtn">Accéder à mon espace</button>
+    <div class="err" id="empCodeErr" style="color:var(--red);font-size:12px;margin-top:8px;text-align:center;display:none;"></div>
+  </div>
+</div>
+
+<div id="dashboard" style="display:none;">
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sb-header">
+      <div class="sb-logo">
+        <div class="logo-icon" id="sbLogoIcon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+        <span class="logo-text" id="sbLogoText">EntreFlow</span>
+      </div>
+      <div class="sb-company" style="cursor:default;">
+        <div style="display:flex;align-items:center;gap:9px;">
+          <div class="sb-company-av" id="sbAv">E</div>
+          <div><div class="sb-company-name" id="sbName">—</div><div class="sb-company-edit">Employé</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="sb-nav">
+      <div class="nav-group">Principal</div>
+      <div class="nav-item active" onclick="goTo('home')"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Tableau de bord</span></div>
+      <div class="nav-item" onclick="goTo('sales')"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><span>Ventes</span></div>
+      <div class="nav-item" onclick="goTo('stock')"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg><span>Stock</span></div>
+      <div class="nav-item" onclick="goTo('quotes')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Devis</span></div>
+      <div class="nav-item" onclick="goTo('clients')"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span>Clients</span></div>
+      <div class="nav-item" onclick="goTo('activities')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Activités</span></div>
+    </div>
+    <div class="sb-footer">
+      <div class="nav-item" onclick="doEmpLogout()" style="color:var(--red)"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>Déconnexion</span></div>
+    </div>
+  </nav>
+
+  <!-- TOPBAR -->
+  <div class="topbar" id="topbar">
+    <div class="topbar-left">
+      <button class="menu-btn" onclick="toggleSidebar()"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+      <span class="topbar-title" id="topbarTitle">Tableau de bord</span>
+    </div>
+    <div class="topbar-right">
+      <div class="icon-btn" title="Actualiser" onclick="refreshCurrentPage()"><svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg></div>
+      <div class="user-av" id="userAv" title="Employé">E</div>
+    </div>
+  </div>
+
+  <div id="sidebarVeil" onclick="toggleSidebar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:45;opacity:0;transition:opacity .28s;"></div>
+
+  <div class="main" id="mainContent">
+
+    <!-- HOME -->
+    <div class="page active" id="page-home">
+      <div class="page-header">
+        <div><h1 id="empGreeting">Bonjour</h1><p id="empWelcomeSub">Espace personnel</p></div>
+        <div><span class="date-chip" id="dateChip"></span></div>
+      </div>
+      <div class="kpi-grid" id="empKpis"></div>
+      <div class="home-lower-grid">
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Mes dernieres ventes</div></div>
+          <div id="empRecentSales"><div class="empty-state"><div class="empty-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><strong>Aucune vente</strong></div></div>
+        </div>
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>Stock critique</div></div>
+          <div id="empStockAlert"><div class="empty-state"><strong>Tout est OK</strong></div></div>
+        </div>
+      </div>
+      <div class="quick-actions-grid">
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Actions rapides</div></div>
+          <div class="qa-stack">
+            <button class="qa-item primary" onclick="if(typeof openSaleModal==='function')openSaleModal()"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><span class="qa-label">Nouvelle vente<span class="qa-sublbl">Enregistrer une transaction</span></span></button>
+            <button class="qa-item" onclick="if(typeof openQuoteModal==='function')openQuoteModal()"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span class="qa-label">Creer devis<span class="qa-sublbl">Nouvelle proposition</span></span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SALES -->
+    <div class="page" id="page-sales">
+      <div class="page-header"><div><h1>Ventes</h1><p>Mes enregistrements</p></div><button class="btn btn-primary" onclick="if(typeof openSaleModal==='function')openSaleModal()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nouvelle vente</button></div>
+      <div class="card" style="margin-bottom:14px;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <label style="font-size:12px;color:var(--gray);">Periode :</label>
+          <select id="salesDayFilter" onchange="loadSalesPage()" style="background:rgba(4,6,18,.65);border:1px solid var(--border);color:var(--white);padding:7px 10px;border-radius:8px;font-size:13px;">
+            <option value="today">Aujourd'hui</option><option value="yesterday">Hier</option><option value="dayBefore">Avant-hier</option><option value="all">Toutes les ventes</option>
+          </select>
+          <span id="salesDayTotal" style="margin-left:auto;font-size:13px;color:var(--gray);">Total : 0 F</span>
+        </div>
+      </div>
+      <div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>N° Vente</th><th>Client</th><th>Total</th><th>Paiement</th><th>Date</th></tr></thead><tbody id="salesTbody"></tbody></table></div></div>
+    </div>
+
+    <!-- STOCK -->
+    <div class="page" id="page-stock">
+      <div class="page-header"><div><h1>Stock</h1><p>Produits disponibles (lecture seule)</p></div></div>
+      <div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Produit</th><th>Quantite</th><th>Seuil</th><th>Niveau</th><th>Statut</th></tr></thead><tbody id="stockTbody"></tbody></table></div></div>
+    </div>
+
+    <!-- QUOTES -->
+    <div class="page" id="page-quotes">
+      <div class="page-header"><div><h1>Devis</h1><p>Mes devis envoyes</p></div><button class="btn btn-primary" onclick="if(typeof openQuoteModal==='function')openQuoteModal()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nouveau devis</button></div>
+      <div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>N° Devis</th><th>Client</th><th>Total</th><th>Validite</th><th>Statut</th><th>Date</th></tr></thead><tbody id="quotesTbody"></tbody></table></div></div>
+    </div>
+
+    <!-- CLIENTS -->
+    <div class="page" id="page-clients">
+      <div class="page-header"><div><h1>Clients</h1><p>Carnet client</p></div></div>
+      <div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Nom</th><th>Telephone</th><th>Email</th><th>Ville</th></tr></thead><tbody id="clientsTbody"></tbody></table></div></div>
+    </div>
+
+    <!-- ACTIVITIES -->
+    <div class="page" id="page-activities">
+      <div class="page-header"><div><h1>Activites</h1><p>Votre flux en temps reel</p></div><span class="date-chip">Auto-actualisation 20s</span></div>
+      <div class="card" style="margin-bottom:18px"><div id="activitiesList"><div class="empty-state"><div class="empty-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><strong>Aucune activite recente</strong></div></div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-bg" id="saleModal">
+  <div class="modal-box wide">
+    <div class="modal-head"><h3>Enregistrer une vente</h3><button class="modal-close" onclick="closeModal('saleModal')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="row2">
+      <div class="fg"><label>Client (optionnel)</label><select id="sl-client"><option value="">-- Selectionner --</option></select></div>
+      <div class="fg"><label>Email client (pour facture)</label><input id="sl-client-email" type="email" placeholder="client@email.com"></div>
+    </div>
+    <div style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;"><label style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.06em">Produits vendus *</label><button class="btn-sm" onclick="addSaleRow()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Ajouter</button></div>
+      <div id="saleRows"></div>
+    </div>
+    <div style="background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.14);border-radius:11px;padding:14px;margin:14px 0;">
+      <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;color:var(--gray)">Total de la vente</span><strong style="font-size:20px;font-weight:700;color:var(--blue-l);font-family:'Syne',sans-serif" id="saleTotal">0 F CFA</strong></div>
+    </div>
+    <div class="row3">
+      <div class="fg"><label>Mode de paiement</label><select id="sl-method"><option value="cash">Especes</option><option value="mobile_money_wave">Wave</option><option value="mobile_money_mtn">MTN Money</option><option value="mobile_money_moov">Moov Money</option><option value="card">Carte bancaire</option><option value="bank_transfer">Virement</option></select></div>
+      <div class="fg"><label>Montant recu</label><input id="sl-paid" type="number" min="0" placeholder="0"></div>
+      <div class="fg"><label>Monnaie a rendre</label><input id="sl-change" type="text" value="0 F CFA" disabled style="opacity:.7"></div>
+    </div>
+    <div class="modal-actions"><button class="btn btn-outline" onclick="closeModal('saleModal')">Annuler</button><button class="btn btn-primary" id="saveSaleBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Enregistrer la vente</button></div>
+  </div>
+</div>
+
+<!-- MODAL DEVIS -->
+<div class="modal-bg" id="quoteModal">
+  <div class="modal-box wide">
+    <div class="modal-head"><h3>Creer un devis</h3><button class="modal-close" onclick="closeModal('quoteModal')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="fg"><label>Client *</label><select id="qt-client-select" onchange="onQuoteClientChange()"><option value="">-- Nouveau client --</option></select></div>
+    <div id="qt-new-client-block">
+      <div class="row2"><div class="fg"><label>Nom du client *</label><input id="qt-client-name" type="text" placeholder="Nom du nouveau client"></div><div class="fg"><label>Telephone (WhatsApp)</label><input id="qt-client-phone" type="tel" placeholder="+229 XX XX XX XX"></div></div>
+      <div class="row2"><div class="fg"><label>Email client</label><input id="qt-client-email" type="email" placeholder="client@email.com"></div><div class="fg"><label>Validite (jours)</label><input id="qt-validite" type="number" min="1" value="7"></div></div>
+    </div>
+    <div style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;"><label style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.06em">Articles du devis *</label><button class="btn-sm" onclick="addQuoteRow()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Ajouter</button></div>
+      <div id="quoteRows"></div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="qt-tva-enabled" style="width:auto;" onchange="toggleQuoteTva()"> Appliquer la TVA (non obligatoire)</label><input id="qt-tva-rate" type="number" min="0" max="100" value="18" style="margin-top:8px;display:none;" placeholder="Taux TVA %"></div>
+      <div class="fg" style="text-align:right;"><label>Total estime</label><div style="font-size:22px;font-weight:800;color:var(--blue-l);font-family:'Syne',sans-serif;" id="quoteTotal">0 F CFA</div></div>
+    </div>
+    <div class="modal-actions"><button class="btn btn-outline" onclick="closeModal('quoteModal')">Annuler</button><button class="btn btn-primary" id="saveQuoteBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Creer le devis</button></div>
+  </div>
+</div>
+
+<!-- MODAL ENVOI DEVIS -->
+<div class="modal-bg" id="quoteSendModal">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Devis cree !</h3><button class="modal-close" onclick="closeModal('quoteSendModal')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <p style="font-size:13px;color:var(--gray);margin-bottom:16px;">N° <strong id="qsNumber" style="color:var(--white)"></strong> — Total <strong id="qsTotal" style="color:var(--blue-l)"></strong></p>
+    <div class="fg"><label style="display:block;margin-bottom:8px;">Envoyer ce devis</label><p style="font-size:13px;color:var(--gray);">Un email avec le PDF et le lien de signature a ete envoye automatiquement au client.</p></div>
+    <div class="modal-actions" style="flex-direction:column;align-items:stretch;gap:10px;"><button class="btn btn-green btn-full" onclick="closeModal('quoteSendModal')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Compris</button><button class="btn btn-outline btn-full" onclick="sendQuoteVia('whatsapp')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>Ouvrir WhatsApp</button></div>
+  </div>
+</div>
+
+<!-- MOBILE BOTTOM NAV -->
+<div class="emp-bottom-nav" id="empBottomNav">
+  <button class="emp-nav-item active" data-nav="home" onclick="goTo('home')"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Accueil</button>
+  <button class="emp-nav-item" data-nav="sales" onclick="goTo('sales')"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Ventes</button>
+  <button class="emp-nav-item" data-nav="stock" onclick="goTo('stock')"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>Stock</button>
+  <button class="emp-nav-item" data-nav="quotes" onclick="goTo('quotes')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Devis</button>
+  <button class="emp-nav-item" data-nav="clients" onclick="goTo('clients')"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Clients</button>
+  <button class="emp-nav-item" data-nav="activities" onclick="goTo('activities')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Activites</button>
+</div>
+
+<script>
+/* ══ EMPLOYEE LOGIC ══ */
+let EMP = null;
+let currentPage = 'home';
+let empCharts = {};
+
+async function api(action, payload = {}) {
+  const API_SECRET = 'bb9581756e1377c23a3f471181b4b76031b771dbfb9d7dd263f2960cb3e1b62a';
+  const cacheKey = 'ef_emp_' + action;
+  const isMutation = ['signQuote','createSale','createQuote','updateCompany','createProduct','updateProduct','deleteProduct','createClient','createEmployee','sendQuoteVia','cancelSale','createBranch'].includes(action);
+  if (!isMutation) { const cached = localStorage.getItem(cacheKey); if (cached) { try { return JSON.parse(cached); } catch (e) {} } }
+  const stored = localStorage.getItem('empSession');
+  const session = stored ? JSON.parse(stored) : null;
+  const data = Object.assign({ action }, payload);
+  if (session && session.token) data.token = session.token;
+  else data.token = API_SECRET;
+  const r = await fetch('https://script.google.com/macros/s/AKfycbzy8sUmoTDlbYfzgqadT6EbW15lZqAp-MINJHdsqpecxkR5ZM-AuyA7JpX01J3WmS8j/exec', {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(data)
+  });
+  const text = await r.text().catch(() => '');
+  const clean = text.replace(/^[\s\S]*?<html[\s\S]*?<body[^>]*>/i, '').replace(/<\/body>[\s\S]*$/i, '');
+  const json = clean ? JSON.parse(clean) : {};
+  if (!r.ok || json.error) throw new Error(json.error || 'Erreur API');
+  const result = json.result !== undefined ? json.result : json;
+  if (!isMutation && r.ok) localStorage.setItem(cacheKey, JSON.stringify(result));
+  return result;
+}
+
+function clearEmpCache() { Object.keys(localStorage).forEach(k => { if (k.startsWith('ef_emp_')) localStorage.removeItem(k); }); }
+
+function toast(msg, type = 'info') {
+  const c = document.getElementById('toastContainer');
+  const el = document.createElement('div'); el.className = 'toast ' + type;
+  const ICONS = { success: '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>', error: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>', info: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>' };
+  el.innerHTML = (ICONS[type] || '') + '<span>' + msg + '</span>';
+  c.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('visible'));
+  setTimeout(() => { el.classList.remove('visible'); setTimeout(() => el.remove(), 400); }, 4200);
+}
+
+/* NAV */
+const PAGE_TITLES = { home: 'Tableau de bord', sales: 'Ventes', stock: 'Stock', quotes: 'Devis', clients: 'Clients', activities: 'Activites' };
+function goTo(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const target = document.getElementById('page-' + page);
+  if (target) target.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => { if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'" + page + "'")) n.classList.add('active'); });
+  document.getElementById('topbarTitle').textContent = PAGE_TITLES[page] || page;
+  currentPage = page;
+  if (page === 'home') loadHomePage();
+  else if (page === 'sales') loadSalesPage();
+  else if (page === 'stock') loadStockPage();
+  else if (page === 'quotes') loadQuotesPage();
+  else if (page === 'clients') loadClientsPage();
+  else if (page === 'activities') loadActivitiesPage();
+  if (window.innerWidth < 760) {
+    const sb = document.getElementById('sidebar'), veil = document.getElementById('sidebarVeil');
+    sb.classList.remove('ef-open');
+    veil.style.display = 'none'; veil.style.opacity = '0'; sb.style.boxShadow = 'none';
+  }
+}
+function refreshCurrentPage() { goTo(currentPage); }
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar'), veil = document.getElementById('sidebarVeil');
+  if (window.innerWidth < 760) {
+    const open = sb.classList.toggle('ef-open');
+    veil.style.display = open ? 'block' : 'none';
+    requestAnimationFrame(() => { if (open) { veil.style.opacity = '1'; sb.style.boxShadow = '12px 0 30px rgba(0,0,0,.35)'; } else { veil.style.opacity = '0'; sb.style.boxShadow = 'none'; } });
+  } else { sb.classList.toggle('collapsed'); }
+}
+
+/* MODALS */
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+  document.querySelectorAll('#' + id + ' input:not([type=hidden]):not([type=checkbox]),#' + id + ' textarea').forEach(el => el.value = '');
+  document.querySelectorAll('#' + id + ' select').forEach(el => el.selectedIndex = 0);
+  const hid = document.querySelector('#' + id + ' input[type=hidden]'); if (hid) hid.value = '';
+  if (id === 'saleModal') { document.getElementById('saleRows').innerHTML = ''; document.getElementById('saleTotal').textContent = '0 F CFA'; }
+  if (id === 'quoteModal') { document.getElementById('quoteRows').innerHTML = ''; document.getElementById('quoteTotal').textContent = '0 F CFA'; }
+}
+
+/* UTILS */
+function getGreeting() { const h = new Date().getHours(); return h < 12 ? 'Bonjour' : h < 18 ? 'Bon apres-midi' : 'Bonsoir'; }
+function fmtAmt(v) { return Math.round(v).toLocaleString('fr-FR'); }
+function fmtDate(d) { return new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }); }
+function setBtnLoading(id, on) {
+  const el = typeof id === 'string' ? document.getElementById(id) : id;
+  if (!el) return;
+  el.classList.toggle('btn-loading', !!on);
+}
+function animCount(id, target) {
+  const el = document.getElementById(id); if (!el) return;
+  const dur = 700, t0 = performance.now();
+  (function tick(t) { const p = Math.min(1, (t - t0) / dur); el.textContent = Math.round(target * p); if (p < 1) requestAnimationFrame(tick); })(t0);
+}
+
+/* ══ SALE ══ */
+let saleRowIdx = 0, saleProductCache = [];
+async function openSaleModal() {
+  saleRowIdx = 0; document.getElementById('saleRows').innerHTML = ''; document.getElementById('saleTotal').textContent = '0 F CFA';
+  const [clients, products] = await Promise.all([api('listClients', { companyId: EMP.company_id }), api('listProducts', { companyId: EMP.company_id })]);
+  const sel = document.getElementById('sl-client');
+  sel.innerHTML = '<option value="">-- Client (optionnel) --</option>' + (clients || []).map(c => '<option value="' + c.id + '" data-email="' + (c.email || '') + '">' + c.name + '</option>').join('');
+  sel.onchange = function () { document.getElementById('sl-client-email').value = this.options[this.selectedIndex]?.getAttribute('data-email') || ''; };
+  saleProductCache = products || [];
+  openModal('saleModal'); addSaleRow();
+}
+function addSaleRow() {
+  const idx = saleRowIdx++; const wrap = document.getElementById('saleRows'); const div = document.createElement('div');
+  div.className = 'cart-row'; div.id = 'srow-' + idx;
+  div.innerHTML = '<select id="sp-' + idx + '" onchange="calcSaleTotal()"><option value="">-- Produit --</option>' + saleProductCache.map(p => '<option value="' + p.id + '" data-price="' + p.unit_sell_price + '" data-name="' + p.name + '">' + p.name + ' — ' + fmtAmt(p.unit_sell_price || 0) + ' F</option>').join('') + '</select><input id="sq-' + idx + '" type="number" min="1" value="1" placeholder="Qte" onchange="calcSaleTotal()" oninput="calcSaleTotal()" style="text-align:center"/><input type="text" value="0 F" disabled style="opacity:.6;text-align:right" id="sline-' + idx + '"/><button class="rm-btn" onclick="document.getElementById(\'srow-' + idx + '\').remove();calcSaleTotal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+  wrap.appendChild(div);
+}
+function calcSaleTotal() {
+  let total = 0;
+  document.querySelectorAll('[id^="srow-"]').forEach(div => {
+    const idx = div.id.split('-')[1];
+    const sel = document.getElementById('sp-' + idx);
+    const qty = parseFloat(document.getElementById('sq-' + idx)?.value) || 0;
+    const price = parseFloat(sel?.options[sel?.selectedIndex]?.getAttribute('data-price')) || 0;
+    const lineTotal = price * qty; total += lineTotal;
+    const lineEl = document.getElementById('sline-' + idx); if (lineEl) lineEl.value = fmtAmt(lineTotal) + ' F';
+  });
+  document.getElementById('saleTotal').textContent = fmtAmt(total) + ' F CFA';
+  document.getElementById('sl-paid').value = total || '';
+  updateChange();
+}
+function updateChange() {
+  const total = parseFloat(document.getElementById('saleTotal').textContent.replace(/[^\d]/g, '')) || 0;
+  const paid = parseFloat(document.getElementById('sl-paid').value) || 0;
+  document.getElementById('sl-change').value = fmtAmt(Math.max(0, paid - total)) + ' F CFA';
+}
+document.getElementById('sl-paid').addEventListener('input', updateChange);
+document.getElementById('saveSaleBtn').addEventListener('click', async () => {
+  if (!EMP) { toast('Session employe invalide', 'error'); return; }
+  const clientId = document.getElementById('sl-client').value || null;
+  const clientName = document.getElementById('sl-client').options[document.getElementById('sl-client').selectedIndex]?.text || '';
+  const clientEmail = document.getElementById('sl-client-email').value.trim();
+  const method = document.getElementById('sl-method').value;
+  const paid = parseFloat(document.getElementById('sl-paid').value) || 0;
+  const items = [];
+  document.querySelectorAll('[id^="srow-"]').forEach(div => {
+    const idx = div.id.split('-')[1];
+    const sel = document.getElementById('sp-' + idx);
+    const qty = parseFloat(document.getElementById('sq-' + idx)?.value);
+    const price = parseFloat(sel?.options[sel?.selectedIndex]?.getAttribute('data-price'));
+    const name = sel?.options[sel?.selectedIndex]?.getAttribute('data-name') || '';
+    if (sel?.value && qty > 0) items.push({ product_id: sel.value, quantity: qty, unit_price: price, name });
+  });
+  if (items.length === 0) { toast('Ajoutez au moins un produit', 'error'); return; }
+  const btn = document.getElementById('saveSaleBtn');
+  try {
+    setBtnLoading(btn, true);
+    const res = await api('createSale', { company_id: EMP.company_id, branch_id: EMP.branch_id || '', client_id: clientId, client_name: clientName, client_email: clientEmail, payment_method: method, amount_paid: paid, items, created_by: EMP.id });
+    clearEmpCache();
+    toast('Vente de ' + fmtAmt(res.total) + ' F enregistree !' + (clientEmail ? ' Facture envoyee par email.' : ''), 'success');
+    closeModal('saleModal'); loadSalesPage(); loadHomePage();
+  } catch (err) { toast('Erreur : ' + err.message, 'error'); }
+  finally { setBtnLoading(btn, false); }
+});
+
+/* ══ QUOTES ══ */
+let quoteRowIdx = 0, quoteProductCache = [];
+async function openQuoteModal() {
+  quoteRowIdx = 0; document.getElementById('quoteRows').innerHTML = ''; document.getElementById('quoteTotal').textContent = '0 F CFA';
+  quoteProductCache = await api('listProducts', { companyId: EMP.company_id });
+  const sel = document.getElementById('qt-client-select');
+  sel.innerHTML = '<option value="">-- Nouveau client --</option>';
+  try {
+    const clients = await api('listClients', { companyId: EMP.company_id });
+    (clients || []).forEach(c => { const opt = document.createElement('option'); opt.value = c.id; opt.textContent = c.name + (c.phone ? ' (' + c.phone + ')' : ''); sel.appendChild(opt); });
+  } catch (e) {}
+  document.getElementById('qt-client-name').value = '';
+  document.getElementById('qt-client-phone').value = '';
+  document.getElementById('qt-client-email').value = '';
+  document.getElementById('qt-new-client-block').style.display = 'block';
+  openModal('quoteModal'); addQuoteRow();
+}
+function onQuoteClientChange() {
+  const id = document.getElementById('qt-client-select').value;
+  document.getElementById('qt-new-client-block').style.display = id ? 'none' : 'block';
+}
+function toggleQuoteTva() {
+  const enabled = document.getElementById('qt-tva-enabled').checked;
+  document.getElementById('qt-tva-rate').style.display = enabled ? 'block' : 'none';
+  calcQuoteTotal();
+}
+function addQuoteRow() {
+  const idx = quoteRowIdx++; const wrap = document.getElementById('quoteRows'); const div = document.createElement('div');
+  div.className = 'cart-row'; div.id = 'qrow-' + idx;
+  div.innerHTML = '<div style="grid-column:1;"><select id="qp-' + idx + '" onchange="onQuoteProductChange(this,' + idx + ')"><option value="">-- Selectionner un produit --</option>' + quoteProductCache.map(p => '<option value="' + p.id + '" data-price="' + p.unit_sell_price + '" data-name="' + p.name + '">' + p.name + '</option>').join('') + '</select><div class="new-prod-form" id="npf-' + idx + '" style="display:none;"><input type="text" class="new-prod-name" placeholder="Nom du nouveau produit" autofocus/><select class="new-prod-unit"><option value="piece">Piece</option><option value="kg">Kg</option><option value="litre">Litre</option><option value="carton">Carton</option><option value="boite">Boite</option></select><input type="number" class="new-prod-price" placeholder="Prix unitaire" min="0" step="1"/><button type="button" class="btn-sm" onclick="saveNewProductForQuote(' + idx + ')">OK</button><button type="button" class="btn-sm btn-outline" onclick="cancelNewProductForQuote(' + idx + ')" style="border:1px solid var(--border);background:transparent;color:var(--gray);">Annuler</button></div></div><input type="number" min="1" value="1" placeholder="Qte" onchange="calcQuoteTotal()" oninput="calcQuoteTotal()" style="text-align:center" id="qq-' + idx + '"/><input type="text" value="0 F" disabled style="opacity:.6;text-align:right" id="qline-' + idx + '"/><button class="rm-btn" onclick="document.getElementById(\'qrow-' + idx + '\').remove();calcQuoteTotal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+  wrap.appendChild(div);
+}
+function onQuoteProductChange(sel, idx) {
+  const npf = document.getElementById('npf-' + idx);
+  if (sel.value === '__new__') { npf.style.display = 'block'; }
+  else { npf.style.display = 'none'; }
+  calcQuoteTotal();
+}
+function saveNewProductForQuote(idx) {
+  const name = document.querySelector('#qrow-' + idx + ' .new-prod-name')?.value?.trim();
+  const unit = document.querySelector('#qrow-' + idx + ' .new-prod-unit')?.value;
+  const price = parseFloat(document.querySelector('#qrow-' + idx + ' .new-prod-price')?.value);
+  if (!name || isNaN(price)) { toast('Nom et prix requis', 'error'); return; }
+  const sel = document.getElementById('qp-' + idx);
+  const opt = document.createElement('option'); opt.value = 'new_' + Date.now(); opt.textContent = name + ' (nouveau)'; opt.setAttribute('data-price', price); opt.setAttribute('data-name', name); opt.selected = true;
+  sel.insertBefore(opt, sel.querySelector('option[value="__new__"]'));
+  document.getElementById('npf-' + idx).style.display = 'none';
+  calcQuoteTotal();
+}
+function cancelNewProductForQuote(idx) { document.getElementById('npf-' + idx).style.display = 'none'; document.getElementById('qp-' + idx).value = ''; calcQuoteTotal(); }
+function calcQuoteTotal() {
+  let total = 0;
+  document.querySelectorAll('[id^="qrow-"]').forEach(div => {
+    const idx = div.id.split('-')[1];
+    const sel = document.getElementById('qp-' + idx);
+    const qty = parseFloat(document.getElementById('qq-' + idx)?.value) || 0;
+    const price = parseFloat(sel?.options[sel?.selectedIndex]?.getAttribute('data-price')) || 0;
+    const lineTotal = price * qty; total += lineTotal;
+  });
+  const tvaRate = parseFloat(document.getElementById('qt-tva-rate')?.value) || 0;
+  const tvaEnabled = document.getElementById('qt-tva-enabled')?.checked;
+  const tvaAmt = tvaEnabled ? total * (tvaRate / 100) : 0;
+  document.getElementById('quoteTotal').textContent = fmtAmt(total + tvaAmt) + ' F CFA';
+}
+document.getElementById('saveQuoteBtn').addEventListener('click', async () => {
+  if (!EMP) { toast('Session invalide', 'error'); return; }
+  const clientId = document.getElementById('qt-client-select').value || null;
+  let clientName = document.getElementById('qt-client-name').value.trim();
+  let clientPhone = document.getElementById('qt-client-phone').value.trim();
+  let clientEmail = document.getElementById('qt-client-email').value.trim();
+  const validDays = parseInt(document.getElementById('qt-validite').value) || 7;
+  const tvaEnabled = document.getElementById('qt-tva-enabled').checked;
+  const tvaRate = parseFloat(document.getElementById('qt-tva-rate')?.value) || 0;
+  if (!clientId && !clientName) { toast('Nom du client requis', 'error'); return; }
+  const items = [];
+  document.querySelectorAll('[id^="qrow-"]').forEach(div => {
+    const idx = div.id.split('-')[1];
+    const sel = document.getElementById('qp-' + idx);
+    const qty = parseFloat(document.getElementById('qq-' + idx)?.value);
+    const price = parseFloat(sel?.options[sel?.selectedIndex]?.getAttribute('data-price'));
+    const name = sel?.options[sel?.selectedIndex]?.getAttribute('data-name') || '';
+    const isNewProd = String(sel?.value || '').startsWith('new_');
+    if (sel?.value && qty > 0) items.push({ product_id: isNewProd ? null : sel.value, quantity: qty, unit_price: price, name, is_new: isNewProd });
+  });
+  if (items.length === 0) { toast('Ajoutez au moins un article', 'error'); return; }
+  const btn = document.getElementById('saveQuoteBtn');
+  try {
+    setBtnLoading(btn, true);
+    const res = await api('createQuote', { company_id: EMP.company_id, branch_id: EMP.branch_id || '', client_id: clientId, client_name: clientName, client_phone: clientPhone, client_email: clientEmail, valid_days: validDays, items, tva_enabled: tvaEnabled, tva_rate: tvaRate });
+    clearEmpCache();
+    document.getElementById('qsNumber').textContent = res.quote_number || '—';
+    document.getElementById('qsTotal').textContent = fmtAmt(res.total || 0) + ' F';
+    openModal('quoteSendModal'); loadQuotesPage();
+  } catch (err) { toast('Erreur : ' + err.message, 'error'); }
+  finally { setBtnLoading(btn, false); }
+});
+async function sendQuoteVia(channel) { closeModal('quoteSendModal'); }
+
+/* ══ CLIENTS ══ */
+async function loadClientsPage() {
+  if (!EMP) return;
+  try {
+    const data = await api('listClients', { companyId: EMP.company_id });
+    const tbody = document.getElementById('clientsTbody');
+    if (!data?.length) { tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><strong>Aucun client</strong></div></td></tr>'; return; }
+    tbody.innerHTML = data.map(c => '<tr><td><strong style="color:var(--white)">' + (c.name || '—') + '</strong></td><td style="color:var(--gray)">' + (c.phone || '') + '</td><td style="color:var(--gray)">' + (c.email || '') + '</td><td style="color:var(--gray)">' + (c.city || '') + '</td></tr>').join('');
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+/* ══ STOCK ══ */
+async function loadStockPage() {
+  if (!EMP) return;
+  try {
+    const data = await api('listStock', { companyId: EMP.company_id });
+    const tbody = document.getElementById('stockTbody');
+    if (!data?.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><strong>Aucun produit</strong></div></td></tr>'); return; }
+    tbody.innerHTML = data.map(s => {
+      const qty = parseFloat(s.quantity) || 0;
+      const thresh = parseFloat(s.min_threshold) || 5;
+      const status = qty === 0 ? '<span class="badge b-danger">Rupture</span>' : qty <= thresh ? '<span class="badge b-amber">Stock faible</span>' : '<span class="badge b-success">OK</span>';
+      return '<tr><td><strong style="color:var(--white)">' + (s.products?.name || s.product_name || '—') + '</strong></td><td><strong style="color:var(--white)">' + fmtAmt(qty) + '</strong></td><td style="color:var(--gray)">' + fmtAmt(thresh) + '</td><td style="font-weight:600;color:' + (qty === 0 ? 'var(--red)' : qty <= thresh ? 'var(--amber)' : 'var(--green)') + '">' + fmtAmt(qty) + '</td><td>' + status + '</td></tr>';
+    }).join('');
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+/* ══ SALES ══ */
+async function loadSalesPage() {
+  if (!EMP) return;
+  const filter = document.getElementById('salesDayFilter')?.value || 'all';
+  try {
+    const data = await api('listSales', { companyId: EMP.company_id, filter });
+    const payLabels = { cash: 'Especes', mobile_money_wave: 'Wave', mobile_money_mtn: 'MTN', mobile_money_moov: 'Moov', card: 'Carte', bank_transfer: 'Virement' };
+    const tbody = document.getElementById('salesTbody');
+    let total = 0;
+    if (!data?.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><strong>Aucune vente</strong></div></td></tr>'; }
+    else {
+      tbody.innerHTML = data.map(s => { const t = parseFloat(s.total) || 0; total += t; return '<tr><td style="color:var(--blue-l);font-weight:500">' + (s.sale_number || '—') + '</td><td>' + (s.client?.name || s.client_name || '—') + '</td><td style="font-weight:600">' + fmtAmt(t) + ' F</td><td><span class="badge b-info">' + (payLabels[s.payment_method] || s.payment_method) + '</span></td><td style="color:var(--gray)">' + fmtDate(s.created_at) + '</td></tr>'; }).join('');
+    }
+    document.getElementById('salesDayTotal').textContent = 'Total : ' + fmtAmt(total) + ' F';
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+/* ══ QUOTES ══ */
+async function loadQuotesPage() {
+  if (!EMP) return;
+  try {
+    const data = await api('listQuotes', { companyId: EMP.company_id });
+    const tbody = document.getElementById('quotesTbody');
+    if (!data?.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><strong>Aucun devis</strong></div></td></tr>'; return; }
+    const statusStyle = { brouillon: 'b-amber', envoye: 'b-info', signe: 'b-success', expire: 'b-danger' };
+    tbody.innerHTML = data.map(q => '<tr><td style="color:var(--blue-l);font-weight:500">' + (q.quote_number || '—') + '</td><td>' + (q.client_name || '—') + '</td><td style="font-weight:600">' + fmtAmt(q.total || 0) + ' F</td><td style="color:var(--gray)">' + (q.validity_days || 0) + ' jours</td><td><span class="badge ' + (statusStyle[q.statut] || 'b-amber') + '">' + (q.statut || '—') + '</span></td><td style="color:var(--gray)">' + fmtDate(q.created_at) + '</td></tr>').join('');
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+/* ══ ACTIVITIES ══ */
+async function loadActivitiesPage() {
+  if (!EMP) return;
+  try {
+    const data = await api('getEmployeeActivities', { token: EMP.token });
+    const list = document.getElementById('activitiesList');
+    if (!data?.length) { list.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><strong>Aucune activite recente</strong></div>'; return; }
+    list.innerHTML = data.map(a => {
+      const icon = a.action === 'sale' ? '<svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>'
+        : a.action === 'quote' ? '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
+        : '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+      return '<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);"><div style="width:36px;height:36px;border-radius:10px;background:rgba(37,99,235,.10);display:flex;align-items:center;justify-content:center;flex-shrink:0;">' + icon + '</div><div style="flex:1;min-width:0;"><div style="font-weight:600;color:var(--white);font-size:13px;">' + (a.details || a.action) + '</div><div style="font-size:12px;color:var(--gray);margin-top:3px;">' + new Date(a.created_at).toLocaleString('fr-FR') + '</div></div><div style="font-weight:700;color:var(--blue-l);font-size:13px;white-space:nowrap;">' + (a.montant ? fmtAmt(a.montant) + ' F' : '') + '</div></div>';
+    }).join('');
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+/* ══ HOME ══ */
+async function loadHomePage() {
+  if (!EMP) return;
+  try {
+    const [salesAll, stock] = await Promise.all([
+      api('listSales', { companyId: EMP.company_id }),
+      api('listStock', { companyId: EMP.company_id })
+    ]);
+    const now = new Date();
+    document.getElementById('empGreeting').textContent = getGreeting() + ', ' + (EMP.prenom || EMP.nom || '');
+    document.getElementById('empWelcomeSub').textContent = 'Espace personnel';
+    document.getElementById('dateChip').textContent = now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(todayStart); todayEnd.setDate(todayEnd.getDate() + 1);
+    const todaySales = (salesAll || []).filter(s => new Date(s.created_at) >= todayStart && new Date(s.created_at) < todayEnd && s.statut !== 'cancelled');
+    const caToday = todaySales.reduce((s, x) => s + (parseFloat(x.total) || 0), 0);
+    const lowStock = (stock || []).filter(s => { const q = parseFloat(s.quantity) || 0; const t = parseFloat(s.min_threshold) || 5; return q <= t; });
+    document.getElementById('ek1').textContent = todaySales.length;
+    document.getElementById('ek2').textContent = fmtAmt(caToday) + ' F';
+    document.getElementById('ek3').textContent = (stock || []).length;
+    document.getElementById('ek4').textContent = lowStock.length;
+    const recent = [...(salesAll || [])].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 6);
+    const salesDiv = document.getElementById('empRecentSales');
+    salesDiv.innerHTML = recent.length ? recent.map(s => '<div class="sale-row"><div><div class="sale-client">' + (s.client?.name || s.client_name || 'Client anonyme') + '</div><div class="sale-num">' + (s.sale_number || '—') + '</div></div><div style="text-align:right"><div class="sale-amt">' + fmtAmt(parseFloat(s.total) || 0) + ' F</div><div class="sale-date">' + fmtDate(s.created_at) + '</div></div>').join('') : '<div class="empty-state"><div class="empty-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><strong>Aucune vente</strong></div>';
+    const stockAlert = document.getElementById('empStockAlert');
+    stockAlert.innerHTML = lowStock.length ? lowStock.map(s => '<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;"><strong style="color:var(--red)">' + (s.products?.name || '—') + '</strong> <span style="color:var(--gray);margin-left:6px;">' + fmtAmt(parseFloat(s.quantity) || 0) + ' / ' + fmtAmt(parseFloat(s.min_threshold) || 5) + '</span></div>').join('') : '<div class="empty-state"><div class="empty-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><strong>Tout est OK</strong></div>';
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+/* ══ SESSION ══ */
+async function doEmpLogin() {
+  const code = document.getElementById('empCode').value.trim();
+  const errEl = document.getElementById('empCodeErr');
+  if (!code || code.length !== 6) { errEl.textContent = 'Le code doit contenir 6 caracteres.'; errEl.style.display = 'block'; return; }
+  const btn = document.getElementById('empCodeBtn');
+  btn.disabled = true; btn.textContent = 'Connexion...';
+  try {
+    const r = await api('employeeLoginByCode', { code });
+    if (!r || !r.employee) throw new Error('Code invalide ou employe inactif.');
+    const s = { token: r.session && r.session.token, employee_id: r.employee.id, prenom: r.employee.prenom, nom: r.employee.nom, company_id: r.employee.company_id, branch_id: r.employee.branch_id, role: 'employee' };
+    localStorage.setItem('empSession', JSON.stringify(s));
+    EMP = r.employee;
+    document.getElementById('empLoginScreen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    document.getElementById('sbName').textContent = r.employee.company?.name || 'EntreFlow';
+    document.getElementById('sbAv').textContent = (r.employee.prenom || 'E')[0].toUpperCase();
+    document.getElementById('userAv').textContent = (r.employee.prenom || 'E')[0].toUpperCase();
+    loadHomePage(); startAutoRefresh();
+  } catch (err) { errEl.textContent = err.message; errEl.style.display = 'block'; btn.disabled = false; btn.textContent = 'Acceder a mon espace'; }
+}
+function doEmpLogout() { try { localStorage.removeItem('empSession'); } catch (e) {} EMP = null; location.href = location.href; }
+document.getElementById('empCodeBtn').addEventListener('click', doEmpLogin);
+document.getElementById('empCode').addEventListener('keydown', e => { if (e.key === 'Enter') doEmpLogin(); });
+
+/* ══ AUTO REFRESH ══ */
+let autoRefreshTimer = null;
+function startAutoRefresh() { if (autoRefreshTimer) clearInterval(autoRefreshTimer); autoRefreshTimer = setInterval(() => { if (EMP) refreshCurrentPage(); }, 20000); }
+
+/* ══ INIT ══ */
+async function initEmployee() {
+  const stored = localStorage.getItem('empSession');
+  if (stored) {
+    try {
+      const s = JSON.parse(stored);
+      if (s.employee_id && s.token) {
+        const r = await api('findEmployeeByToken', { token: s.token });
+        if (r && r.id) {
+          EMP = r;
+          document.getElementById('empLoginScreen').style.display = 'none';
+          document.getElementById('dashboard').style.display = 'block';
+          document.getElementById('sbName').textContent = r.company?.name || 'EntreFlow';
+          document.getElementById('sbAv').textContent = (r.prenom || 'E')[0].toUpperCase();
+          document.getElementById('userAv').textContent = (r.prenom || 'E')[0].toUpperCase();
+          loadHomePage(); startAutoRefresh(); return;
+        }
+      }
+    } catch (e) { localStorage.removeItem('empSession'); }
+  }
+  document.getElementById('empLoginScreen').style.display = 'flex';
+  document.getElementById('dashboard').style.display = 'none';
+}
+
+/* ══ BACKGROUND ANIMATION ══ */
+const bgC = document.getElementById('bgCanvas'), bgX = bgC ? bgC.getContext('2d') : null;
+if (bgX) {
+  let BW, BH, BT = 0;
+  function bgResize() { BW = bgC.width = window.innerWidth; BH = bgC.height = window.innerHeight; }
+  bgResize(); window.addEventListener('resize', bgResize);
+  const bgBlobs = [{ x: .1, y: .2, vx: .0003, vy: .0002, r: .45, h: 218 }, { x: .88, y: .75, vx: -.0002, vy: .0003, r: .4, h: 228 }, { x: .5, y: .9, vx: .0002, vy: -.0002, r: .35, h: 205 }];
+  const bgNodes = Array.from({ length: 35 }, () => ({ x: Math.random(), y: Math.random(), vx: (Math.random() - .5) * .0006, vy: (Math.random() - .5) * .0005, r: .8 + Math.random() * 1.4, a: .15 + Math.random() * .3, h: 212 + Math.random() * 25, p: Math.random() * Math.PI * 2 }));
+  function bgDraw() {
+    BT += .007; bgX.clearRect(0, 0, BW, BH);
+    const g = bgX.createLinearGradient(0, 0, BW * .7, BH); g.addColorStop(0, '#040810'); g.addColorStop(1, '#020614'); bgX.fillStyle = g; bgX.fillRect(0, 0, BW, BH);
+    bgBlobs.forEach(b => { b.x += b.vx; b.y += b.vy; if (b.x < 0 || b.x > 1) b.vx *= -1; if (b.y < 0 || b.y > 1) b.vy *= -1; const gd = bgX.createRadialGradient(b.x * BW, b.y * BH, 0, b.x * BW, b.y * BH, b.r * Math.min(BW, BH)); gd.addColorStop(0, 'hsla(' + b.h + ',72%,50%,.08)'); gd.addColorStop(1, 'transparent'); bgX.fillStyle = gd; bgX.fillRect(0, 0, BW, BH); });
+    const LK = BW * .09;
+    bgNodes.forEach((n, i) => { n.x += n.vx; n.y += n.vy; if (n.x < 0 || n.x > 1) n.vx *= -1; if (n.y < 0 || n.y > 1) n.vy *= -1; n.p += .016; const px = n.x * BW, py = n.y * BH, pa = n.a * (.6 + .4 * Math.sin(n.p)); for (let j = i + 1; j < bgNodes.length; j++) { const m = bgNodes[j]; const dx = (n.x - m.x) * BW, dy = (n.y - m.y) * BH, d = Math.sqrt(dx * dx + dy * dy); if (d < LK) { bgX.beginPath(); bgX.moveTo(px, py); bgX.lineTo(m.x * BW, m.y * BH); bgX.strokeStyle = 'rgba(96,165,250,' + ((1 - d / LK) * .06) + ')'; bgX.lineWidth = .5; bgX.stroke(); } } bgX.beginPath(); bgX.arc(px, py, n.r, 0, Math.PI * 2); bgX.fillStyle = 'hsla(' + n.h + ',70%,65%,' + pa + ')'; bgX.fill(); });
+    requestAnimationFrame(bgDraw);
+  }
+  bgDraw();
+}
+
+initEmployee();
+</script>
+</body>
+</html>

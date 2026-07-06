@@ -1,0 +1,13 @@
+{
+  "name": "EntreFlow Super Admin",
+  "short_name": "EntreFlow",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#040810",
+  "theme_color": "#040810",
+  "icons": [
+    { "src": "icon-192.svg", "sizes": "192x192", "type": "image/svg+xml" },
+    { "src": "icon-512.svg", "sizes": "512x512", "type": "image/svg+xml" }
+  ]
+}

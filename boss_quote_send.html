@@ -1,0 +1,20 @@
+<div class="modal-bg" id="quoteSendModal">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Devis créé !</h3><button class="modal-close" onclick="closeModal('quoteSendModal')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <p style="font-size:13px;color:var(--gray);margin-bottom:16px;">N° <strong id="qsNumber" style="color:var(--white)"></strong> — Total <strong id="qsTotal" style="color:var(--blue-l)"></strong></p>
+    <div class="fg">
+      <label style="display:block;margin-bottom:8px;">Envoyer ce devis</label>
+      <p style="font-size:13px;color:var(--gray);">Un email avec le PDF et le lien de signature a été envoyé automatiquement au client.</p>
+    </div>
+    <div class="modal-actions" style="flex-direction:column;align-items:stretch;gap:10px;">
+      <button class="btn btn-green btn-full" onclick="closeModal('quoteSendModal')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Compris
+      </button>
+      <button class="btn btn-outline btn-full" onclick="sendQuoteVia('whatsapp')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+        Ouvrir WhatsApp
+      </button>
+    </div>
+  </div>
+</div>
