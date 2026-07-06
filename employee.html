@@ -1138,7 +1138,7 @@ function startAutoRefresh() { if (autoRefreshTimer) clearInterval(autoRefreshTim
 
 /* ══ INIT ══ */
 function hideLoading(){ const el=document.getElementById('loadingScreen'); if(el){ el.style.display='none'; } }
-function initEmployee() {
+async function initEmployee() {
   const stored = localStorage.getItem('empSession');
   if (stored) {
     try {
