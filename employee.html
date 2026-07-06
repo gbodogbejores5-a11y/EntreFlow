@@ -433,11 +433,18 @@ function renderAll(){
 }
 function renderSaleRow(s){
   const time = new Date(s.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-  const invBtn = s.client_email
-    ? '<button class="inv-btn" id="inv-'+s.id+'" onclick="sendInvoiceForSale(\\''+s.id+'\\', this)">Envoyer</button>'
-    : '<span style="color:var(--gray);font-size:12px;">—</span>';
+  const invBtn = s.client_email ? '<button class="inv-btn" data-inv-id="'+s.id+'">Envoyer</button>' : '<span style="color:var(--gray);font-size:12px;">—</span>';
   return '<tr><td style="color:var(--blue-l);font-weight:700">'+esc(s.sale_number||'—')+'</td><td>'+esc(s.client_name||'Anonyme')+'</td><td style="font-weight:700">'+money(s.total)+'</td><td style="color:var(--gray)">'+time+'</td><td>'+invBtn+'</td></tr>';
 }
+document.addEventListener('click', function(e){
+  const btn = e.target.closest('button[data-inv-id]');
+  if (!btn) return;
+  const saleId = btn.getAttribute('data-inv-id');
+  if (!saleId) return;
+  btn.disabled = true;
+  sendInvoiceForSale(saleId, btn);
+});
+function refreshSaleClientOptions(){
 function refreshSaleClientOptions(){
   const sel = document.getElementById('sl-client'); const current = sel.value;
   sel.innerHTML = '<option value="">-- Client anonyme --</option>' + (DASH.clients||[]).map(c =>
