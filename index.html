@@ -32,10 +32,12 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #60A5
 .nav-links{display:flex;gap:48px}
 .nav-links a{font-size:14px;font-weight:500;color:#8A99C2;text-decoration:none;transition:color .2s}
 @media(hover:hover){.nav-links a:hover{color:#F8FAFC}}
-.btn-ghost{padding:8px 24px;border-radius:40px;font-size:13px;font-weight:500;background:transparent;border:1px solid rgba(59,130,246,.15);color:#F8FAFC;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.btn-ghost{padding:8px 24px;border-radius:40px;font-size:13px;font-weight:500;background:transparent;border:1px solid rgba(59,130,246,.15);color:#F8FAFC;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;flex-shrink:0}
 @media(hover:hover){.btn-ghost:hover{border-color:#60A5FA;background:rgba(59,130,246,.08);transform:translateY(-1px)}}
-.btn-blue{padding:8px 28px;border-radius:40px;font-size:13px;font-weight:600;background:linear-gradient(105deg,#1D4ED8,#3B82F6);border:none;color:#fff;cursor:pointer;transition:all .25s;box-shadow:0 4px 14px rgba(37,99,235,.35);font-family:'DM Sans',sans-serif;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.btn-blue{padding:8px 28px;border-radius:40px;font-size:13px;font-weight:600;background:linear-gradient(105deg,#1D4ED8,#3B82F6);border:none;color:#fff;cursor:pointer;transition:all .25s;box-shadow:0 4px 14px rgba(37,99,235,.35);font-family:'DM Sans',sans-serif;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;flex-shrink:0}
 @media(hover:hover){.btn-blue:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(37,99,235,.5)}}
+
+.nav-btns{display:flex;align-items:center;gap:12px;flex-shrink:0}
 
 .burger{display:none;flex-direction:column;justify-content:center;gap:5px;width:44px;height:44px;background:none;border:none;cursor:pointer;flex-shrink:0;z-index:210}
 .burger span{display:block;width:22px;height:2px;background:#F8FAFC;border-radius:2px;transition:transform .3s ease,opacity .3s ease;margin:0 auto}
@@ -166,6 +168,13 @@ footer{border-top:1px solid rgba(59,130,246,.12);padding:48px 6%;display:flex;ju
   .nav-btns{gap:8px}
 }
 
+/* Phones — keep the top bar to logo + hamburger only, so nothing can ever
+   be squeezed or pushed off-screen. Both actions still live in the
+   full-screen mobile panel. */
+@media(max-width:560px){
+  .nav-btns .btn-blue{display:none}
+}
+
 @media(max-width:768px){
   .nav{height:64px;padding:0 5%}
   .mobile-panel{top:64px}
@@ -198,7 +207,7 @@ footer{border-top:1px solid rgba(59,130,246,.12);padding:48px 6%;display:flex;ju
   .logo svg{width:28px;height:28px}
   .hero{padding:100px 5% 48px}
   .hero p{padding:0}
-  .kpis{grid-template-columns:1fr 1fr;gap:8px}
+  .kpis{grid-template-columns:1fr 1fr}
   .kpi{padding:10px}
   .kpi-v{font-size:18px}
   .f-top{align-items:flex-start}
