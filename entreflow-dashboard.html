@@ -419,10 +419,6 @@ body.ef-md .sidebar, body.ef-lg .sidebar, body.ef-xl .sidebar {
   transform: translateX(0) !important;
 }
 
-body.ef-sidebar-veil::before{
-  content:''; position:fixed; inset:0; background:rgba(4,6,18,.55);
-  z-index:70; animation:ef-fadein .2s ease;
-}
 @keyframes ef-fadein{from{opacity:0}to{opacity:1}}
 
 body.ef-xs .topbar, body.ef-sm .topbar { left:0 !important; padding:0 12px; }
@@ -2428,21 +2424,24 @@ init();
 
   function openMobileSidebar(){
     const sb = document.querySelector('.sidebar');
+    const veil = document.getElementById('sidebarVeil');
     if (!sb) return;
     sb.classList.add('ef-open');
-    document.body.classList.add('ef-sidebar-veil');
+    if (veil) { veil.style.display='block'; requestAnimationFrame(()=>{ veil.style.opacity='1'; }); }
   }
 
   function closeMobileSidebar(){
     const sb = document.querySelector('.sidebar');
+    const veil = document.getElementById('sidebarVeil');
     if (!sb) return;
     sb.classList.remove('ef-open');
-    document.body.classList.remove('ef-sidebar-veil');
+    if (veil) { veil.style.opacity='0'; setTimeout(()=>{ veil.style.display='none'; }, 280); }
   }
 
   function isMobileSidebarOpen(){
     const sb = document.querySelector('.sidebar');
-    return sb && sb.classList.contains('ef-open');
+    const veil = document.getElementById('sidebarVeil');
+    return sb && sb.classList.contains('ef-open') || (veil && veil.style.display==='block');
   }
 
   window.efToggleSidebar = function(){
