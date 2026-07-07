@@ -31,13 +31,11 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #60A5
 .logo-text span{background:linear-gradient(90deg,#fff,#93C5FD);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .nav-links{display:flex;gap:48px}
 .nav-links a{font-size:14px;font-weight:500;color:#8A99C2;text-decoration:none;transition:color .2s}
-.nav-links a:hover{color:#F8FAFC}
-.nav-btns{display:flex;gap:12px;align-items:center}
+@media(hover:hover){.nav-links a:hover{color:#F8FAFC}}
 .btn-ghost{padding:8px 24px;border-radius:40px;font-size:13px;font-weight:500;background:transparent;border:1px solid rgba(59,130,246,.15);color:#F8FAFC;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
-.btn-ghost:hover{border-color:#60A5FA;background:rgba(59,130,246,.08);transform:translateY(-1px)}
+@media(hover:hover){.btn-ghost:hover{border-color:#60A5FA;background:rgba(59,130,246,.08);transform:translateY(-1px)}}
 .btn-blue{padding:8px 28px;border-radius:40px;font-size:13px;font-weight:600;background:linear-gradient(105deg,#1D4ED8,#3B82F6);border:none;color:#fff;cursor:pointer;transition:all .25s;box-shadow:0 4px 14px rgba(37,99,235,.35);font-family:'DM Sans',sans-serif;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
-.btn-blue:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(37,99,235,.5)}
-.btn-lg{padding:14px 34px;font-size:14px}
+@media(hover:hover){.btn-blue:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(37,99,235,.5)}}
 
 .burger{display:none;flex-direction:column;justify-content:center;gap:5px;width:44px;height:44px;background:none;border:none;cursor:pointer;flex-shrink:0;z-index:210}
 .burger span{display:block;width:22px;height:2px;background:#F8FAFC;border-radius:2px;transition:transform .3s ease,opacity .3s ease;margin:0 auto}
@@ -65,7 +63,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #60A5
 
 /* ---------- BROWSER FRAME MOCKUP ---------- */
 .frame{max-width:1000px;width:100%;margin:0 auto;border-radius:28px;border:1px solid rgba(59,130,246,.15);overflow:hidden;background:rgba(10,16,48,.75);backdrop-filter:blur(8px);box-shadow:0 30px 80px -20px rgba(0,0,0,.65);animation:up .7s .32s both;transition:transform .3s}
-.frame:hover{transform:translateY(-4px)}
+@media(hover:hover){.frame:hover{transform:translateY(-4px)}}
 .f-bar{padding:14px 20px;background:rgba(5,10,26,.85);border-bottom:1px solid rgba(59,130,246,.15);display:flex;align-items:center;gap:12px}
 .dots{display:flex;gap:8px;flex-shrink:0}
 .dots span{width:12px;height:12px;border-radius:50%}
@@ -112,9 +110,9 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #60A5
 .sec-sub{font-size:16px;color:#8A99C2;max-width:520px}
 .feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.15);border-radius:28px;overflow:hidden;margin-top:56px}
 .feat-card{background:rgba(10,16,48,.82);padding:32px;transition:all .3s}
-.feat-card:hover{background:rgba(17,24,61,.92);transform:translateY(-2px)}
-.feat-icon{width:52px;height:52px;border-radius:16px;background:rgba(59,130,246,.10);display:flex;align-items:center;justify-content:center;margin-bottom:20px}
-.feat-icon svg{width:28px;height:28px;stroke:#93C5FD;stroke-width:1.6;fill:none}
+@media(hover:hover){.feat-card:hover{background:rgba(17,24,61,.92);transform:translateY(-2px)}}
+
+
 .feat-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:10px}
 .feat-desc{font-size:14px;color:#8A99C2;line-height:1.6}
 .how-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:32px;margin-top:64px;position:relative}
@@ -141,7 +139,7 @@ footer{border-top:1px solid rgba(59,130,246,.12);padding:48px 6%;display:flex;ju
 .f-logo-text{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;background:linear-gradient(90deg,#fff,#93C5FD);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .f-links{display:flex;gap:36px;flex-wrap:wrap;justify-content:center}
 .f-links a{font-size:13px;color:#8A99C2;text-decoration:none;transition:color .2s}
-.f-links a:hover{color:#93C5FD}
+@media(hover:hover){.f-links a:hover{color:#93C5FD}}
 .f-copy{font-size:12px;color:#4A5568}
 
 .reveal{opacity:0;transform:translateY(40px);transition:opacity .8s cubic-bezier(.2,.9,.4,1.1),transform .8s ease}
