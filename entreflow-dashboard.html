@@ -2370,7 +2370,8 @@ async function init(){
     if(new URLSearchParams(location.search).get('token')){goTo('employee_view');loadEmployeeView();}
   }catch(err){
     console.error(err);
-    showToast(err.message || 'Erreur de chargement', 'error');
+    const el=document.getElementById('loadingScreen');if(el){el.classList.add('hide');setTimeout(()=>el.style.display='none',400);}
+    const ts=document.getElementById('toastContainer');if(ts){const m=document.createElement('div');m.className='toast error';m.innerHTML=`<span>${err.message||'Erreur de chargement'}</span>`;ts.appendChild(m);requestAnimationFrame(()=>m.classList.add('visible'));setTimeout(()=>{m.classList.add('leaving');setTimeout(()=>m.remove(),350);},4200);}
   }
 }
 
