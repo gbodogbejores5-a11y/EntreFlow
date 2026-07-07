@@ -1535,6 +1535,7 @@ async function loadHomePage(silent){
   const periodSales=salesAll.filter(s=>new Date(s.created_at)>=periodStart);
   const revenue=periodSales.reduce((s,v)=>s+(parseFloat(v.total)||0),0);
   const avgBasket=periodSales.length?Math.round(revenue/periodSales.length):0;
+  const lowStock=(stock||[]).filter(s=>(parseFloat(s.quantity)||0)<=(parseFloat(s.min_threshold||5)||5));
 
   if (!silent) {
     animCount('k1',products.length);animCount('k2',clients.length);animCount('k3',periodSales.length);
