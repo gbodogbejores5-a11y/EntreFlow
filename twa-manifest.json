@@ -1,0 +1,20 @@
+{
+  "shortName": "EntreFlow",
+  "packageId": "com.entreflow.app",
+  "host": "entreflow.netlify.app",
+  "launcherName": "EntreFlow",
+  "display": "standalone",
+  "themeColor": "#040810",
+  "navigationColor": "#040810",
+  "backgroundColor": "#040810",
+  "enableNotifications": false,
+  "signing": {
+    "keyStorePath": "android/entreflow.jks",
+    "keyStorePassword": "entreflow2026",
+    "keyAlias": "entreflow",
+    "keyPassword": "entreflow2026"
+  },
+  "splashes": [],
+  "iconUrl": "https://entreflow.netlify.app/globe.svg",
+  "iconColor": "#3b82f6"
+}
