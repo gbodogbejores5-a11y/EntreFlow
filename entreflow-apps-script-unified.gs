@@ -1672,8 +1672,7 @@ function _i(name) {
 }
 
 function getPortalUrl_() {
-  try { return ScriptApp.getService().getUrl(); }
-  catch (e) { return CONFIG.PORTAL_URL; }
+  return CONFIG.PORTAL_URL || 'https://entreflow.netlify.app';
 }
 function safeJson_(obj) {
   return JSON.stringify(obj)

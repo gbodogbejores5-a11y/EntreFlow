@@ -16,7 +16,6 @@
 *{margin:0;padding:0;box-sizing:border-box;font-family:'DM Sans',-apple-system,sans-serif;-webkit-tap-highlight-color:transparent}
 html{scroll-behavior:smooth}
 body{background:#040612;color:#F8FAFC;min-height:100vh;font-family:'DM Sans',sans-serif;overflow-x:hidden}
-body.menu-open{overflow:hidden}
 h1,h2,h3{font-family:'Syne',sans-serif;letter-spacing:-0.02em}
 img,svg{max-width:100%}
 #cvs{position:fixed;inset:0;z-index:0;pointer-events:none}
@@ -37,19 +36,8 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #60A5
 .btn-blue{padding:8px 28px;border-radius:40px;font-size:13px;font-weight:600;background:linear-gradient(105deg,#1D4ED8,#3B82F6);border:none;color:#fff;cursor:pointer;transition:all .25s;box-shadow:0 4px 14px rgba(37,99,235,.35);font-family:'DM Sans',sans-serif;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;flex-shrink:0}
 @media(hover:hover){.btn-blue:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(37,99,235,.5)}}
 
-.nav-btns{display:flex;align-items:center;gap:12px;flex-shrink:0}
-
-.burger{display:none;flex-direction:column;justify-content:center;gap:5px;width:44px;height:44px;background:none;border:none;cursor:pointer;flex-shrink:0;z-index:210}
-.burger span{display:block;width:22px;height:2px;background:#F8FAFC;border-radius:2px;transition:transform .3s ease,opacity .3s ease;margin:0 auto}
-.burger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
-.burger.open span:nth-child(2){opacity:0}
-.burger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
-
-.mobile-panel{position:fixed;top:72px;left:0;right:0;bottom:0;z-index:150;background:rgba(4,7,20,.98);backdrop-filter:blur(20px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding:40px 24px;transform:translateY(-12px);opacity:0;pointer-events:none;transition:opacity .28s ease,transform .28s ease}
-.mobile-panel.open{opacity:1;transform:translateY(0);pointer-events:auto}
-.mobile-panel a{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:#F8FAFC;text-decoration:none}
-.mobile-panel .mp-btns{display:flex;flex-direction:column;gap:14px;width:100%;max-width:300px;margin-top:12px}
-.mobile-panel .btn-ghost,.mobile-panel .btn-blue{width:100%;padding:14px 24px;font-size:15px}
+.nav-btns{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.txt-short{display:none}
 
 /* ---------- HERO ---------- */
 .hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:130px 5% 80px}
@@ -76,7 +64,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #60A5
 .f-sb-icon{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#1D4ED8,#3B82F6);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
 .f-sb-name{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;background:linear-gradient(90deg,#fff,#93C5FD);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .f-sb-item{display:flex;align-items:center;gap:12px;padding:10px 16px;font-size:13px;font-weight:500;color:#8A99C2;cursor:pointer}
-.f-sb-item svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0}
+.f-sb-item svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 .f-sb-item.on{background:linear-gradient(90deg,rgba(59,130,246,.12),transparent);color:#93C5FD;border-right:2px solid #60A5FA}
 .f-main{flex:1;padding:20px;overflow-x:auto;min-width:0}
 .f-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;gap:12px;flex-wrap:wrap}
@@ -96,9 +84,10 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #60A5
 .p-paid{background:rgba(16,185,129,.14);color:#10B981}
 
 /* ---------- TRUST / STATS ---------- */
-.trust{display:flex;justify-content:center;gap:48px;flex-wrap:wrap;padding:32px 5%;border-bottom:1px solid rgba(59,130,246,.12);background:rgba(5,10,26,.35)}
-.t-item{display:flex;align-items:center;gap:10px;font-size:13px;color:#8A99C2}
-.t-item svg{width:18px;height:18px;stroke:#93C5FD;stroke-width:1.5;fill:none;flex-shrink:0}
+.trust{display:flex;justify-content:center;gap:40px;flex-wrap:wrap;padding:32px 5%;border-bottom:1px solid rgba(59,130,246,.12);background:rgba(5,10,26,.35)}
+.t-item{display:flex;align-items:center;gap:12px;font-size:13px;color:#8A99C2}
+.t-icon{width:32px;height:32px;flex-shrink:0;border-radius:10px;background:rgba(59,130,246,.10);border:1px solid rgba(96,165,250,.18);display:flex;align-items:center;justify-content:center}
+.t-item svg{width:16px;height:16px;stroke:#93C5FD;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;fill:none;flex-shrink:0}
 .stats{display:flex;justify-content:center;gap:64px;flex-wrap:wrap;padding:56px 5%;border-bottom:1px solid rgba(59,130,246,.12)}
 .stat{text-align:center}
 .stat-n{font-family:'Syne',sans-serif;font-size:clamp(30px,6vw,44px);font-weight:800;background:linear-gradient(135deg,#fff,#93C5FD);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
@@ -115,6 +104,8 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #60A5
 @media(hover:hover){.feat-card:hover{background:rgba(17,24,61,.92);transform:translateY(-2px)}}
 
 
+.feat-icon{width:48px;height:48px;flex-shrink:0;border-radius:14px;background:linear-gradient(135deg,rgba(59,130,246,.20),rgba(29,78,216,.06));border:1px solid rgba(96,165,250,.22);display:flex;align-items:center;justify-content:center;margin-bottom:22px}
+.feat-icon svg{width:22px;height:22px;stroke:#93C5FD;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .feat-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:10px}
 .feat-desc{font-size:14px;color:#8A99C2;line-height:1.6}
 .how-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:32px;margin-top:64px;position:relative}
@@ -160,24 +151,43 @@ footer{border-top:1px solid rgba(59,130,246,.12);padding:48px 6%;display:flex;ju
   .trust{gap:32px}
 }
 
-/* Tablets & large phones — switch to mobile nav */
+/* Tablets & large phones — drop the anchor links, keep both CTA buttons
+   directly in the bar, always visible, never hidden behind a menu. */
 @media(max-width:900px){
   .nav-links{display:none}
-  .nav-btns .btn-ghost{display:none}
-  .burger{display:flex}
-  .nav-btns{gap:8px}
 }
 
-/* Phones — keep the top bar to logo + hamburger only, so nothing can ever
-   be squeezed or pushed off-screen. Both actions still live in the
-   full-screen mobile panel. */
-@media(max-width:560px){
-  .nav-btns .btn-blue{display:none}
+@media(max-width:640px){
+  .nav{padding:0 5%;height:66px}
+  .logo svg{width:30px;height:30px}
+  .logo-text{font-size:18px}
+  .nav-btns{gap:8px}
+  .btn-ghost{padding:9px 18px;font-size:12.5px}
+  .btn-blue{padding:9px 20px;font-size:12.5px}
+}
+
+/* Small phones — swap the long CTA label for a short one and drop the
+   wordmark down to just the icon, so both buttons keep full tap targets
+   and stay on one tidy, centered row. */
+@media(max-width:420px){
+  .nav{padding:0 4.5%;height:62px}
+  .logo-text{display:none}
+  .logo svg{width:28px;height:28px}
+  .txt-full{display:none}
+  .txt-short{display:inline}
+  .nav-btns{gap:7px}
+  .btn-ghost{padding:8px 14px;font-size:12px}
+  .btn-blue{padding:8px 16px;font-size:12px}
+}
+
+@media(max-width:340px){
+  .nav{padding:0 4%}
+  .btn-ghost{padding:7px 12px;font-size:11.5px}
+  .btn-blue{padding:7px 14px;font-size:11.5px}
+  .nav-btns{gap:6px}
 }
 
 @media(max-width:768px){
-  .nav{height:64px;padding:0 5%}
-  .mobile-panel{top:64px}
   .hero{padding:110px 6% 60px}
   .badge{font-size:11px;padding:5px 16px;margin-bottom:24px;text-align:center}
   .hero-btns{margin-bottom:48px}
@@ -203,8 +213,6 @@ footer{border-top:1px solid rgba(59,130,246,.12);padding:48px 6%;display:flex;ju
 
 /* Small phones */
 @media(max-width:480px){
-  .logo-text{font-size:18px}
-  .logo svg{width:28px;height:28px}
   .hero{padding:100px 5% 48px}
   .hero p{padding:0}
   .kpis{grid-template-columns:1fr 1fr}
@@ -220,7 +228,6 @@ footer{border-top:1px solid rgba(59,130,246,.12);padding:48px 6%;display:flex;ju
   .step-num{width:56px;height:56px;font-size:22px}
   .cta-box{padding:36px 18px}
   .btn-lg{padding:13px 26px;font-size:13px}
-  .mobile-panel a{font-size:19px}
 }
 
 /* Very small phones */
@@ -233,7 +240,6 @@ footer{border-top:1px solid rgba(59,130,246,.12);padding:48px 6%;display:flex;ju
 /* Landscape phones (short viewport) */
 @media(max-height:480px) and (orientation:landscape){
   .hero{min-height:auto;padding:100px 5% 48px}
-  .mobile-panel{overflow-y:auto;padding:24px}
 }
 </style>
 </head>
@@ -248,21 +254,9 @@ footer{border-top:1px solid rgba(59,130,246,.12);padding:48px 6%;display:flex;ju
   <div class="nav-links"><a href="#features">Fonctionnalités</a><a href="#how">Processus</a></div>
   <div class="nav-btns">
     <a class="btn-ghost" href="/entreflow-login.html">Connexion</a>
-    <a class="btn-blue" href="/employee.html">Espace Vendeur</a>
-    <button class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="mobilePanel">
-      <span></span><span></span><span></span>
-    </button>
+    <a class="btn-blue" href="/employee.html"><span class="txt-full">Espace Vendeur</span><span class="txt-short">Vendeur</span></a>
   </div>
 </nav>
-
-<div class="mobile-panel" id="mobilePanel">
-  <a href="#features">Fonctionnalités</a>
-  <a href="#how">Processus</a>
-  <div class="mp-btns">
-    <a class="btn-ghost" href="/entreflow-login.html">Connexion</a>
-    <a class="btn-blue" href="/employee.html">Espace Vendeur</a>
-  </div>
-</div>
 
 <section class="hero">
   <div class="badge"><span class="badge-dot"></span>La nouvelle référence pour les entrepreneurs</div>
@@ -302,10 +296,10 @@ footer{border-top:1px solid rgba(59,130,246,.12);padding:48px 6%;display:flex;ju
 </section>
 
 <div class="trust reveal">
-  <div class="t-item"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>Disponible pour les entreprises au Bénin</span></div>
-  <div class="t-item"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg><span>Hébergement sécurisé</span></div>
-  <div class="t-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Support réactif</span></div>
-  <div class="t-item"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><span>Conçu pour les entrepreneurs</span></div>
+  <div class="t-item"><span class="t-icon"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span><span>Disponible pour les entreprises au Bénin</span></div>
+  <div class="t-item"><span class="t-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span><span>Hébergement sécurisé</span></div>
+  <div class="t-item"><span class="t-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span><span>Support réactif</span></div>
+  <div class="t-item"><span class="t-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></span><span>Conçu pour les entrepreneurs</span></div>
 </div>
 
 <div class="stats reveal">
@@ -357,19 +351,6 @@ footer{border-top:1px solid rgba(59,130,246,.12);padding:48px 6%;display:flex;ju
 </div>
 
 <script>
-/* ---------- Mobile nav toggle ---------- */
-const burger=document.getElementById('burger');
-const panel=document.getElementById('mobilePanel');
-function closeMenu(){burger.classList.remove('open');panel.classList.remove('open');burger.setAttribute('aria-expanded','false');document.body.classList.remove('menu-open')}
-burger.addEventListener('click',()=>{
-  const isOpen=panel.classList.toggle('open');
-  burger.classList.toggle('open',isOpen);
-  burger.setAttribute('aria-expanded',isOpen?'true':'false');
-  document.body.classList.toggle('menu-open',isOpen);
-});
-panel.querySelectorAll('a').forEach(a=>a.addEventListener('click',closeMenu));
-window.addEventListener('resize',()=>{if(window.innerWidth>900)closeMenu()});
-
 /* ---------- Background canvas animation ---------- */
 const C=document.getElementById('cvs'),X=C.getContext('2d');
 let W,H,T=0;const DPR=Math.min(window.devicePixelRatio||1,2);
