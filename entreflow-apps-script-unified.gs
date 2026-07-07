@@ -1061,7 +1061,7 @@ function generateQuotePDF_(p) {
   }
   if (p.sendWhatsapp && quote.client_phone) {
     const phone = String(quote.client_phone).replace(/[^0-9+]/g, '');
-    whatsappLink = `https://wa.me/${phone}?text=${encodeURIComponent(`Bonjour ${quote.client_name}, voici votre devis N° ${quote.quote_number} d'un montant de ${fmtMoney(quote.total, company.currency)}. Merci — ${company.name || CONFIG.APP_NAME}.`)}`;
+    whatsappLink = `https://wa.me/${phone}?text=${encodeURIComponent(`Bonjour ${quote.client_name}, voici votre devis N° ${quote.quote_number} d'un montant de ${fmtMoney(quote.total, company.currency)}.\nVérifiez votre email ET vos spams pour consulter et signer votre devis.\nMerci — ${company.name || CONFIG.APP_NAME}.`)}`;
   }
   return { ok: true, emailSent, whatsappLink };
 }
@@ -1400,6 +1400,7 @@ function sendEmail_(p) {
 function _emailHeaderBlock_(company) {
   const co = company || {};
   if (co.logo_data) return `<img src="${co.logo_data}" style="height:36px;max-width:140px;object-fit:contain;border-radius:7px;display:block;">`;
+  if (CONFIG.ENTREFLOW_LOGO_BASE64) return `<img src="${CONFIG.ENTREFLOW_LOGO_BASE64}" style="height:36px;max-width:140px;object-fit:contain;border-radius:7px;display:block;">`;
   return `<p style="font-size:22px;font-weight:900;color:#fff;margin:0;letter-spacing:-.5px;">${co.name || CONFIG.APP_NAME}</p>`;
 }
 /* P1: _emailWrap_ échappe systématiquement les textes dynamiques pour prévenir XSS */
