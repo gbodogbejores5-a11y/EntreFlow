@@ -522,9 +522,8 @@ async function submitReg(){
   try{
     const reg=await api('registerUser',{email,password:pass,prenom,nom,role:'admin',companyName:company});
     if(reg && reg.ok !== false){
-      localStorage.setItem('entreflowUser', JSON.stringify({ ...reg.user, token: reg.token }));
-      showToast('Compte créé avec succès !','success');
-      setTimeout(()=>window.location.href='entreflow-dashboard.html',1200);
+      showToast('Compte créé ! Connectez-vous.','success');
+      setTimeout(()=>window.location.href='entreflow-login.html',1200);
     } else {
       setLoading(btn,false);
       showToast(reg?.error || 'Erreur lors de la création','error');
@@ -550,7 +549,7 @@ async function submitLogin(){
     const res = await api('login', { email, password: pass });
     console.log('LOGIN_RES', res);
     if (res && (res.ok !== false) && res.user) {
-      localStorage.setItem('entreflowUser', JSON.stringify({ ...res.user, token: res.token }));
+      localStorage.setItem('entreflowUser', JSON.stringify(res.user));
       console.log('SESSION_SAVED', localStorage.getItem('entreflowUser'));
       showToast('Connexion réussie !', 'success');
       setTimeout(() => { window.location.href = 'entreflow-dashboard.html'; }, 400);
