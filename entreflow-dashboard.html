@@ -2370,8 +2370,7 @@ async function init(){
     if(new URLSearchParams(location.search).get('token')){goTo('employee_view');loadEmployeeView();}
   }catch(err){
     console.error(err);
-    try{localStorage.removeItem('entreflowUser');}catch(e){}
-    location.href=location.origin+location.pathname.replace(/\/[^/]*$/, '/')+'entreflow-login.html';
+    showToast(err.message || 'Erreur de chargement', 'error');
   }
 }
 
