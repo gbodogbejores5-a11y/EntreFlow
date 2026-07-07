@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>EntreFlow — Admin</title>
+<style>
+:root{--bg:#050A1A;--card:#0A1030;--blue:#2563EB;--blue-m:#3B82F6;--white:#F1F5FF;--gray:#8A99C2;--border:rgba(59,130,246,.18);--red:#F87171;--green:#10B981;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--white);font-family:'DM Sans',system-ui,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.card{width:100%;max-width:980px;background:rgba(10,16,48,.55);backdrop-filter:blur(24px);border:1px solid var(--border);border-radius:28px;padding:48px;box-shadow:0 32px 80px -16px rgba(0,0,0,.65);}
+h1{font-family:'Syne',system-ui,sans-serif;font-size:26px;font-weight:700;margin-bottom:6px;}
+.sub{font-size:13px;color:var(--gray);margin-bottom:28px;}
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.055em;margin-bottom:7px;}
+.field input{width:100%;padding:11px 14px;background:rgba(8,13,38,.7);border:1px solid var(--border);border-radius:10px;font-size:13px;color:var(--white);font-family:inherit;outline:none;}
+.field input:focus{border-color:var(--blue-m);box-shadow:0 0 0 4px rgba(37,99,235,.13);}
+.btn{padding:11px 18px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:#fff;background:linear-gradient(105deg,var(--blue),var(--blue-m));box-shadow:0 6px 22px rgba(37,99,235,.38);transition:all .25s;}
+.btn:hover{filter:brightness(1.08);}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
+.link{padding:10px 14px;border-radius:10px;background:rgba(37,99,235,.1);border:1px solid var(--border);color:var(--blue-l);text-decoration:none;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;}
+.link:hover{border-color:var(--blue-m);color:#fff;}
+.muted{font-size:12px;color:var(--gray);margin-top:10px;}
+.err{color:var(--red);font-size:13px;margin-top:8px;display:none;}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:18px;}
+</style>
+</head>
+<body>
+<div class="card">
+  <div id="lock">
+    <h1>Administration</h1>
+    <p class="sub">Accès réservé</p>
+    <div class="field">
+      <label>Mot de passe</label>
+      <input type="password" id="pw" placeholder="Saisir le mot de passe admin" onkeydown="if(event.key==='Enter')check()"/>
+    </div>
+    <button class="btn" onclick="check()">Entrer</button>
+    <div class="err" id="err">Mot de passe incorrect.</div>
+  </div>
+
+  <div id="admin" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+      <div>
+        <h1>Panneau admin</h1>
+        <p class="sub">Liens rapides et actions</p>
+      </div>
+      <button class="btn" onclick="lock()" style="background:rgba(255,255,255,.08);border:1px solid var(--border);box-shadow:none;">Verrouiller</button>
+    </div>
+
+    <div class="grid">
+      <a class="link" href="/entreflow-dashboard.html" target="_blank">📊 Dashboard patron</a>
+      <a class="link" href="/employee.html" target="_blank">👷 Espace vendeur</a>
+      <a class="link" href="/" target="_blank">🏠 Landing page</a>
+      <a class="link" href="/entreflow-login.html" target="_blank">🔐 Connexion patron</a>
+    </div>
+
+    <div class="grid" style="margin-top:14px;">
+      <button class="btn" onclick="doAction('clear')">Effacer stockage local</button>
+      <button class="btn" onclick="doAction('reload')" style="background:linear-gradient(105deg,#10B981,#059669);">Recharger la page</button>
+    </div>
+
+    <p class="muted">Session stockée dans ce navigateur uniquement.</p>
+  </div>
+</div>
+
+<script>
+const ADMIN_PW = 'CHANGE_ME_ADMIN_PW';
+const lockEl = document.getElementById('lock');
+const adminEl = document.getElementById('admin');
+const errEl = document.getElementById('err');
+const pwEl = document.getElementById('pw');
+function check(){
+  if(pwEl.value === ADMIN_PW){
+    lockEl.style.display='none';
+    adminEl.style.display='block';
+    errEl.style.display='none';
+  } else {
+    errEl.style.display='block';
+    pwEl.value='';
+    pwEl.focus();
+  }
+}
+function lock(){
+  adminEl.style.display='none';
+  lockEl.style.display='block';
+  pwEl.value='';
+}
+function doAction(a){
+  if(a==='clear'){
+    try{localStorage.clear();alert('Stockage local effacé.');}catch(e){alert(e.message);}
+  }
+  if(a==='reload') location.reload();
+}
+</script>
+</body>
+</html>
