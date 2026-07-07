@@ -262,6 +262,15 @@ body{background:var(--bg);color:var(--white);font-family:'DM Sans',sans-serif;mi
 @media(prefers-reduced-motion:reduce){
   *{animation-duration:.01ms !important;animation-iteration-count:1 !important;}
 }
+
+/* TOGGLE EYE */
+.eye-btn{
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:var(--gray-d);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;
+  transition:color .2s,background .2s;
+}
+.eye-btn:hover{color:var(--white);background:rgba(255,255,255,.06);}
 </style>
 </head>
 <body>
@@ -366,7 +375,7 @@ body{background:var(--bg);color:var(--white);font-family:'DM Sans',sans-serif;mi
       <label>Mot de passe</label>
       <div class="field-wrap">
         <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-        <input type="password" id="regPass" placeholder="Min. 8 caractères" required oninput="updatePwMeter()"/>
+        <input type="password" id="regPass" placeholder="Min. 8 caractères" required oninput="updatePwMeter()"/><button type="button" class="eye-btn" onclick="togglePw('regPass', this)" aria-label="Afficher le mot de passe"><svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
       </div>
       <div class="pw-meter" id="pwMeter"><span></span><span></span><span></span><span></span></div>
       <div class="pw-hint" id="pwHint">Utilisez majuscules, chiffres et symboles pour plus de sécurité</div>
@@ -375,7 +384,7 @@ body{background:var(--bg);color:var(--white);font-family:'DM Sans',sans-serif;mi
       <label>Confirmer le mot de passe</label>
       <div class="field-wrap">
         <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-        <input type="password" id="regPass2" placeholder="Répéter le mot de passe" required/>
+        <input type="password" id="regPass2" placeholder="Répéter le mot de passe" required/><button type="button" class="eye-btn" onclick="togglePw('regPass2', this)" aria-label="Afficher le mot de passe"><svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
       </div>
     </div>
     <button class="btn-submit" id="btnReg" onclick="submitReg()">
@@ -403,7 +412,7 @@ body{background:var(--bg);color:var(--white);font-family:'DM Sans',sans-serif;mi
       <label>Mot de passe</label>
       <div class="field-wrap">
         <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-        <input type="password" id="loginPass" placeholder="Min. 8 caractères" required/>
+        <input type="password" id="loginPass" placeholder="Min. 8 caractères" required/><button type="button" class="eye-btn" onclick="togglePw('loginPass', this)" aria-label="Afficher le mot de passe"><svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
       </div>
     </div>
     <div class="forgot"><a href="entreflow-forgot.html">Mot de passe oublié ?</a></div>
@@ -513,7 +522,7 @@ async function submitReg(){
   try{
     const reg=await api('registerUser',{email,password:pass,prenom,nom,role:'admin',companyName:company});
     if(reg && reg.ok !== false){
-      localStorage.setItem('entreflowUser', JSON.stringify({ id: reg.id, email, prenom, nom, role: 'admin', company_id: reg.companyId || '' }));
+      localStorage.setItem('entreflowUser', JSON.stringify({ ...reg.user, token: reg.token }));
       showToast('Compte créé avec succès !','success');
       setTimeout(()=>window.location.href='entreflow-dashboard.html',1200);
     } else {
@@ -539,10 +548,12 @@ async function submitLogin(){
   setLoading(btn,true);
   try {
     const res = await api('login', { email, password: pass });
+    console.log('LOGIN_RES', res);
     if (res && (res.ok !== false) && res.user) {
-      localStorage.setItem('entreflowUser', JSON.stringify(res.user));
+      localStorage.setItem('entreflowUser', JSON.stringify({ ...res.user, token: res.token }));
+      console.log('SESSION_SAVED', localStorage.getItem('entreflowUser'));
       showToast('Connexion réussie !', 'success');
-      setTimeout(() => { window.location.href = 'entreflow-dashboard.html'; }, 1200);
+      setTimeout(() => { window.location.href = 'entreflow-dashboard.html'; }, 400);
     } else {
       setLoading(btn,false);
       showToast(res?.error || 'Identifiants invalides', 'error');
@@ -618,6 +629,27 @@ function loop(){
   requestAnimationFrame(loop);
 }
 loop();
+
+
+/* Toggle visibilité mot de passe */
+function togglePw(id, btn){
+  const el = document.getElementById(id);
+  const eye = btn.querySelector('.eye-open, .eye-closed');
+  if(!el) return;
+  if(el.type === 'password'){
+    el.type = 'text';
+    const icon = btn.querySelector('.eye-open');
+    if(icon) icon.style.display = 'none';
+    const iconClosed = btn.querySelector('.eye-closed');
+    if(iconClosed) iconClosed.style.display = 'block';
+  } else {
+    el.type = 'password';
+    const icon = btn.querySelector('.eye-open');
+    if(icon) icon.style.display = 'block';
+    const iconClosed = btn.querySelector('.eye-closed');
+    if(iconClosed) iconClosed.style.display = 'none';
+  }
+}
 
 /* ── API ── */
 const API_BASE = 'https://script.google.com/macros/s/AKfycbzy8sUmoTDlbYfzgqadT6EbW15lZqAp-MINJHdsqpecxkR5ZM-AuyA7JpX01J3WmS8j/exec';
