@@ -288,7 +288,7 @@ td{padding:12px 10px;font-size:14px;border-bottom:1px solid #F0F3FF0A;}
    CONFIGURATION — remplace par ton URL /exec Apps Script actuelle.
    C'est la SEULE ligne à changer si l'URL du backend change un jour.
    ═══════════════════════════════════════════════════════════════════ */
-const API_URL = 'https://script.google.com/macros/s/AKfycbzy8sUmoTDlbYfzgqadT6EbW15lZqAp-MINJHdsqpecxkR5ZM-AuyA7JpX01J3WmS8j/exec';
+const API_URL = '/api/exec';
 
 /* ═══ Échappement HTML anti-XSS ═══ */
 function esc(str){ if(str===null||str===undefined) return ''; return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
