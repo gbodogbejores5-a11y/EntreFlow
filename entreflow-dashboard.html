@@ -1107,28 +1107,31 @@ window._chartPeriod='month';
 /* ══ API ═ */
 const STALE_ACTIONS = new Set(['listSales','listClients','listStock','listProducts','listEmployees','listQuotes','getDailySalesByEmployee','getEmployeeStats','listBranches']);
 const STALE_TTL = 60 * 1000;
-function cacheKey(action){ return 'ef_cache_' + action; }
-function readCache(action){
+function cacheKey(action, payload){
+  const p = payload && Object.keys(payload).length ? ':' + JSON.stringify(payload) : '';
+  return 'ef_cache_' + action + p;
+}
+function readCache(action, payload){
   try {
-    const raw = localStorage.getItem(cacheKey(action));
+    const raw = localStorage.getItem(cacheKey(action, payload));
     if (!raw) return null;
     const entry = JSON.parse(raw);
     if (!entry || !entry.ts || Date.now() - entry.ts > STALE_TTL) {
-      localStorage.removeItem(cacheKey(action));
+      localStorage.removeItem(cacheKey(action, payload));
       return null;
     }
     return entry.data;
   } catch (e) { return null; }
 }
-function writeCache(action, data){
-  try { localStorage.setItem(cacheKey(action), JSON.stringify({ ts: Date.now(), data })); } catch (e) {}
+function writeCache(action, payload, data){
+  try { localStorage.setItem(cacheKey(action, payload), JSON.stringify({ ts: Date.now(), data })); } catch (e) {}
 }
 async function api(action, payload={}, opts={}){
   const API_SECRET = 'bb9581756e1377c23a3f471181b4b76031b771dbfb9d7dd263f2960cb3e1b62a';
   const isMutation = ['signQuote','createSale','createQuote','updateCompany','createProduct','updateProduct','deleteProduct','createClient','createEmployee','sendQuoteVia','cancelSale','createBranch'].includes(action);
   const silent = opts.silent === true;
   if (!isMutation) {
-    const cached = readCache(action);
+    const cached = readCache(action, payload);
     if (cached) {
       if (!silent) {
         // For explicit actions, still fire network in background if stale data could be outdated
@@ -1141,7 +1144,7 @@ async function api(action, payload={}, opts={}){
             const clean = (await r.text().catch(()=>'')).replace(/^[\s\S]*?<html[\s\S]*?<body[^>]*>/i,'').replace(/<\/body>[\s\S]*$/i,'');
             const data = clean ? JSON.parse(clean) : {};
             if (r.ok && !data.error && data.result !== undefined) {
-              writeCache(action, data.result);
+              writeCache(action, payload, data.result);
             }
           } catch (e) {}
         })();
@@ -1163,7 +1166,7 @@ async function api(action, payload={}, opts={}){
   if(!r.ok || data.error) throw new Error(data.error || 'Erreur API');
   const result = data.result !== undefined ? data.result : data;
   if (!isMutation && r.ok) {
-    writeCache(action, result);
+    writeCache(action, payload, result);
   }
   return result;
 }

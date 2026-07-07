@@ -647,13 +647,13 @@ function createEmployee_(p) {
 function listEmployees_(p) {
   p = p || {}; const emps = sheetToObjects_(CONFIG.SHEETS.EMPLOYEES).filter(e => String(e.company_id) === String(p.companyId || '') && e.statut !== 'inactif');
   const branches = sheetToObjects_(CONFIG.SHEETS.BRANCHES);
-  return emps.map(e => { const b = branches.find(br => String(br.id) === String(e.branch_id)); e.branches = b ? { name: b.name } : { name: '—' }; e.portal_link = CONFIG.EMPLOYEE_PORTAL_URL + '?employeeToken=' + e.access_token; return e; });
+  return emps.map(e => { const b = branches.find(br => String(br.id) === String(e.branch_id)); e.branches = b ? { name: b.name } : { name: '—' }; e.portal_link = CONFIG.EMPLOYEE_PORTAL_URL + '/employee.html?employeeToken=' + e.access_token; return e;});
 }
 function deleteEmployee_(p) { p = p || {}; if (!p.id) return { ok: false }; assertBelongsToCompany_(CONFIG.SHEETS.EMPLOYEES, p.id, p.company_id); return updateRow_(CONFIG.SHEETS.EMPLOYEES, p.id, { statut: 'inactif' }); }
 function permanentDeleteEmployee_(p) { p = p || {}; assertBelongsToCompany_(CONFIG.SHEETS.EMPLOYEES, p.id, p.company_id); deleteRowPermanently_(CONFIG.SHEETS.EMPLOYEES, p.id); return { ok: true }; }
 function findEmployeeByToken_(p) {
   const found = findRow_(CONFIG.SHEETS.EMPLOYEES, 'access_token', (p || {}).token || '');
-  const item = rowToObject_(found); if (item) item.portal_link = CONFIG.EMPLOYEE_PORTAL_URL + '?employeeToken=' + item.access_token;
+  const item = rowToObject_(found); if (item) item.portal_link = CONFIG.EMPLOYEE_PORTAL_URL + '/employee.html?employeeToken=' + item.access_token;
   return item;
 }
 /**
@@ -667,7 +667,7 @@ function findEmployeeByCode_(p) {
   const code = String((p || {}).code || '').trim().toUpperCase();
   if (!code) return null;
   const found = findRow_(CONFIG.SHEETS.EMPLOYEES, 'access_code', code);
-  const item = rowToObject_(found); if (item) item.portal_link = CONFIG.EMPLOYEE_PORTAL_URL + '?employeeToken=' + item.access_token;
+  const item = rowToObject_(found); if (item) item.portal_link = CONFIG.EMPLOYEE_PORTAL_URL + '/employee.html?employeeToken=' + item.access_token;
   return item;
 }
 /** Action de connexion employé — appelée depuis la page de code publique */
