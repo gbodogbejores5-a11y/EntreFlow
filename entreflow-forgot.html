@@ -1,30 +1,36 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=yes,viewport-fit=cover"/>
 <title>Mot de passe oublié — EntreFlow</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{background:#050A18;color:#EEF2FF;font-family:'DM Sans',system-ui,-apple-system,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-  .card{max-width:420px;width:100%;background:rgba(8,12,32,.92);border:1px solid rgba(96,165,250,.14);border-radius:22px;padding:32px 26px}
-  .logo{display:flex;align-items:center;gap:10px;margin-bottom:22px}
+  .card{max-width:420px;width:100%;background:rgba(8,12,32,.92);border:1px solid rgba(96,165,250,.14);border-radius:22px;padding:30px 24px}
+  .step{display:none}
+  .step.show{display:block}
+  .logo{display:flex;align-items:center;gap:10px;margin-bottom:20px}
   .logo svg{width:34px;height:34px}
   .logo span{font-size:20px;font-weight:800;font-family:'Syne',sans-serif;background:linear-gradient(90deg,#fff 30%,#60A5FA);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
   h1{font-size:18px;font-weight:700;margin-bottom:6px}
-  p.sub{font-size:13px;color:#8A9AC2;margin-bottom:22px;line-height:1.6}
+  p.sub{font-size:13px;color:#8A9AC2;margin-bottom:20px;line-height:1.6}
+  .stepper{display:flex;gap:8px;margin-bottom:22px}
+  .dot{width:28px;height:28px;border-radius:50%;background:rgba(96,165,250,.12);color:#8A9AC2;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .dot.active{background:linear-gradient(135deg,#1D4ED8,#60A5FA);color:#fff}
   .field{margin-bottom:14px}
   label{display:block;font-size:11px;font-weight:700;color:#8A9AC2;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
-  input{width:100%;padding:11px 13px;background:rgba(4,6,18,.7);border:1px solid rgba(96,165,250,.12);border-radius:10px;color:#EEF2FF;font-size:14px;font-family:inherit;outline:none;transition:.2s}
+  input{width:100%;padding:12px 13px;background:rgba(4,6,18,.7);border:1px solid rgba(96,165,250,.12);border-radius:10px;color:#EEF2FF;font-size:14px;font-family:inherit;outline:none;transition:.2s}
   input:focus{border-color:rgba(96,165,250,.45);box-shadow:0 0 0 3px rgba(37,99,235,.08)}
   .btn{width:100%;padding:12px;border:none;border-radius:999px;background:linear-gradient(135deg,#1D4ED8,#60A5FA);color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px}
   .btn:disabled{opacity:.6;cursor:not-allowed}
-  .back{display:inline-block;margin-top:14px;font-size:13px;color:#60A5FA;text-decoration:none}
-  .back:hover{text-decoration:underline}
+  .err{color:#EF4444;font-size:12px;margin-top:10px}
   .ok{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.35);color:#10B981;border-radius:12px;padding:14px;margin-top:16px;font-size:13px;line-height:1.6}
-  .err{color:#EF4444;font-size:12px;margin-top:8px}
+  .back{display:inline-block;margin-top:14px;font-size:13px;color:#60A5FA;text-decoration:none}
   .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
   @keyframes spin{to{transform:rotate(360deg)}}
+  .retry{margin-top:10px;font-size:13px;color:#8A9AC2}
+  .retry a{color:#60A5FA;cursor:pointer;text-decoration:underline}
 </style>
 </head>
 <body>
@@ -33,46 +39,130 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 6v6c0 5 3.8 9.4 9 11 5.2-1.6 9-6 9-11V6l-9-4z"/><path d="M9 12l2 2 4-4"/></svg>
       <span>EntreFlow</span>
     </div>
-    <h1>Mot de passe oublié ?</h1>
-    <p class="sub">Entrez votre adresse email. Nous vous enverrons un nouveau mot de passe temporaire par email.</p>
 
-    <div class="field">
-      <label>Adresse email</label>
-      <input type="email" id="fEmail" placeholder="contact@entreprise.bj" autocomplete="email"/>
+    <div class="stepper">
+      <div class="dot active" id="d1">1</div>
+      <div class="dot" id="d2">2</div>
+      <div class="dot" id="d3">3</div>
     </div>
 
-    <button class="btn" id="btnSend" onclick="sendReset()">
-      <span class="btn-label">Envoyer le nouveau mot de passe</span>
-      <span class="spinner" id="spinner"></span>
-    </button>
-    <div class="err" id="err"></div>
-    <div class="ok" id="ok" style="display:none"></div>
+    <div class="step show" id="s1">
+      <h1>Mot de passe oublié ?</h1>
+      <p class="sub">Entrez votre email pour recevoir un code de réinitialisation.</p>
+      <div class="field">
+        <label>Adresse email</label>
+        <input type="email" id="email" placeholder="contact@entreprise.bj" autocomplete="email"/>
+      </div>
+      <button class="btn" id="btn1" onclick="step1()">
+        <span class="btn-label">Envoyer le code</span>
+        <span class="spinner" id="sp1"></span>
+      </button>
+      <div class="err" id="e1"></div>
+    </div>
+
+    <div class="step" id="s2">
+      <h1>Vérification</h1>
+      <p class="sub">Saisissez le code reçu par email.</p>
+      <div class="field">
+        <label>Code de vérification</label>
+        <input type="text" id="code" placeholder="Ex: 847291" inputmode="numeric" maxlength="6"/>
+      </div>
+      <button class="btn" id="btn2" onclick="step2()">
+        <span class="btn-label">Vérifier le code</span>
+        <span class="spinner" id="sp2"></span>
+      </button>
+      <div class="err" id="e2"></div>
+      <div class="retry">Pas reçu le code ? <a onclick="resend()">Renvoyer</a></div>
+    </div>
+
+    <div class="step" id="s3">
+      <h1>Nouveau mot de passe</h1>
+      <p class="sub">Choisissez un nouveau mot de passe sécurisé.</p>
+      <div class="field">
+        <label>Nouveau mot de passe</label>
+        <input type="password" id="pw" placeholder="Min. 8 caractères"/>
+      </div>
+      <div class="field">
+        <label>Confirmer</label>
+        <input type="password" id="pw2" placeholder="Répéter le mot de passe"/>
+      </div>
+      <button class="btn" id="btn3" onclick="step3()">
+        <span class="btn-label">Changer le mot de passe</span>
+        <span class="spinner" id="sp3"></span>
+      </button>
+      <div class="err" id="e3"></div>
+    </div>
+
     <a class="back" href="entreflow-login.html">← Retour à la connexion</a>
   </div>
 
 <script>
 const API='https://script.google.com/macros/s/AKfycbyVyjl_A07qjhrkWm9ak6VVDB2UhjsXpwP1SNOAJcem5ft-RTqHInBFkcYgegOw6Ok/exec';
+let currentEmail='';
+
+function $(id){ return document.getElementById(id); }
+function showStep(n){
+  ['s1','s2','s3'].forEach((id,i)=>$('s'+ (i+1)).classList.toggle('show', i+1===n));
+  ['d1','d2','d3'].forEach((id,i)=>$('d'+(i+1)).classList.toggle('active', i+1<=n));
+}
+function err(id,msg){ $(id).textContent=msg||''; }
+function clearErr(id){ $(id).textContent=''; }
+function setLoading(btnId,spId,state){ $(btnId).disabled=state; $(spId).style.display=state?'block':'none'; }
+
 async function api(action, payload){
   const res=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,data:payload})});
   const text=await res.text();
-  let data; try{ data=JSON.parse(text); }catch(e){ data=text; }
-  if(!res.ok) throw new Error((data&&data.error)||text||('HTTP '+res.status));
+  let data; try{ data=JSON.parse(text); }catch(e){ data={error:text||('HTTP '+res.status)}; }
+  if(!res.ok||(data && data.error)) throw new Error((data && data.error)||text||('HTTP '+res.status));
   return data;
 }
-async function sendReset(){
-  const email=document.getElementById('fEmail').value.trim();
-  const err=document.getElementById('err');
-  const ok=document.getElementById('ok');
-  const btn=document.getElementById('btnSend');
-  err.textContent=''; ok.style.display='none'; btn.disabled=true;
-  document.getElementById('spinner').style.display='block';
+
+async function step1(){
+  clearErr('e1');
+  const email=$('email').value.trim();
+  if(!email){ err('e1','Veuillez saisir votre email.'); return; }
+  setLoading('btn1','sp1',true);
   try{
-    const r=await api('forgotPassword',{email});
-    ok.textContent='Un nouveau mot de passe a été envoyé à '+email+'. Vérifiez votre boîte email (et vos spams), puis connectez-vous avec ce mot de passe temporaire.';
-    ok.style.display='block';
-    document.getElementById('fEmail').value='';
-  }catch(e){ err.textContent=e.message||'Erreur lors de l\'envoi.'; }
-  finally{ btn.disabled=false; document.getElementById('spinner').style.display='none'; }
+    await api('requestBossResetCode',{email});
+    currentEmail=email;
+    showStep(2);
+  }catch(e){ err('e1',e.message||'Erreur lors de l\'envoi du code.'); }
+  finally{ setLoading('btn1','sp1',false); }
+}
+
+async function step2(){
+  clearErr('e2');
+  const code=$('code').value.trim();
+  if(!code){ err('e2','Veuillez saisir le code.'); return; }
+  setLoading('btn2','sp2',true);
+  try{
+    const r=await api('verifyResetCode',{email:currentEmail,code});
+    if(!r||!r.ok){ throw new Error(r&&r.error ? r.error : 'Code invalide.'); }
+    showStep(3);
+  }catch(e){ err('e2',e.message||'Code invalide ou expiré.'); }
+  finally{ setLoading('btn2','sp2',false); }
+}
+
+async function step3(){
+  clearErr('e3');
+  const pw=$('pw').value;
+  const pw2=$('pw2').value;
+  if(!pw||pw.length<8){ err('e3','Mot de passe trop court (min. 8 caractères).'); return; }
+  if(pw!==pw2){ err('e3','Les mots de passe ne correspondent pas.'); return; }
+  setLoading('btn3','sp3',true);
+  try{
+    await api('resetBossPassword',{email:currentEmail,password:pw});
+    $('s3').innerHTML='<div class="ok">Mot de passe changé. <a style="color:#60A5FA;text-decoration:none;font-weight:700" href="entreflow-login.html">Se connecter</a></div>';
+  }catch(e){ err('e3',e.message||'Erreur lors de la réinitialisation.'); }
+  finally{ setLoading('btn3','sp3',false); }
+}
+
+async function resend(){
+  clearErr('e2');
+  try{
+    await api('requestBossResetCode',{email:currentEmail});
+    $('e2').textContent='Un nouveau code a été envoyé.';
+  }catch(e){ err('e2',e.message||'Erreur lors du renvoi.'); }
 }
 </script>
 </body>

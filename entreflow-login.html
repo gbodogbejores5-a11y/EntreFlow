@@ -521,12 +521,13 @@ async function submitReg(){
   setLoading(btn,true);
   try{
     const reg=await api('registerUser',{email,password:pass,prenom,nom,role:'admin',companyName:company});
-    if(reg && reg.ok !== false){
-      showToast('Compte créé ! Connectez-vous.','success');
-      setTimeout(()=>window.location.href='entreflow-login.html',1200);
+    if (reg && reg.ok && reg.user && reg.user.token) {
+      localStorage.setItem('entreflowUser', JSON.stringify(reg.user));
+      showToast('Compte créé ! Bienvenue.', 'success');
+      setTimeout(() => { window.location.href = 'entreflow-dashboard.html'; }, 400);
     } else {
+      showToast(reg?.error || 'Erreur lors de la création', 'error');
       setLoading(btn,false);
-      showToast(reg?.error || 'Erreur lors de la création','error');
     }
   }catch(err){
     setLoading(btn,false);
