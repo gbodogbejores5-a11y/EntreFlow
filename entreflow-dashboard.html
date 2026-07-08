@@ -762,6 +762,7 @@ body.ef-xs .toast-wrap, body.ef-sm .toast-wrap {
       <div class="fg"><label>Client (optionnel)</label><select id="sl-client"><option value="">-- Sélectionner --</option></select></div>
       <div class="fg"><label>Email client (pour facture)</label><input id="sl-client-email" type="email" placeholder="client@email.com"></div>
     </div>
+    <div class="fg" id="saleBranchBlock"><label>Agence *</label><select id="sl-branch"><option value="">-- Choisir --</option></select></div>
     <div style="margin-bottom:10px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <label style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.06em">Produits vendus *</label>
@@ -1874,29 +1875,41 @@ async function loadStockPage(silent){
   if(!CO)return;
   const filterSel = document.getElementById('stockBranchFilter');
   const branchId = filterSel ? filterSel.value : '';
-  const rows = branchId ? await api('listStock',{branchId}).catch(()=>[]) : [];
-  const products = await api('listProducts',{companyId:CO.id}).catch(()=>[]);
+  if (filterSel && !filterSel.options?.length) {
+    try {
+      const branches = await api('listBranches',{companyId:CO.id});
+      (branches||[]).forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.id; opt.textContent = b.name;
+        filterSel.appendChild(opt);
+      });
+    } catch(e){}
+  }
+  const [products,stockRows] = await Promise.all([
+    api('listProducts',{companyId:CO.id}).catch(()=>[]),
+    api('listStock', branchId ? {branchId} : {companyId:CO.id}).catch(()=>[])
+  ]);
   if (!silent) {
     const st = document.getElementById('stockTitle');
-    if(st) st.textContent = branchId ? 'Stock filtré par agence' : 'Stock global (' + (rows||[]).length + ' lignes)';
+    if (st) st.textContent = branchId ? 'Stock filtré par agence' : 'Stock global (' + (stockRows||[]).length + ' lignes)';
   }
   const tbody=document.getElementById('stockTbody');
   const actives=(products||[]).filter(x=>x.statut!=='inactif');
-  const stockMap=new Map((rows||[]).map(r=>[String(r.product_id),r]));
-  const missing=actives.filter(p=>!stockMap.has(String(p.id))).map(p=>({product_id:p.id,quantity:0,min_threshold:p.min_threshold||5}));
-  if(!rows?.length && !missing?.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><strong>Aucun stock enregistré pour cette agence</strong><span>Ajoutez du stock ou réapprovisionnez un produit</span></div></td></tr>`;return;}
-  const merged=[...(rows||[]),...missing];
-  if(!merged.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><strong>Aucun produit</strong></div></td></tr>`;return;}
-  const rowsHtml=merged.map(r=>{
-    const prod=actives.find(p=>p.id===r.product_id)||{name:'—',unit:'',min_threshold:5};
-    const qty=parseFloat(r.quantity)||0,thresh=parseFloat(r.min_threshold||prod.min_threshold)||5;
-    const status=qty===0?'err':qty<=thresh?'warn':'ok';const label={ok:'En stock',warn:'Faible',err:'Rupture'}[status];
-    const barCol={ok:'var(--green)',warn:'var(--amber)',err:'var(--red)'}[status];
-    const barPct=Math.max(0,Math.min(100,(qty/(thresh*3||1))*100));
-    const actionBtn=status==='err'||status==='warn'?`<button class="btn btn-sm" style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.35);color:var(--green)" onclick="restockPrompt('${r.product_id}',${qty},${thresh})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Réappro.</button>`:`<span style="color:var(--gray);font-size:12px">—</span>`;
-    return `<tr><td style="font-weight:500">${prod?.name||'—'}</td><td>${qty}</td><td>${thresh}</td><td><div class="stk-bar" style="width:80px"><div class="stk-bar-fill" style="width:${barPct}%;background:${barCol}"></div></div></td><td><span class="badge b-${status}">${label}</span></td><td>${actionBtn}</td></tr>`;
-  }).join('');
-  if (!silent) tbody.innerHTML = rowsHtml;
+  if(stockRows?.length){
+    const rowsHtml=stockRows.map(r=>{
+      const prod=actives.find(p=>p.id===r.product_id)||{name:'—',unit:'',min_threshold:5};
+      const qty=parseFloat(r.quantity)||0,thresh=parseFloat(r.min_threshold||prod.min_threshold)||5;
+      const status=qty===0?'err':qty<=thresh?'warn':'ok';const label={ok:'En stock',warn:'Faible',err:'Rupture'}[status];
+      const barCol={ok:'var(--green)',warn:'var(--amber)',err:'var(--red)'}[status];
+      const barPct=Math.max(0,Math.min(100,(qty/(thresh*3||1))*100));
+      const actionBtn=status==='err'||status==='warn'?`<button class="btn btn-sm" style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.35);color:var(--green)" onclick="restockPrompt('${r.product_id}',${qty},${thresh})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Réappro.</button>`:`<span style="color:var(--gray);font-size:12px">—</span>`;
+      const branchName = r.branch_name ? `<span class="badge b-info" style="margin-right:6px">${escapeHtml_(r.branch_name)}</span>` : '';
+      return `<tr><td style="font-weight:500">${branchName}${prod?.name||'—'}</td><td>${qty}</td><td>${thresh}</td><td><div class="stk-bar" style="width:80px"><div class="stk-bar-fill" style="width:${barPct}%;background:${barCol}"></div></div></td><td><span class="badge b-${status}">${label}</span></td><td>${actionBtn}</td></tr>`;
+    }).join('');
+    if (!silent) tbody.innerHTML = rowsHtml;
+  } else {
+    if (!silent) tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><strong>Aucun stock</strong><span>Ajoutez du stock</span></div></td></tr>`;
+  }
 }
 function restockPrompt(pid,curQty,thresh){
   openModal('restockModal');
@@ -2001,6 +2014,16 @@ async function loadEmployeesPage(silent){
   if(!CO)return;
   const filterSel = document.getElementById('empBranchFilter');
   const branchId = filterSel ? filterSel.value : '';
+  if (filterSel && !filterSel.options?.length) {
+    try {
+      const branches = await api('listBranches',{companyId:CO.id});
+      (branches||[]).forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.id; opt.textContent = b.name;
+        filterSel.appendChild(opt);
+      });
+    } catch(e){}
+  }
   let emps = await api('listEmployees',{companyId:CO.id}).catch(()=>[]);
   if (branchId) emps = (Array.isArray(emps) ? emps : []).filter(e => String(e.branch_id) === String(branchId));
   const tbody=document.getElementById('employeesTbody');
@@ -2061,27 +2084,43 @@ async function loadSalesPage(silent){
   const filter=document.getElementById('salesDayFilter')?.value||'all';
   const salesBranchFilter = document.getElementById('salesBranchFilter');
   const salesBranchId = salesBranchFilter ? salesBranchFilter.value : '';
+  if (salesBranchFilter && !salesBranchFilter.options?.length) {
+    try {
+      const branches = await api('listBranches',{companyId:CO.id});
+      (branches||[]).forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.id; opt.textContent = b.name;
+        salesBranchFilter.appendChild(opt);
+      });
+    } catch(e){}
+  }
   let data=await api('listSales',{companyId:CO.id,filter}).catch(()=>({}));
   let sales = Array.isArray(data.sales) ? data.sales : (Array.isArray(data) ? data : []);
   if (salesBranchId) sales = sales.filter(s => String(s.branch_id) === String(salesBranchId));
   const payLabels={cash:'Espèces',mobile_money_wave:'Wave',mobile_money_mtn:'MTN',mobile_money_moov:'Moov',card:'Carte',bank_transfer:'Virement'};
   const tbody=document.getElementById('salesTbody');
   let total=0;
-  if(!data?.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><strong>Aucune vente</strong></div></td></tr>`;}
+  if(!sales?.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><strong>Aucune vente</strong></div></td></tr>`;}
   else{
-    const rows=data.map(s=>{const t=parseFloat(s.total)||0;total+=t;return `<tr><td style="color:var(--blue-l);font-weight:500">${s.sale_number||'—'}</td><td>${s.client?.name||s.client_name||'—'}</td><td style="font-weight:600">${fmtAmt(t)} F</td><td><span class="badge b-info">${payLabels[s.payment_method]||s.payment_method}</span></td><td style="color:var(--gray)">${fmtDateTime(s.created_at)}</td><td><button class="btn btn-danger" onclick="softDeleteSale('${s.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2 2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button></td></tr>`;}).join('');
+    const rows=sales.map(s=>{const t=parseFloat(s.total)||0;total+=t;return `<tr><td style="color:var(--blue-l);font-weight:500">${s.sale_number||'—'}</td><td>${s.client?.name||s.client_name||'—'}</td><td style="font-weight:600">${fmtAmt(t)} F</td><td><span class="badge b-info">${payLabels[s.payment_method]||s.payment_method}</span></td><td style="color:var(--gray)">${fmtDateTime(s.created_at)}</td><td><button class="btn btn-danger" onclick="softDeleteSale('${s.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2 2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button></td></tr>`;}).join('');
     if (!silent) tbody.innerHTML = rows;
   }
-  if (!silent) document.getElementById('salesDayTotal').textContent='Total : '+fmtAmt(total)+' F' + ' | company=' + (CO.id||'') + ' ventes=' + data.length;
+  if (!silent) document.getElementById('salesDayTotal').textContent='Total : '+fmtAmt(total)+' F';
 }
 
 let saleRowIdx=0,saleProductCache=[];
 async function openSaleModal(){
   saleRowIdx=0;document.getElementById('saleRows').innerHTML='';document.getElementById('saleTotal').textContent='0 F CFA';
-  const [clients,products]=await Promise.all([api('listClients',{companyId:CO.id}),api('listProducts',{companyId:CO.id})]);
+  const [clients,products,branches]=await Promise.all([api('listClients',{companyId:CO.id}),api('listProducts',{companyId:CO.id}),api('listBranches',{companyId:CO.id}).catch(()=>[])]);
   document.getElementById('sl-client').innerHTML='<option value="">-- Client (optionnel) --</option>'+(clients||[]).map(c=>`<option value="${c.id}" data-email="${c.email||''}">${c.name}</option>`).join('');
   document.getElementById('sl-client').onchange=function(){document.getElementById('sl-client-email').value=this.options[this.selectedIndex]?.getAttribute('data-email')||'';};
   saleProductCache=products||[];
+  const slBranch=document.getElementById('sl-branch');
+  if (slBranch) {
+    slBranch.innerHTML='<option value="">-- Choisir --</option>'+(branches||[]).map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+    if (BR && BR.id) slBranch.value=String(BR.id);
+    if (!BR && (branches||[]).length === 1) slBranch.value=String((branches||[])[0].id);
+  }
   openModal('saleModal');addSaleRow();
 }
 function addSaleRow(){
@@ -2113,7 +2152,8 @@ function updateChange(){
 }
 
 document.getElementById('saveSaleBtn').addEventListener('click',async()=>{
-  if(!BR){toast('Aucune agence configurée','error');return;}
+  const branchId=document.getElementById('sl-branch')?.value;
+  if(!branchId){toast('Agence requise','error');return;}
   const clientId=document.getElementById('sl-client').value||null;
   const clientName=document.getElementById('sl-client').options[document.getElementById('sl-client').selectedIndex]?.text||'';
   const clientEmail=document.getElementById('sl-client-email').value.trim();
@@ -2128,7 +2168,7 @@ document.getElementById('saveSaleBtn').addEventListener('click',async()=>{
   const btn=document.getElementById('saveSaleBtn');
   try{
     setBtnLoading(btn,true);
-    const res=await api('createSale',{company_id:CO.id,branch_id:BR.id,client_id:clientId,client_name:clientId?'':clientName,client_email:clientEmail,payment_method:method,amount_paid:paid,items,created_by:U.email});
+    const res=await api('createSale',{company_id:CO.id,branch_id:branchId,client_id:clientId,client_name:clientId?'':clientName,client_email:clientEmail,payment_method:method,amount_paid:paid,items,created_by:U.email});
     clearApiCache();toast(`Vente de ${fmtAmt(res.total)} F enregistrée !`+(clientEmail?' Facture envoyée par email.':''),'success');
     closeModal('saleModal');loadSalesPage(false);loadHomePage(false);
   }catch(err){toast('Erreur : '+err.message,'error');}
