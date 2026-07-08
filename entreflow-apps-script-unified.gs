@@ -16,7 +16,7 @@ const CONFIG = {
   APP_NAME      : 'EntreFlow',
   APP_TAGLINE   : 'Gérez. Vendez. Développez.',
   APP_URL       : 'https://script.google.com/macros/s/AKfycbyVyjl_A07qjhrkWm9ak6VVDB2UhjsXpwP1SNOAJcem5ft-RTqHInBFkcYgegOw6Ok/exec',
-  SUPPORT_EMAIL : 'support@votredomaine.com',
+  SUPPORT_EMAIL : 'support@africagoldendigital.com',
   SENDER_NAME   : 'EntreFlow by Africa Golden Digital',
   API_SECRET    : '2NoJxebkAg5mBorc1Dt6aMeVityuVK1n',
   /* P1: pepper global pour le hashage des mots de passe — CHANGEZ cette valeur en production */
@@ -479,7 +479,34 @@ function updateCompany_(p) {
   return { ok: true, company: getCompanyById_(id) };
 }
 function listBranches_(p) { return sheetToObjects_(CONFIG.SHEETS.BRANCHES).filter(b => String(b.company_id) === String((p || {}).companyId || '')); }
-function createBranch_(p) { p = p || {}; const obj = { id: uuid(), company_id: p.companyId || '', name: p.name || 'Agence', is_main: !!p.isMain, is_active: true, created_at: new Date().toISOString() }; insertRow_(CONFIG.SHEETS.BRANCHES, obj); return obj; }
+function createBranch_(p) { p = p || {}; const obj = { id: uuid(), company_id: p.companyId || '', name: p.name || 'Agence', is_main: !!p.isMain, is_active: p.isActive !== undefined ? !!p.isActive : true, created_at: new Date().toISOString() }; insertRow_(CONFIG.SHEETS.BRANCHES, obj); return obj; }
+function updateBranch_(p) {
+  p = p || {}; const id = p.id; if (!id) return { ok: false, error: 'id manquant' };
+  const br = rowToObject_(findRow_(CONFIG.SHEETS.BRANCHES, 'id', id));
+  if (!br) return { ok: false, error: 'Agence introuvable' };
+  assertBelongsToCompany_(br.company_id, p.companyId);
+  const updates = {};
+  if (p.name) updates.name = p.name;
+  if (p.isActive !== undefined) updates.is_active = !!p.isActive;
+  updates.is_main = !!br.is_main;
+  updateRow_(CONFIG.SHEETS.BRANCHES, id, updates);
+  return rowToObject_(findRow_(CONFIG.SHEETS.BRANCHES, 'id', id));
+}
+function deleteBranch_(p) {
+  p = p || {}; const id = p.id; if (!id) return { ok: false, error: 'id manquant' };
+  const br = rowToObject_(findRow_(CONFIG.SHEETS.BRANCHES, 'id', id));
+  if (!br) return { ok: false, error: 'Agence introuvable' };
+  if (String(br.company_id) !== String((p || {}).companyId || '')) return { ok: false, error: 'Accès refusé' };
+  if (br.is_main) return { ok: false, error: "Impossible de supprimer l'agence principale." };
+  const emps = sheetToObjects_(CONFIG.SHEETS.EMPLOYEES).filter(e => String(e.branch_id) === String(id));
+  const mainBr = sheetToObjects_(CONFIG.SHEETS.BRANCHES).find(b => String(b.company_id) === String(br.company_id) && b.is_main);
+  if (emps.length && !mainBr) return { ok: false, error: 'Rattachez d\'abord les employés à une autre agence.' };
+  if (emps.length && mainBr) {
+    emps.forEach(e => updateRow_(CONFIG.SHEETS.EMPLOYEES, e.id, { branch_id: mainBr.id }));
+  }
+  updateRow_(CONFIG.SHEETS.BRANCHES, id, { is_active: false });
+  return { ok: true };
+}
 
 /* ═══ PRODUITS ═══ */
 function createProduct_(p) {
@@ -2658,7 +2685,7 @@ const PUBLIC_NO_AUTH = ['login', 'loginUser', 'registerUser', 'forgotPassword', 
 const SCOPED_ACTIONS = new Set([
   'createSale', 'updateSale', 'cancelSale', 'createQuote', 'createClient', 'createProduct',
   'updateStock', 'restockProduct', 'createEmployee', 'deleteEmployee', 'permanentDeleteEmployee', 'updateCompany', 'updateProduct',
-  'deleteProduct', 'permanentDeleteProduct', 'updateClient', 'deleteClient', 'createBranch',
+  'deleteProduct', 'permanentDeleteProduct', 'updateClient', 'deleteClient', 'createBranch', 'updateBranch', 'deleteBranch',
   'deleteQuote', 'signQuote', 'generateQuotePDF', 'restoreTrash'
 ]);
 /** Actions strictement réservées au boss (scope 'admin') — jamais un employé */
@@ -2704,6 +2731,8 @@ function handleRequest_(e) {
       case 'updateCompany':           result = updateCompany_(data); break;
       case 'listBranches':            result = listBranches_(data); break;
       case 'createBranch':            result = createBranch_(data); break;
+      case 'updateBranch':            result = updateBranch_(data); break;
+      case 'deleteBranch':            result = deleteBranch_(data); break;
 
       case 'createProduct':           result = createProduct_(data); break;
       case 'listProducts':            result = listProducts_(data); break;

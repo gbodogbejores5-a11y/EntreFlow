@@ -1156,7 +1156,7 @@ function writeCache(action, payload, data){
   try { localStorage.setItem(cacheKey(action, payload), JSON.stringify({ ts: Date.now(), data })); } catch (e) {}
 }
 async function api(action, payload={}, opts={}){
-  const API_SECRET = 'bb9581756e1377c23a3f471181b4b76031b771dbfb9d7dd263f2960cb3e1b62a';
+  const API_SECRET = '2NoJxebkAg5mBorc1Dt6aMeVityuVK1n';
   const isMutation = ['signQuote','createSale','createQuote','updateCompany','createProduct','updateProduct','deleteProduct','createClient','createEmployee','sendQuoteVia','cancelSale','createBranch'].includes(action);
   const silent = opts.silent === true;
   if (!isMutation) {
