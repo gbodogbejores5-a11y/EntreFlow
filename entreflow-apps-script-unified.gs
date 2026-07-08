@@ -2369,7 +2369,9 @@ function jsonResp_(obj) {
 }
 function getSuperAdminSecret_() {
   const secret = PropertiesService.getScriptProperties().getProperty('ENTREFLOW_SUPER_ADMIN_SECRET');
-  if (secret) return secret;
+  if (secret && String(secret).trim()) return String(secret).trim();
+  const fallback = String(CONFIG.ENTREFLOW_SUPER_ADMIN_SECRET || '').trim();
+  if (fallback) return fallback;
   throw new Error('Secret super admin non configuré.');
 }
 function requireSuperAdmin_(token) {
