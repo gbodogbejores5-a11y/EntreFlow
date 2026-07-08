@@ -134,6 +134,7 @@ td{padding:11px 10px;font-size:13px;border-bottom:1px solid rgba(240,243,255,.04
     </div>
     <div class="tb-right">
       <span class="live-pill"><span></span>Synchronisé</span>
+      <button class="btn-logout" id="notifBtn">🔔 Notifications</button>
       <button class="btn-logout" id="logoutBtn">Déconnexion</button>
     </div>
   </div>
@@ -264,6 +265,12 @@ async function doSuperLogin(){
   finally{ btn.disabled=false; btn.textContent='Accéder au panneau'; }
 }
 document.getElementById('logoutBtn').addEventListener('click',()=>{ sessionStorage.removeItem('ef_admin_secret'); location.reload(); });
+document.getElementById('notifBtn').addEventListener('click', async () => {
+  if (!('Notification' in window)) { toast('Notifications non supportées.','error'); return; }
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') { new Notification('EntreFlow', { body: 'Notifications activées ✓', icon: '/icon-192.png' }); toast('Notifications activées ✓','success'); }
+  else { toast('Permission refusée.','error'); }
+});
 
 function goTab(id,btn){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));

@@ -11,7 +11,14 @@
 <meta property="og:image" content="https://entreflow.pages.dev/logoEntre.png">
 <meta property="og:url" content="https://entreflow.pages.dev/">
 <link rel="canonical" href="https://entreflow.pages.dev/">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icon-192.png">
+<script>
+if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(()=>{}); }
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; });
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght=400;500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'DM Sans',-apple-system,sans-serif;-webkit-tap-highlight-color:transparent}
 html{scroll-behavior:smooth}
@@ -376,6 +383,36 @@ function loop(){T+=reduceMotion||isMobile?0:.011;X.setTransform(1,0,0,1,0,0);X.c
 window.addEventListener('scroll',()=>{const n=document.getElementById('nav');n.style.background=window.scrollY>30?'rgba(5,10,26,.92)':'rgba(5,10,26,.6)'});
 const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')}),{threshold:.1});
 document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+/* ---------- PWA install prompt ---------- */
+let _deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); _deferredInstallPrompt = e; showInstallFab(); });
+function showInstallFab() {
+  if (!_deferredInstallPrompt || document.getElementById('installFab')) return;
+  const fab = document.createElement('button');
+  fab.id = 'installFab';
+  fab.textContent = '📲 Installer l\'app';
+  fab.style.cssText = 'position:fixed;bottom:18px;right:18px;z-index:9999;background:linear-gradient(115deg,#DC2626,#EF4444);color:#fff;border:none;padding:12px 16px;border-radius:999px;font:700 13px/1.2 "DM Sans",system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.45);';
+  document.body.appendChild(fab);
+  fab.onclick = async () => { _deferredInstallPrompt.prompt(); await _deferredInstallPrompt.userChoice; _deferredInstallPrompt = null; fab.remove(); };
+}
+
+/* ---------- Notifications ---------- */
+function showNotifFab() {
+  if (document.getElementById('notifFab') || !('Notification' in window)) return;
+  const btn = document.createElement('button');
+  btn.id = 'notifFab';
+  btn.textContent = '🔔 Activer les notifications';
+  btn.style.cssText = 'position:fixed;bottom:70px;right:18px;z-index:9999;background:rgba(255,255,255,.08);color:#F8FAFC;border:1px solid rgba(59,130,246,.18);padding:10px 14px;border-radius:999px;font:700 12px/1.2 "DM Sans",system-ui,sans-serif;backdrop-filter:blur(6px);';
+  document.body.appendChild(btn);
+  btn.onclick = async () => {
+    const perm = await Notification.requestPermission();
+    if (perm === 'granted') { new Notification('EntreFlow', { body: 'Notifications activées ✓', icon: '/icon-192.png' }); toast('Notifications activées ✓','success'); }
+    else { toast('Permission refusée.','error'); }
+    btn.remove();
+  };
+}
+setTimeout(showNotifFab, 45000);
 </script>
 </body>
 </html>

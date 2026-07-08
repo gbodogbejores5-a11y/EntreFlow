@@ -2491,7 +2491,16 @@ init();
   } else {
     applyResponsiveClasses();
   }
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js');
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+
+/* ---------- Notifications ---------- */
+async function requestNotifications() {
+  if (!('Notification' in window)) { toast('Notifications non supportées.','error'); return; }
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') { new Notification('EntreFlow', { body: 'Notifications activées ✓', icon: '/icon-192.png' }); toast('Notifications activées ✓','success'); }
+  else { toast('Permission refusée.','error'); }
+}
+setTimeout(() => requestNotifications(), 30000);
 </script>
 </body>
 </html>
