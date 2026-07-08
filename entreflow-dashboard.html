@@ -1475,6 +1475,8 @@ document.getElementById('setupSkipBtn').addEventListener('click',async(e)=>{
     try{
       CO=await api('createDefaultCompany',{ownerId:U.id,email:U.email});
       await ensureBranch();
+      localStorage.setItem('entreflowSetupDone','1');
+      saveState_();
     }catch(err){
       toast('Impossible de créer l\'espace par défaut : '+err.message,'error');
       document.getElementById('setupScreen').classList.add('show');
@@ -1556,11 +1558,11 @@ async function loadHomePage(silent){
   }else{
     try{
       ([products,clients,salesAll,stock,quotes]=await Promise.all([
-        api('listProducts',{companyId:CO.id}),
-        api('listClients',{companyId:CO.id}),
-        api('listSales',{companyId:CO.id}).then(r=>(r||[]).filter(s=>s.statut==='completed')),
-        BR?api('listStock',{branchId:BR.id}):Promise.resolve([]),
-        api('listQuotes',{companyId:CO.id})
+        api('listProducts',{companyId:CO.id}).then(Array.isArray?.(r)=>r:Array.isArray(r?.result)?r.result:[]),
+        api('listClients',{companyId:CO.id}).then(Array.isArray?.(r)=>r:Array.isArray(r?.result)?r.result:[]),
+        api('listSales',{companyId:CO.id}).then(r=>{ const arr=Array.isArray(r)?r:(Array.isArray(r?.result)?r.result:[]); return arr.filter(s=>s.statut==='completed'); }),
+        BR?api('listStock',{branchId:BR.id}).then(r=>Array.isArray(r)?r:(Array.isArray(r?.result)?r.result:[])):Promise.resolve([]),
+        api('listQuotes',{companyId:CO.id}).then(Array.isArray?.(r)=>r:Array.isArray(r?.result)?r.result:[])
       ]));
     }catch(err){console.error(err);toast('Erreur dashboard : '+err.message,'error');return;}
   }
@@ -1824,7 +1826,10 @@ document.getElementById('saveProductBtn').addEventListener('click',async()=>{
       toast('"'+name+'" modifié !','success');
     }else if(productBatch.length){
       const branchId=document.getElementById('pm-branch')?.value;
-      if(!branchId){toast('Agence de stock requise','error');return;}
+      if(!branchId && (BR||false)){
+        const allBr=(await api('listBranches',{companyId:CO.id}).catch(()=>[]))||[];
+        if(allBr.length){toast('Agence de stock requise','error');return;}
+      }
       for(const item of productBatch){
         const res=await api('createProduct',{company_id:CO.id,branchId,...item});
       }
@@ -1836,10 +1841,13 @@ document.getElementById('saveProductBtn').addEventListener('click',async()=>{
       const unitSell=parseFloat(document.getElementById('pm-unit-sell').value)||0;
       if(!name){toast('Nom du produit requis','error');return;}
       if(unitSell<=0){toast('Prix de vente requis','error');return;}
-      const branchId=document.getElementById('pm-branch')?.value;
-      if(!branchId){toast('Agence de stock requise','error');return;}
+      const branchId=document.getElementById('pm-branch')?.value||'';
       const payload={name,pack_qty:packQty,pack_buy_price:packBuy,unit_sell_price:unitSell,buy_unit_price:packQty>0?packBuy/packQty:packBuy,min_threshold:parseFloat(document.getElementById('pm-thresh').value)||5,unit:document.getElementById('pm-unit').value};
       const stock=parseFloat(document.getElementById('pm-stock').value)||0;
+      if(!branchId && (BR||false)){
+        const allBr=(await api('listBranches',{companyId:CO.id}).catch(()=>[]))||[];
+        if(allBr.length){toast('Agence de stock requise','error');return;}
+      }
       const res=await api('createProduct',{company_id:CO.id,branchId,quantity:stock,...payload});
       toast('"'+name+'" ajouté !','success');
     }
