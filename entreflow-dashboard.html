@@ -1137,7 +1137,7 @@ async function api(action, payload={}, opts={}){
         // For explicit actions, still fire network in background if stale data could be outdated
         void (async () => {
           try {
-            const r = await fetch('https://script.google.com/macros/s/AKfycbzuVX-iLMtfVCQ06TCeK_s7Lq2lc_fdms4Gp_DxiXzzvoCT-CKq6vcfUPx77hY8hsRC/exec', {
+            const r = await fetch('https://script.google.com/macros/s/AKfycbyVyjl_A07qjhrkWm9ak6VVDB2UhjsXpwP1SNOAJcem5ft-RTqHInBFkcYgegOw6Ok/exec', {
               method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
               body: JSON.stringify({ action, ...payload })
             });
@@ -1156,7 +1156,7 @@ async function api(action, payload={}, opts={}){
   const session = stored ? JSON.parse(stored) : null;
   if (session && session.token) payload.token = session.token;
   else payload.token = API_SECRET;
-  const r = await fetch('https://script.google.com/macros/s/AKfycbzuVX-iLMtfVCQ06TCeK_s7Lq2lc_fdms4Gp_DxiXzzvoCT-CKq6vcfUPx77hY8hsRC/exec', {
+  const r = await fetch('https://script.google.com/macros/s/AKfycbyVyjl_A07qjhrkWm9ak6VVDB2UhjsXpwP1SNOAJcem5ft-RTqHInBFkcYgegOw6Ok/exec', {
     method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
     body: JSON.stringify({ action, ...payload })
   });

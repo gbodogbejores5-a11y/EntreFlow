@@ -15,7 +15,7 @@
 const CONFIG = {
   APP_NAME      : 'EntreFlow',
   APP_TAGLINE   : 'Gérez. Vendez. Développez.',
-  APP_URL       : 'https://entreflow.pages.dev',
+  APP_URL       : 'https://script.google.com/macros/s/AKfycbyVyjl_A07qjhrkWm9ak6VVDB2UhjsXpwP1SNOAJcem5ft-RTqHInBFkcYgegOw6Ok/exec',
   SUPPORT_EMAIL : 'support@votredomaine.com',
   SENDER_NAME   : 'EntreFlow by Africa Golden Digital',
   API_SECRET    : '2NoJxebkAg5mBorc1Dt6aMeVityuVK1n',
@@ -26,10 +26,10 @@ const CONFIG = {
 
   // URL /exec de CE script — sert le portail employé, la page de connexion par
   // code, ET la page de signature publique
-  PORTAL_URL : 'https://script.google.com/macros/s/AKfycbzuVX-iLMtfVCQ06TCeK_s7Lq2lc_fdms4Gp_DxiXzzvoCT-CKq6vcfUPx77hY8hsRC/exec',
+  PORTAL_URL : 'https://script.google.com/macros/s/AKfycbyVyjl_A07qjhrkWm9ak6VVDB2UhjsXpwP1SNOAJcem5ft-RTqHInBFkcYgegOw6Ok/exec',
 
-  // URL du site public employé (ex: https://entreflow.pages.dev)
-  EMPLOYEE_PORTAL_URL : 'https://entreflow.pages.dev',
+  // URL du site public employé (ex: https://script.google.com/macros/s/AKfycbyVyjl_A07qjhrkWm9ak6VVDB2UhjsXpwP1SNOAJcem5ft-RTqHInBFkcYgegOw6Ok/exec)
+  EMPLOYEE_PORTAL_URL : 'https://script.google.com/macros/s/AKfycbyVyjl_A07qjhrkWm9ak6VVDB2UhjsXpwP1SNOAJcem5ft-RTqHInBFkcYgegOw6Ok/exec',
 
   // Logo EntreFlow (le SaaS, pas celui de l'entreprise du client) en base64
   // data URI, ex: "data:image/png;base64,iVBORw0KG...". Collez ici le contenu
@@ -1676,7 +1676,7 @@ function _i(name) {
 }
 
 function getPortalUrl_() {
-  return CONFIG.PORTAL_URL || 'https://entreflow.pages.dev';
+  return CONFIG.PORTAL_URL || 'https://script.google.com/macros/s/AKfycbyVyjl_A07qjhrkWm9ak6VVDB2UhjsXpwP1SNOAJcem5ft-RTqHInBFkcYgegOw6Ok/exec';
 }
 function safeJson_(obj) {
   return JSON.stringify(obj)

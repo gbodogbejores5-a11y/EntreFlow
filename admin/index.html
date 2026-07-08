@@ -225,7 +225,7 @@ td{padding:11px 10px;font-size:13px;border-bottom:1px solid rgba(240,243,255,.04
 </div>
 
 <script>
-const ADMIN_API_URL='https://script.google.com/macros/s/AKfycbzuVX-iLMtfVCQ06TCeK_s7Lq2lc_fdms4Gp_DxiXzzvoCT-CKq6vcfUPx77hY8hsRC/exec'; const API_BASE=ADMIN_API_URL;
+const ADMIN_API_URL='https://script.google.com/macros/s/AKfycbyVyjl_A07qjhrkWm9ak6VVDB2UhjsXpwP1SNOAJcem5ft-RTqHInBFkcYgegOw6Ok/exec'; const API_BASE=ADMIN_API_URL;
 async function api(action,payload){
   const body=Object.assign({action,token:ADMIN_TOKEN},payload||{});
   const r=await fetch(API_BASE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
