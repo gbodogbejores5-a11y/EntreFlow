@@ -2599,7 +2599,6 @@ async function requestNotifications() {
   if (perm === 'granted') { new Notification('EntreFlow', { body: 'Notifications activées ✓', icon: '/icon-192.png' }); toast('Notifications activées ✓','success'); }
   else { toast('Permission refusée.','error'); }
 }
-setTimeout(() => requestNotifications(), 30000);
 
 /* ---------- MULTI-AGENCES ---------- */
 let branchFilter = { all: true, id: '' };
