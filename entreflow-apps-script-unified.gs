@@ -55,7 +55,7 @@ const SHEET_SCHEMAS = {
   Agences       : ['id','company_id','name','is_main','is_active','created_at'],
   Employes      : ['id','company_id','branch_id','full_name','phone','email','whatsapp','poste','salaire','access_token','access_code','statut','created_at'],
   Clients       : ['id','company_id','name','phone','email','city','notes','total_revenue','statut','created_at','updated_at'],
-  Produits      : ['id','company_id','name','category','unit','pack_qty','pack_buy_price','unit_sell_price','min_threshold','statut','created_at','updated_at'],
+  Produits      : ['id','company_id','branch_id','name','category','unit','pack_qty','pack_buy_price','unit_sell_price','min_threshold','statut','created_at','updated_at'],
   Stocks        : ['id','company_id','branch_id','product_id','quantity','min_threshold','updated_at'],
   Ventes        : ['id','company_id','branch_id','sale_number','client_id','client_name','client_email','total','subtotal','payment_method','amount_paid','change_given','statut','created_by','employee_id','created_at'],
   VenteLignes   : ['id','sale_id','product_id','name','unit','quantity','unit_price','total_ligne'],
@@ -463,11 +463,17 @@ function createCompany_(p) {
   insertRow_(CONFIG.SHEETS.COMPANIES, obj);
   if (p.email) { const u = findRow_(CONFIG.SHEETS.USERS, 'email', p.email); if (u) updateRow_(CONFIG.SHEETS.USERS, u.row[u.header.findIndex(h => h.trim() === 'id')], { company_id: id }); }
   if (p.ownerId) updateRow_(CONFIG.SHEETS.USERS, p.ownerId, { company_id: id });
-  const branch = createBranch_({ companyId: id, name: 'Agence principale', isMain: true });
+  const branches = [];
+  if (p.branches !== undefined && !p.branches.length) {
+    // Mode sans agence : pas d'agence créée automatiquement
+  } else {
+    const branch = createBranch_({ companyId: id, name: 'Agence principale', isMain: true });
+    branches.push(branch);
+  }
   logAudit_('CREATE_COMPANY', 'Boutiques', id, p.email || '', p.name);
-  return { ...obj, branches: [branch] };
+  return { ...obj, branches };
 }
-function createDefaultCompany_(p) { p = p || {}; return createCompany_({ ownerId: p.ownerId, name: p.name || 'Mon Entreprise', email: p.email || '' }); }
+function createDefaultCompany_(p) { p = p || {}; return createCompany_({ ownerId: p.ownerId, name: p.name || 'Mon Entreprise', email: p.email || '', branches: [] }); }
 /* P1: updateCompany_ — Empêche la modification de l'entreprise d'un tiers ; utilise uniquement data.company_id injecté par scopePayload_ */
 function updateCompany_(p) {
   p = p || {}; const id = p.id || p.companyId; if (!id) return { ok: false, error: 'id manquant' };
@@ -480,6 +486,21 @@ function updateCompany_(p) {
 }
 function listBranches_(p) { return sheetToObjects_(CONFIG.SHEETS.BRANCHES).filter(b => String(b.company_id) === String((p || {}).companyId || '')); }
 function createBranch_(p) { p = p || {}; const obj = { id: uuid(), company_id: p.companyId || '', name: p.name || 'Agence', is_main: !!p.isMain, is_active: true, created_at: new Date().toISOString() }; insertRow_(CONFIG.SHEETS.BRANCHES, obj); return obj; }
+function updateBranch_(p) {
+  p = p || {}; const id = p.id; if (!id) return { ok: false, error: 'id manquant' };
+  const updates = {}; if (p.name) updates.name = p.name; if (p.isMain !== undefined) updates.is_main = !!p.isMain; if (p.isActive !== undefined) updates.is_active = !!p.isActive;
+  const r = updateRow_(CONFIG.SHEETS.BRANCHES, id, updates); if (!r.ok) return r;
+  return rowToObject_(findRow_(CONFIG.SHEETS.BRANCHES, 'id', id));
+}
+function deleteBranch_(p) {
+  p = p || {}; const id = p.id; if (!id) return { ok: false, error: 'id manquant' };
+  const br = rowToObject_(findRow_(CONFIG.SHEETS.BRANCHES, 'id', id));
+  if (!br) return { ok: false, error: 'Agence introuvable' };
+  if (br.is_main) return { ok: false, error: 'Impossible de supprimer l\'agence principale.' };
+  // Ne pas supprimer physiquement : marquer inactif + dissocier employés/stocks/ventes
+  updateRow_(CONFIG.SHEETS.BRANCHES, id, { is_active: false });
+  return { ok: true };
+}
 
 /* ═══ PRODUITS ═══ */
 function createProduct_(p) {
@@ -2704,6 +2725,8 @@ function handleRequest_(e) {
       case 'updateCompany':           result = updateCompany_(data); break;
       case 'listBranches':            result = listBranches_(data); break;
       case 'createBranch':            result = createBranch_(data); break;
+      case 'updateBranch':            result = updateBranch_(data); break;
+      case 'deleteBranch':            result = deleteBranch_(data); break;
 
       case 'createProduct':           result = createProduct_(data); break;
       case 'listProducts':            result = listProducts_(data); break;
