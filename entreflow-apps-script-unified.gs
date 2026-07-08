@@ -633,7 +633,7 @@ function createEmployee_(p) {
   p = p || {}; const id = uuid(); const token = generateToken_(); const code = generateEmployeeCode_(); const now = new Date().toISOString();
   const obj = { id, company_id: p.companyId || '', branch_id: p.branchId || '', full_name: p.fullName || '', phone: p.phone || '', email: p.email || '', whatsapp: p.whatsapp || '', poste: p.poste || 'Vendeur', salaire: Number(p.salaire || 0), access_token: token, access_code: code, statut: 'actif', created_at: now };
   insertRow_(CONFIG.SHEETS.EMPLOYEES, obj);
-  const loginLink = getPortalUrl_() + '?employeeLogin=1';
+  const loginLink = CONFIG.EMPLOYEE_PORTAL_URL + '/employee.html?employeeToken=' + token;
   // TODO P1: token employé permanent sans expiration — envisager une date d'expiration si besoin.
   const company = getCompanyById_(obj.company_id) || {};
   if (p.email) { try { sendEmail_({ to: p.email, subject: `${company.name || CONFIG.APP_NAME} — Votre code d'accès employé`, html: buildEmail_EmployeeWelcome({ nom: p.fullName, poste: p.poste || 'Employé', company, code, loginLink }) }); } catch (e) {} }
