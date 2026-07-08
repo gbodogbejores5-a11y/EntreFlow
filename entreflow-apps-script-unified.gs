@@ -25,10 +25,10 @@ const CONFIG = {
 
   // URL /exec de CE script — sert le portail employé, la page de connexion par
   // code, ET la page de signature publique
-  PORTAL_URL : 'https://entreflow.netlify.app',
+  PORTAL_URL : 'https://entreflow.pages.dev',
 
-  // URL du site public employé (ex: https://entreflow.netlify.app)
-  EMPLOYEE_PORTAL_URL : 'https://entreflow.netlify.app',
+  // URL du site public employé (ex: https://entreflow.pages.dev)
+  EMPLOYEE_PORTAL_URL : 'https://entreflow.pages.dev',
 
   // Logo EntreFlow (le SaaS, pas celui de l'entreprise du client) en base64
   // data URI, ex: "data:image/png;base64,iVBORw0KG...". Collez ici le contenu
@@ -1672,7 +1672,7 @@ function _i(name) {
 }
 
 function getPortalUrl_() {
-  return CONFIG.PORTAL_URL || 'https://entreflow.netlify.app';
+  return CONFIG.PORTAL_URL || 'https://entreflow.pages.dev';
 }
 function safeJson_(obj) {
   return JSON.stringify(obj)

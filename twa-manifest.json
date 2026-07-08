@@ -1,7 +1,7 @@
 {
   "shortName": "EntreFlow",
   "packageId": "com.entreflow.app",
-  "host": "entreflow.netlify.app",
+  "host": "entreflow.pages.dev",
   "launcherName": "EntreFlow",
   "display": "standalone",
   "themeColor": "#040810",
@@ -15,6 +15,6 @@
     "keyPassword": "entreflow2026"
   },
   "splashes": [],
-  "iconUrl": "https://entreflow.netlify.app/globe.svg",
+  "iconUrl": "https://entreflow.pages.dev/globe.svg",
   "iconColor": "#3b82f6"
 }

@@ -1,7 +1,7 @@
 {
   "name": "EntreFlow — Espace Patron",
   "short_name": "EntreFlow",
-  "start_url": "https://entreflow.netlify.app/app/dashboard/",
+  "start_url": "https://entreflow.pages.dev/app/dashboard/",
   "display": "standalone",
   "background_color": "#040810",
   "theme_color": "#2563EB",
