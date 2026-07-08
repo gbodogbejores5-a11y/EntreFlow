@@ -2371,7 +2371,7 @@ function getSuperAdminSecret_() {
     const secret = PropertiesService.getScriptProperties().getProperty('ENTREFLOW_SUPER_ADMIN_SECRET');
     if (secret) return secret;
   } catch (e) {}
-  return 'CHANGE_ME_SUPER_ADMIN_2026';
+  return 'AdminJoresEntreFlow2026@';
 }
 function requireSuperAdmin_(token) {
   const secret = String(getSuperAdminSecret_() || '').trim();
