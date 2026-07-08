@@ -15,7 +15,7 @@
 const CONFIG = {
   APP_NAME      : 'EntreFlow',
   APP_TAGLINE   : 'Gérez. Vendez. Développez.',
-  APP_URL       : 'https://votre-domaine.com',
+  APP_URL       : 'https://entreflow.pages.dev',
   SUPPORT_EMAIL : 'support@votredomaine.com',
   SENDER_NAME   : 'EntreFlow by Africa Golden Digital',
   API_SECRET    : 'CHANGE_ME_SECRET',
