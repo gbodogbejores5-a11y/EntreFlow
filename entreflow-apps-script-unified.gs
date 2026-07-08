@@ -329,7 +329,7 @@ function loginUser_(p) {
   const password = String((p || {}).password || '');
   if (!email || !password) return { ok: false, error: 'Email et mot de passe requis.' };
   const found = findRow_(CONFIG.SHEETS.USERS, 'email', email);
-  if (!found) return { ok: false, error: 'Identifiants invalides.' };
+  if (!found) return { ok: false, error: 'Email introuvable. Vérifiez l\'adresse ou inscrivez-vous.' };
   const col = k => found.header.findIndex(h => h.trim() === k);
   const userSalt = found.row[col('salt')] || '';
   const storedHash = found.row[col('password_hash')] || '';
@@ -343,7 +343,16 @@ function loginUser_(p) {
       migrated = true;
     }
   }
-  if (!ok) return { ok: false, error: 'Identifiants invalides.' };
+  // P1 fallback: si le sel est corrompu/vieux, tenter legacy une fois
+  if (!ok && userSalt) {
+    ok = storedHash === hashPasswordLegacy_(password);
+    if (ok) {
+      const newSalt = Utilities.getUuid();
+      updateRow_(CONFIG.SHEETS.USERS, found.row[col('id')], { password_hash: hashPassword(password, newSalt), salt: newSalt });
+      migrated = true;
+    }
+  }
+  if (!ok) return { ok: false, error: 'Mot de passe incorrect. Utilisez "Mot de passe oublié ?" pour réinitialiser.' };
   if (String(found.row[col('statut')]).toLowerCase() === 'suspendu') return { ok: false, error: 'Compte suspendu. Contactez le support.' };
   const token = uuid(); const now = new Date().toISOString();
   insertRow_(CONFIG.SHEETS.SESSIONS, { id: uuid(), token, user_email: email, debut_session: now, nb_actions: 1, derniere_action: 'login' });

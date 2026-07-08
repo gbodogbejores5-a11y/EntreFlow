@@ -1,115 +1,78 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=yes,viewport-fit=cover"/>
 <title>Mot de passe oublié — EntreFlow</title>
-<link rel="icon" type="image/png" href="/icon-192.png">
-<meta name="theme-color" content="#040810">
 <style>
-:root{--bg:#050A1A;--card:#0A1030;--blue:#2563EB;--blue-m:#3B82F6;--blue-l:#60A5FA;--blue-ll:#93C5FD;--white:#F1F5FF;--gray:#8A99C2;--gray-d:#4A5578;--border:rgba(59,130,246,0.18);--border-f:rgba(96,165,250,0.5);--input:rgba(8,13,38,0.7);--green:#10B981;--red:#F87171;}
-*{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--bg);color:var(--white);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
-#cvs{position:fixed;inset:0;z-index:0;pointer-events:none;}
-.wrap{position:relative;z-index:2;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 20px;}
-
-/* CARD */
-.card{
-  width:100%;max-width:480px;background:rgba(10,16,48,0.55);backdrop-filter:blur(24px);
-  border:1px solid var(--border);border-radius:24px;box-shadow:0 24px 60px -12px rgba(0,0,0,.55);
-  padding:40px 36px;position:relative;overflow:hidden;
-  animation:cardIn .7s cubic-bezier(.16,1,.3,1) both;
-}
-@keyframes cardIn{from{opacity:0;transform:translateY(24px) scale(.97);}to{opacity:1;transform:none;}}
-.brand{display:flex;align-items:center;gap:10px;margin-bottom:28px;}
-.brand-icon{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--blue),var(--blue-l));display:flex;align-items:center;justify-content:center;}
-.brand-icon svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;}
-.brand-name{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;background:linear-gradient(90deg,#fff,var(--blue-l));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.f-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px;}
-.f-sub{font-size:13px;color:var(--gray);margin-bottom:24px;line-height:1.55;}
-.field{margin-bottom:14px;position:relative;}
-.field label{display:block;font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.055em;margin-bottom:6px;}
-.field input{width:100%;padding:11px 14px 11px 40px;background:var(--input);border:1px solid var(--border);border-radius:9px;font-size:13px;color:var(--white);font-family:'DM Sans',sans-serif;outline:none;transition:all .2s ease;}
-.field input:focus{border-color:var(--border-f);background:rgba(37,99,235,.06);box-shadow:0 0 0 3px rgba(37,99,235,.12);}
-.field .ic{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--gray-d);fill:none;stroke-width:1.7;stroke-linecap:round;pointer-events:none;transition:stroke .25s;}
-.field input:focus ~ .ic{stroke:var(--blue-l);}
-.field input::placeholder{color:var(--gray-d);}
-.btn-submit{
-  width:100%;padding:12px;border-radius:999px;background:linear-gradient(105deg,var(--blue),var(--blue-m));border:none;color:#fff;font-size:13.5px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px;box-shadow:0 5px 18px rgba(37,99,235,.35);transition:all .2s;position:relative;overflow:hidden;
-}
-.btn-submit:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 24px rgba(37,99,235,.5);}
-.btn-submit:disabled{opacity:.6;cursor:not-allowed;transform:none;}
-.btn-submit::before{content:'';position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.22) 50%,transparent 70%);background-size:250% 100%;background-position:200% 0;}
-.btn-submit:hover::before{animation:shimmer 1s ease;}
-@keyframes shimmer{to{background-position:-50% 0;}}
-.switch{text-align:center;margin-top:18px;font-size:13px;color:var(--gray);}
-.switch a{color:var(--blue-l);cursor:pointer;font-weight:500;}
-
-/* TOAST */
-#tc{position:fixed;bottom:20px;right:20px;z-index:500;display:flex;flex-direction:column;gap:8px;}
-.tn{padding:12px 16px;border-radius:10px;font-size:13px;color:#fff;display:flex;gap:9px;align-items:center;max-width:320px;transform:translateX(120%);transition:all .35s cubic-bezier(.2,.9,.4,1.1);backdrop-filter:blur(14px);border:1px solid transparent;}
-.tn.show{transform:none;}
-.tn.s{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.4);}
-.tn.e{background:rgba(248,113,113,.15);border-color:rgba(248,113,113,.4);}
-.tn.i{background:rgba(37,99,235,.15);border-color:rgba(96,165,250,.4);}
-.spinner{width:15px;height:15px;border:2px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;flex-shrink:0;}
-@keyframes spin{to{transform:rotate(360deg);}}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#050A18;color:#EEF2FF;font-family:'DM Sans',system-ui,-apple-system,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  .card{max-width:420px;width:100%;background:rgba(8,12,32,.92);border:1px solid rgba(96,165,250,.14);border-radius:22px;padding:32px 26px}
+  .logo{display:flex;align-items:center;gap:10px;margin-bottom:22px}
+  .logo svg{width:34px;height:34px}
+  .logo span{font-size:20px;font-weight:800;font-family:'Syne',sans-serif;background:linear-gradient(90deg,#fff 30%,#60A5FA);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  h1{font-size:18px;font-weight:700;margin-bottom:6px}
+  p.sub{font-size:13px;color:#8A9AC2;margin-bottom:22px;line-height:1.6}
+  .field{margin-bottom:14px}
+  label{display:block;font-size:11px;font-weight:700;color:#8A9AC2;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+  input{width:100%;padding:11px 13px;background:rgba(4,6,18,.7);border:1px solid rgba(96,165,250,.12);border-radius:10px;color:#EEF2FF;font-size:14px;font-family:inherit;outline:none;transition:.2s}
+  input:focus{border-color:rgba(96,165,250,.45);box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+  .btn{width:100%;padding:12px;border:none;border-radius:999px;background:linear-gradient(135deg,#1D4ED8,#60A5FA);color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px}
+  .btn:disabled{opacity:.6;cursor:not-allowed}
+  .back{display:inline-block;margin-top:14px;font-size:13px;color:#60A5FA;text-decoration:none}
+  .back:hover{text-decoration:underline}
+  .ok{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.35);color:#10B981;border-radius:12px;padding:14px;margin-top:16px;font-size:13px;line-height:1.6}
+  .err{color:#EF4444;font-size:12px;margin-top:8px}
+  .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
+  @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
-<canvas id="cvs"></canvas>
-<div id="tc"></div>
-<div class="wrap">
-<div class="card">
-  <div class="brand">
-    <div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M4 17s3-3 8-1 8-5 8-5"/><path d="M4 11s3-3 8-1 8-5 8-5"/></svg></div>
-    <span class="brand-name">EntreFlow</span>
+  <div class="card">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 6v6c0 5 3.8 9.4 9 11 5.2-1.6 9-6 9-11V6l-9-4z"/><path d="M9 12l2 2 4-4"/></svg>
+      <span>EntreFlow</span>
+    </div>
+    <h1>Mot de passe oublié ?</h1>
+    <p class="sub">Entrez votre adresse email. Nous vous enverrons un nouveau mot de passe temporaire par email.</p>
+
+    <div class="field">
+      <label>Adresse email</label>
+      <input type="email" id="fEmail" placeholder="contact@entreprise.bj" autocomplete="email"/>
+    </div>
+
+    <button class="btn" id="btnSend" onclick="sendReset()">
+      <span class="btn-label">Envoyer le nouveau mot de passe</span>
+      <span class="spinner" id="spinner"></span>
+    </button>
+    <div class="err" id="err"></div>
+    <div class="ok" id="ok" style="display:none"></div>
+    <a class="back" href="entreflow-login.html">← Retour à la connexion</a>
   </div>
-  <div class="f-title">Mot de passe oublié</div>
-  <div class="f-sub">Entrez l'email de votre entreprise. Un code de réinitialisation sera envoyé au responsable de l'entreprise.</div>
-  <div class="field">
-    <label>Email de l'entreprise</label>
-    <input type="email" id="email" placeholder="contact@entreprise.bj" required autocomplete="email"/>
-    <svg class="ic" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-  </div>
-  <button class="btn-submit" id="btnSend" onclick="sendCode()">
-    <span>Envoyer le code de réinitialisation</span>
-  </button>
-  <div class="switch"><a onclick="location.href='entreflow-login.html'">Retour à la connexion</a></div>
-</div>
-</div>
 
 <script>
-const API_BASE = 'https://script.google.com/macros/s/AKfycbzuVX-iLMtfVCQ06TCeK_s7Lq2lc_fdms4Gp_DxiXzzvoCT-CKq6vcfUPx77hY8hsRC/exec';
-function toast(msg, type='i') {
-  const c = document.getElementById('tc');
-  const el = document.createElement('div');
-  el.className='tn '+type;
-  el.innerHTML='<span>'+({s:'✓',e:'✕',i:'ℹ'}[type]||'ℹ')+'</span><span>'+msg+'</span>';
-  c.appendChild(el);
-  requestAnimationFrame(()=>el.classList.add('show'));
-  setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),400);},4500);
+const API='https://script.google.com/macros/s/AKfycbzuVX-iLMtfVCQ06TCeK_s7Lq2lc_fdms4Gp_DxiXzzvoCT-CKq6vcfUPx77hY8hsRC/exec';
+async function api(action, payload){
+  const res=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,data:payload})});
+  const text=await res.text();
+  let data; try{ data=JSON.parse(text); }catch(e){ data=text; }
+  if(!res.ok) throw new Error((data&&data.error)||text||('HTTP '+res.status));
+  return data;
 }
-async function sendCode(){
-  const email = document.getElementById('email').value.trim();
-  if(!email){toast('Veuillez entrer votre email','e');return;}
-  const btn = document.getElementById('btnSend');
-  btn.disabled = true; btn.innerHTML='<span class="spinner"></span> Envoi en cours…';
-  try {
-    const res = await fetch(API_BASE, {
-      method:'POST',
-      mode:'cors',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify({ action:'requestBossResetCode', email })
-    });
-    const data = await res.json().catch(()=>({}));
-    if(!res.ok || !data?.success) throw new Error(data?.error || data?.message || 'Erreur lors de l\'envoi');
-    toast('Code envoyé au responsable de l\'entreprise.','s');
-    setTimeout(()=>{ location.href = 'entreflow-reset.html?email=' + encodeURIComponent(email); },1200);
-  } catch (err) {
-    toast(err.message || 'Erreur','e');
-    btn.disabled = false; btn.innerHTML='<span>Envoyer le code de réinitialisation</span>';
-  }
+async function sendReset(){
+  const email=document.getElementById('fEmail').value.trim();
+  const err=document.getElementById('err');
+  const ok=document.getElementById('ok');
+  const btn=document.getElementById('btnSend');
+  err.textContent=''; ok.style.display='none'; btn.disabled=true;
+  document.getElementById('spinner').style.display='block';
+  try{
+    const r=await api('forgotPassword',{email});
+    ok.textContent='Un nouveau mot de passe a été envoyé à '+email+'. Vérifiez votre boîte email (et vos spams), puis connectez-vous avec ce mot de passe temporaire.';
+    ok.style.display='block';
+    document.getElementById('fEmail').value='';
+  }catch(e){ err.textContent=e.message||'Erreur lors de l\'envoi.'; }
+  finally{ btn.disabled=false; document.getElementById('spinner').style.display='none'; }
 }
 </script>
 </body>

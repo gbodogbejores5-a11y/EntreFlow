@@ -1439,8 +1439,18 @@ async function handleSetup(){
 }
 document.getElementById('setupSaveBtn').addEventListener('click',handleSetup);
 document.getElementById('setupSkipBtn').addEventListener('click',async(e)=>{
-  e.preventDefault();document.getElementById('setupScreen').classList.remove('show');
-  if(U&&!CO){try{CO=await api('createDefaultCompany',{ownerId:U.id,email:U.email});await ensureBranch();}catch(err){}}
+  e.preventDefault();
+  document.getElementById('setupScreen').classList.remove('show');
+  if(U&&!CO){
+    try{
+      CO=await api('createDefaultCompany',{ownerId:U.id,email:U.email});
+      await ensureBranch();
+    }catch(err){
+      toast('Impossible de créer l\'espace par défaut : '+err.message,'error');
+      document.getElementById('setupScreen').classList.add('show');
+      return;
+    }
+  }
   startDashboard();
 });
 
