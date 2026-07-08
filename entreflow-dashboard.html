@@ -1558,11 +1558,11 @@ async function loadHomePage(silent){
   }else{
     try{
       ([products,clients,salesAll,stock,quotes]=await Promise.all([
-        api('listProducts',{companyId:CO.id}).then(Array.isArray(r)?r:(Array.isArray(r?.result)?r.result:[])),
-        api('listClients',{companyId:CO.id}).then(Array.isArray(r)?r:(Array.isArray(r?.result)?r.result:[])),
+        api('listProducts',{companyId:CO.id}).then(r=>Array.isArray(r)?r:(Array.isArray(r?.result)?r.result:[])),
+        api('listClients',{companyId:CO.id}).then(r=>Array.isArray(r)?r:(Array.isArray(r?.result)?r.result:[])),
         api('listSales',{companyId:CO.id}).then(r=>{ const arr=Array.isArray(r)?r:(Array.isArray(r?.result)?r.result:[]); return arr.filter(s=>s.statut==='completed'); }),
         BR?api('listStock',{branchId:BR.id}).then(r=>Array.isArray(r)?r:(Array.isArray(r?.result)?r.result:[])):Promise.resolve([]),
-        api('listQuotes',{companyId:CO.id}).then(Array.isArray(r)?r:(Array.isArray(r?.result)?r.result:[]))
+        api('listQuotes',{companyId:CO.id}).then(r=>Array.isArray(r)?r:(Array.isArray(r?.result)?r.result:[]))
       ]));
     }catch(err){console.error(err);toast('Erreur dashboard : '+err.message,'error');return;}
   }
