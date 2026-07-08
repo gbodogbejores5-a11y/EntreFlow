@@ -21,6 +21,7 @@ const CONFIG = {
   API_SECRET    : '2NoJxebkAg5mBorc1Dt6aMeVityuVK1n',
   /* P1: pepper global pour le hashage des mots de passe — CHANGEZ cette valeur en production */
   PASSWORD_PEPPER : 'FkJymGghTCHfzynhtW8qjdLobr5pd9lP',
+  ENTREFLOW_SUPER_ADMIN_SECRET : 'rLbHF0fKDMIlgc',
   YEAR          : new Date().getFullYear(),
 
   // URL /exec de CE script — sert le portail employé, la page de connexion par
