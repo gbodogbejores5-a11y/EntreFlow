@@ -1,0 +1,70 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"><title>Signer votre devis — EntreFlow</title><link rel="icon" type="image/png" href="/icon-192.png"><style>*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{height:100%}body{background:#040810;color:#E2E8F0;font-family:"DM Sans",Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:20px;min-height:100%}.page{width:100%;max-width:500px;background:rgba(10,14,32,.95);border:1px solid rgba(59,130,246,.14);border-radius:22px;padding:24px;box-shadow:0 30px 80px -20px rgba(0,0,0,.55)}.mhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}.mhead h1{font-family:"Syne",sans-serif;font-size:16px;font-weight:800}.badge{font-size:10px;padding:4px 12px;border-radius:40px;background:rgba(59,130,246,.10);border:1px solid rgba(59,130,246,.18);color:#93C5FD;font-weight:600}.loading{display:flex;flex-direction:column;align-items:center;gap:14px;padding:36px;color:#64748B;font-size:13px}.spinner{width:36px;height:36px;border:3px solid rgba(59,130,246,.15);border-top-color:#3B82F6;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.errBox{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.22);border-radius:14px;padding:18px;margin-bottom:14px;color:#FCA5A5;font-size:13.5px;font-weight:500;text-align:center}.amt{font-family:"Syne",sans-serif;font-size:24px;font-weight:800;background:linear-gradient(120deg,#fff,#93C5FD);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px}.sub{font-size:12px;color:#64748B;margin-bottom:14px}.tblWrap{background:rgba(255,255,255,.02);border:1px solid rgba(59,130,246,.10);border-radius:14px;padding:12px;margin-bottom:12px;overflow-x:auto}.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:260px}.tbl th{text-align:left;color:#64748B;font-weight:600;font-size:10px;text-transform:uppercase;padding:5px;border-bottom:1px solid rgba(59,130,246,.10)}.tbl td{padding:8px 5px;border-bottom:1px solid rgba(59,130,246,.05);color:#CBD5E1;vertical-align:top}.tbl td:last-child{text-align:right;font-weight:600;color:#E2E8F0;white-space:nowrap}.fg{margin-bottom:12px}.fg label{display:block;font-size:12px;font-weight:600;color:#94A3B8;margin-bottom:5px}.fg input{width:100%;padding:12px 14px;background:rgba(255,255,255,.03);border:1.5px solid rgba(59,130,246,.14);border-radius:12px;color:#F8FAFC;font-size:13.5px;font-family:"DM Sans",sans-serif;outline:none}.fg input:focus{border-color:#3B82F6;box-shadow:0 0 0 4px rgba(59,130,246,.08)}.sep{height:1px;background:linear-gradient(90deg,transparent,rgba(59,130,246,.14),transparent);margin:14px 0}.sigWrap{position:relative;background:rgba(255,255,255,.02);border:1.5px solid rgba(59,130,246,.14);border-radius:12px;overflow:hidden;touch-action:none}.sigWrap canvas{width:100%;height:140px;display:block;cursor:crosshair}.sigBar{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:rgba(0,0,0,.18);border-top:1px solid rgba(59,130,246,.10)}.sigHint{font-size:10px;color:#4A5568}.clrBtn{background:none;border:none;color:#F87171;font-size:11px;font-weight:600;cursor:pointer;padding:2px 8px;border-radius:5px;font-family:"DM Sans",sans-serif}.err{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.22);border-radius:10px;padding:11px 14px;color:#FCA5A5;font-size:12.5px;margin-top:12px;display:none}.ok{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.22);border-radius:12px;padding:16px;margin-top:14px;display:none}.ok h3{font-family:"Syne",sans-serif;font-size:14px;font-weight:800;color:#10B981;margin-bottom:5px}.ok p{font-size:12.5px;color:#6EE7B7;line-height:1.5}.submit{width:100%;padding:14px;background:linear-gradient(120deg,#1D4ED8,#3B82F6);border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-top:14px;font-family:"DM Sans",sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;transition:.15s}.submit:hover:not(:disabled){filter:brightness(1.07)}.submit:disabled{opacity:.5;cursor:not-allowed}.ldrBtn{width:16px;height:16px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}</style></head><body><div class="page" id="mainApp"><div class="loading" id="loadingEl"><div class="spinner"></div>Chargement du devis…</div><div class="errBox" id="errBox" style="display:none"></div><div id="details" style="display:none"></div></div><script>const API='https://script.google.com/macros/s/AKfycbzSRdOQoUSdvPcUfsT0AGzmpPXBoaHN7EEr4ZVlC4gKcu9MmiOEKUd2PJETvGHJF8pw/exec';const qs=new URLSearchParams(location.search);const QUOTE_ID=qs.get('sign');const TOKEN=qs.get('t');
+const loadingEl=document.getElementById('loadingEl');const errBox=document.getElementById('errBox');const detailsEl=document.getElementById('details');
+function showErr(m){errBox.textContent=m;errBox.style.display='block'}
+function showDetails(){loadingEl.style.display='none';errBox.style.display='none';detailsEl.style.display='block'}
+async function api(action,data){
+  const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,...data})});
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  const j=await r.json();
+  if(!j.ok)throw new Error(j.error||'Erreur serveur');
+  return j.result||j;
+}
+function fmtMoney(v){return(Number(v)||0).toLocaleString('fr-FR')+' F CFA'}
+function fmtDate(d){if(!d)return'—';return new Date(d).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'})}
+function esc(s){const d=document.createElement('div');d.textContent=String(s??'');return d.innerHTML}
+function $(id){return document.getElementById(id)}
+async function init(){
+  if(!QUOTE_ID||!TOKEN){showErr('Lien invalide. Paramètres manquants.');return}
+  try{
+    const res=await api('getQuoteDetail',{id:QUOTE_ID});
+    const q=res.quote||res;const items=res.items||[];
+    if(q.sign_token!==TOKEN){showErr('Lien de signature invalide ou expiré.');return}
+    if(q.statut==='signe'){showErr('Déjà signé le '+fmtDate(q.signed_at)+'.');return}
+    render(q,items);
+  }catch(e){showErr('Erreur : '+e.message)}
+}
+function render(q,items){
+  const cur=(q.currency||'F CFA');
+  const rows=(items||[]).map(it=>`<tr><td>${esc(it.name||it.product_id||'Article')}</td><td>${Number(it.quantity||0)}</td><td>${fmtMoney(it.unit_price)}</td><td>${fmtMoney((Number(it.quantity)||0)*(Number(it.unit_price)||0))}</td></tr>`).join('');
+  const total=Number(q.total)||(items||[]).reduce((s,it)=>s+(Number(it.quantity)||0)*(Number(it.unit_price)||0),0);
+  const dueDate=fmtDate(q.created_at?new Date(new Date(q.created_at).getTime()+(Number(q.validite_jours)||7)*864e5).toISOString():'—');
+  detailsEl.innerHTML=`<div class="mhead"><h1>Devis N° ${esc(q.quote_number)}</h1><span class="badge">${q.statut==='signe'?'Signé':'À signer'}</span></div>
+<div class="amt">${fmtMoney(total)}</div><div class="sub">Valide jusqu'au ${dueDate} · ${cur}</div>
+<div class="tblWrap"><table class="tbl"><thead><tr><th>Article</th><th style="text-align:right">Qté</th><th style="text-align:right">PU</th><th style="text-align:right">Total</th></tr></thead><tbody>${rows}</tbody></table>
+<div style="display:flex;justify-content:space-between;padding:8px 5px 0;font-weight:800;color:#F8FAFC;border-top:1px solid rgba(59,130,246,.12);margin-top:6px"><span>TOTAL</span><span style="font-family:'Syne',sans-serif">${fmtMoney(total)}</span></div></div>
+<div class="sep"></div><form id="signForm" onsubmit="event.preventDefault()">
+<div class="fg"><label for="signerEmail">Votre email *</label><input type="email" id="signerEmail" placeholder="vous@exemple.com" value="${esc(q.client_email||'')}" required></div>
+<div class="fg"><label for="signerName">Votre nom complet *</label><input type="text" id="signerName" placeholder="Jean Dupont" required></div>
+<div class="fg"><label>Votre signature *</label><div class="sigWrap"><canvas id="sigPad" width="900" height="320"></canvas><div class="sigBar"><span class="sigHint">Signez avec votre doigt ou la souris</span><button type="button" class="clrBtn" id="clrSig">Effacer</button></div></div></div>
+<div class="err" id="errEl"></div><div class="ok" id="okEl"><h3>✓ Signature enregistrée</h3><p>Un email de confirmation vous a été envoyé avec le devis signé en PDF. Merci !</p><p style="margin-top:6px;font-size:11.5px;color:#4A5568">Vérifiez votre email ET vos spams.</p></div>
+<button class="submit" id="submitBtn"><span id="btnTxt">✓ Confirmer et signer</span></button></form>';
+  initCanvas();
+  $('#submitBtn').onclick=submitSig;
+}
+let ctx,d=false,hc=false;
+function initCanvas(){
+  const canvas=$('sigPad');if(!canvas)return;
+  ctx=canvas.getContext('2d');ctx.strokeStyle='#60A5FA';ctx.lineWidth=2.4;ctx.lineCap='round';
+  function resize(){const r=canvas.getBoundingClientRect();canvas.width=Math.max(1,(r.width||900)*(window.devicePixelRatio||1));canvas.height=Math.max(1,(r.height||160)*(window.devicePixelRatio||1));if(ctx){ctx.strokeStyle='#60A5FA';ctx.lineWidth=2.4;ctx.lineCap='round'}}
+  resize();window.addEventListener('resize',resize);
+  const p=function(e){const r=canvas.getBoundingClientRect();const t=e.touches?e.touches[0]:e;return{x:(t.clientX-r.left)*(canvas.width/r.width),y:(t.clientY-r.top)*(canvas.height/r.height)}};
+  const s=function(e){d=true;const p0=p(e);ctx.beginPath();ctx.moveTo(p0.x,p0.y)};
+  const m=function(e){if(!d)return;const p0=p(e);ctx.lineTo(p0.x,p0.y);ctx.stroke();hc=true;e.preventDefault()};
+  const e2=function(){d=false};
+  const clr=$('clrSig');
+  canvas.onmousedown=s;canvas.onmousemove=m;canvas.onmouseup=e2;canvas.ontouchstart=s;canvas.ontouchmove=m;canvas.ontouchend=e2;
+  if(clr)clr.onclick=function(){if(!ctx||!canvas)return;ctx.clearRect(0,0,canvas.width,canvas.height);hc=false};
+}
+async function submitSig(){
+  const btn=$('submitBtn');const errEl=$('errEl');const okEl=$('okEl');const btnTxt=$('btnTxt');
+  errEl.style.display='none';errEl.textContent='';okEl.style.display='none';
+  if(!hc){errEl.textContent='Veuillez signer dans le cadre prévu.';errEl.style.display='block';return}
+  const email=$('signerEmail').value.trim();const name=$('signerName').value.trim();
+  if(!email||!name){errEl.textContent='Email et nom sont requis.';errEl.style.display='block';return}
+  const signatureData=$('sigPad').toDataURL('image/png');
+  btn.disabled=true;btnTxt.innerHTML='<div class="ldrBtn"></div>Envoi…';
+  try{await api('confirmSignature',{id:QUOTE_ID,token:TOKEN,email,signerName:name,signatureData});
+    btn.style.display='none';$('signerEmail').disabled=true;$('signerName').disabled=true;var sw=$('sigWrap');sw.style.opacity='.4';sw.style.pointerEvents='none';okEl.style.display='block';
+  }catch(e){errEl.textContent='Erreur : '+e.message;errEl.style.display='block';btn.disabled=false;btnTxt.textContent='✓ Confirmer et signer'}}
+init();
+</script></body></html>

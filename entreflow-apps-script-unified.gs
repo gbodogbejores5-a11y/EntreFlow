@@ -947,7 +947,7 @@ function sendQuoteSignLink_(p) {
   const { quote } = detail;
   if (!quote.client_email) throw new Error('Aucun email client renseigné pour ce devis.');
   const company = getCompanyById_(quote.company_id) || {};
-  const signLink = getPortalUrl_() + '/devis-signer.html?sign=' + quote.id + '&t=' + quote.sign_token;
+  const signLink = getPortalUrl_() + '/sign?sign=' + quote.id + '&t=' + quote.sign_token;
   sendEmail_({
     to: quote.client_email,
     subject: `${company.name || CONFIG.APP_NAME} — Devis N° ${quote.quote_number} à valider`,
