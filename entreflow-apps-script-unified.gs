@@ -18,9 +18,9 @@ const CONFIG = {
   APP_URL       : 'https://entreflow.pages.dev',
   SUPPORT_EMAIL : 'support@votredomaine.com',
   SENDER_NAME   : 'EntreFlow by Africa Golden Digital',
-  API_SECRET    : 'CHANGE_ME_SECRET',
+  API_SECRET    : '2NoJxebkAg5mBorc1Dt6aMeVityuVK1n',
   /* P1: pepper global pour le hashage des mots de passe — CHANGEZ cette valeur en production */
-  PASSWORD_PEPPER : 'CHANGE_ME_PEPPER_2026',
+  PASSWORD_PEPPER : 'FkJymGghTCHfzynhtW8qjdLobr5pd9lP',
   YEAR          : new Date().getFullYear(),
 
   // URL /exec de CE script — sert le portail employé, la page de connexion par
@@ -2367,11 +2367,9 @@ function jsonResp_(obj) {
   return out;
 }
 function getSuperAdminSecret_() {
-  try {
-    const secret = PropertiesService.getScriptProperties().getProperty('ENTREFLOW_SUPER_ADMIN_SECRET');
-    if (secret) return secret;
-  } catch (e) {}
-  return 'AdminJoresEntreFlow2026@';
+  const secret = PropertiesService.getScriptProperties().getProperty('ENTREFLOW_SUPER_ADMIN_SECRET');
+  if (secret) return secret;
+  throw new Error('Secret super admin non configuré.');
 }
 function requireSuperAdmin_(token) {
   const secret = String(getSuperAdminSecret_() || '').trim();
