@@ -892,6 +892,7 @@ body.ef-xs .toast-wrap, body.ef-sm .toast-wrap {
       <div class="nav-item" onclick="goTo('quotes')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Devis</span></div>
       <div class="nav-item" onclick="goTo('clients')"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span>Clients</span></div>
       <div class="nav-item" onclick="goTo('employees')"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><span>Employés</span></div>
+      <div class="nav-item" onclick="goTo('agences')"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 11l7-8 7 8M7 21V11h10v10"/></svg><span>Agences</span></div>
       <div class="nav-item" onclick="goTo('trash')"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg><span>Corbeille</span></div>
       <div class="nav-group">Compte</div>
       <div class="nav-item" onclick="openPanel()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06A1.65 1.65 0 0015 19.4a1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg><span>Paramètres</span></div>
@@ -1032,13 +1033,17 @@ body.ef-xs .toast-wrap, body.ef-sm .toast-wrap {
 
     <!-- STOCK -->
     <div class="page" id="page-stock">
-      <div class="page-header"><div><h1>Stock</h1><p id="stockTitle">Niveaux par agence</p></div></div>
+      <div class="page-header"><div><h1>Stock</h1><p id="stockTitle">Niveaux par agence</p></div>
+        <select id="stockBranchFilter" onchange="loadStockPage(false)" style="background:rgba(4,6,18,.65);border:1px solid var(--border);color:var(--white);padding:7px 10px;border-radius:8px;font-size:13px;"></select>
+      </div>
       <div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Produit</th><th>Quantité</th><th>Seuil</th><th>Niveau</th><th>Statut</th><th>Action</th></tr></thead><tbody id="stockTbody"></tbody></table></div></div>
     </div>
 
     <!-- EMPLOYEES -->
     <div class="page" id="page-employees">
-      <div class="page-header"><div><h1>Employés</h1><p>Gérez vos équipes</p></div><button class="btn btn-primary" onclick="openEmployeeModal()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nouvel employé</button></div>
+      <div class="page-header"><div><h1>Employés</h1><p>Gérez vos équipes</p></div>
+        <select id="empBranchFilter" onchange="loadEmployeesPage(false)" style="background:rgba(4,6,18,.65);border:1px solid var(--border);color:var(--white);padding:7px 10px;border-radius:8px;font-size:13px;"></select>
+        <button class="btn btn-primary" onclick="openEmployeeModal()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nouvel employé</button></div>
       <div class="card" style="margin-bottom:12px">
         <div style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted)">
           <span id="empDayTotal">Employés : 0</span>
@@ -1058,7 +1063,9 @@ body.ef-xs .toast-wrap, body.ef-sm .toast-wrap {
 
     <!-- SALES -->
     <div class="page" id="page-sales">
-      <div class="page-header"><div><h1>Ventes</h1><p>Historique complet</p></div><button class="btn btn-primary" onclick="openSaleModal()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nouvelle vente</button></div>
+      <div class="page-header"><div><h1>Ventes</h1><p>Historique complet</p></div>
+        <select id="salesBranchFilter" onchange="loadSalesPage(false)" style="background:rgba(4,6,18,.65);border:1px solid var(--border);color:var(--white);padding:7px 10px;border-radius:8px;font-size:13px;"></select>
+        <button class="btn btn-primary" onclick="openSaleModal()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nouvelle vente</button></div>
       <div class="card" style="margin-bottom:14px;">
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
           <label style="font-size:12px;color:var(--gray);">Période :</label>
@@ -1089,10 +1096,31 @@ body.ef-xs .toast-wrap, body.ef-sm .toast-wrap {
       <div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Type</th><th>Nom</th><th>Supprimé le</th><th>Action</th></tr></thead><tbody id="trashTbody"></tbody></table></div></div>
     </div>
 
+    <!-- AGENCES -->
+    <div class="page" id="page-agences">
+      <div class="page-header"><div><h1>Agences</h1><p>Gérez vos points de vente</p></div><button class="btn btn-primary" onclick="openBranchModal()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nouvelle agence</button></div>
+      <div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Nom</th><th>Statut</th><th>Créée le</th><th>Employés</th><th>Actions</th></tr></thead><tbody id="branchesTbody"></tbody></table></div></div>
+    </div>
+
     <!-- EMPLOYEE ISOLATED VIEW -->
     <div class="page" id="page-employee_view">
-      <div class="page-header"><div><h1>Mes ventes</h1><p>Espace employé</p></div><button class="btn btn-primary" onclick="openSaleModal()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nouvelle vente</button></div>
+      <div class="page-header"><div><h1>Mes ventes</h1><p>Espace employé</p></div><button class="btn btn-primary" onclick="openSaleModal()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nouvelle vente</button></div>
       <div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>N°</th><th>Client</th><th>Total</th><th>Mode</th><th>Date</th></tr></thead><tbody id="empSalesTbody"></tbody></table></div></div>
+    </div>
+
+    <!-- MODAL AGENCE -->
+    <div id="branchModal" style="display:none;position:fixed;inset:0;background:rgba(4,6,18,.85);backdrop-filter:blur(14px);z-index:300;align-items:center;justify-content:center;padding:20px">
+      <div class="setup-box">
+        <div class="setup-logo"><div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 11l7-8 7 8M7 21V11h10v10"/></svg></div><div class="logo-text">Agence</div></div>
+        <div class="setup-title" id="branchModalTitle">Nouvelle agence</div>
+        <div class="fg"><label>Nom de l'agence</label><input id="branchName" placeholder="Ex: Cotonou, Porto-Novo..."/></div>
+        <div class="fg"><label>Statut</label><select id="branchActive"><option value="1">Active</option><option value="0">Inactive</option></select></div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
+          <button class="btn btn-outline" onclick="closeBranchModal()">Annuler</button>
+          <button class="btn btn-primary" onclick="saveBranch()">Enregistrer</button>
+        </div>
+        <div class="err" id="branchErr" style="color:var(--red);font-size:12px;margin-top:10px"></div>
+      </div>
     </div>
 
   </div>
@@ -1291,7 +1319,7 @@ async function checkRealtimeNotifications(){
 }
 
 /* ══ NAV ══ */
-const pageTitles={home:'Tableau de bord',analytics:'Analytiques',products:'Produits',stock:'Stock',sales:'Ventes',quotes:'Devis',clients:'Clients',employees:'Employés',trash:'Corbeille',employee_view:'Mes ventes'};
+const pageTitles={home:'Tableau de bord',analytics:'Analytiques',products:'Produits',stock:'Stock',sales:'Ventes',quotes:'Devis',clients:'Clients',employees:'Employés',agences:'Agences',trash:'Corbeille',employee_view:'Mes ventes'};
 function goTo(page){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -1307,6 +1335,7 @@ function goTo(page){
   if(page==='quotes')loadQuotesPage(false);
   if(page==='clients')loadClientsPage(false);
   if(page==='employees')loadEmployeesPage(false);
+  if(page==='agences')loadBranchesPage(false);
   if(page==='trash')loadTrashPage(false);
   if(window.innerWidth<760){
     const sb=document.getElementById('sidebar'),veil=document.getElementById('sidebarVeil');
@@ -1842,10 +1871,15 @@ async function softDeleteProduct(id){if(!confirm('Supprimer ce produit ?'))retur
 
 /* ══ STOCK ══ */
 async function loadStockPage(silent){
-  if(!CO||!BR)return;
-  const [rows,products]=await Promise.all([api('listStock',{branchId:BR.id}),api('listProducts',{companyId:CO.id})]);
-  console.log('[EntreFlow] loadStockPage company=' + (CO.id||'') + ' branch=' + (BR.id||'') + ' stockRows=' + (rows||[]).length + ' products=' + (products||[]).length);
-  if (!silent) { const st = document.getElementById('stockTitle'); if(st) st.textContent = 'Stock (' + (BR.id||'') + ') — ' + (rows||[]).length + ' lignes'; }
+  if(!CO)return;
+  const filterSel = document.getElementById('stockBranchFilter');
+  const branchId = filterSel ? filterSel.value : '';
+  const rows = branchId ? await api('listStock',{branchId}).catch(()=>[]) : [];
+  const products = await api('listProducts',{companyId:CO.id}).catch(()=>[]);
+  if (!silent) {
+    const st = document.getElementById('stockTitle');
+    if(st) st.textContent = branchId ? 'Stock filtré par agence' : 'Stock global (' + (rows||[]).length + ' lignes)';
+  }
   const tbody=document.getElementById('stockTbody');
   const actives=(products||[]).filter(x=>x.statut!=='inactif');
   const stockMap=new Map((rows||[]).map(r=>[String(r.product_id),r]));
@@ -1965,7 +1999,10 @@ document.getElementById('saveEmployeeBtn').addEventListener('click',async()=>{
 });
 async function loadEmployeesPage(silent){
   if(!CO)return;
-  const emps=await api('listEmployees',{companyId:CO.id});
+  const filterSel = document.getElementById('empBranchFilter');
+  const branchId = filterSel ? filterSel.value : '';
+  let emps = await api('listEmployees',{companyId:CO.id}).catch(()=>[]);
+  if (branchId) emps = (Array.isArray(emps) ? emps : []).filter(e => String(e.branch_id) === String(branchId));
   const tbody=document.getElementById('employeesTbody');
   if (!silent) document.getElementById('empDayTotal').textContent='Employés : '+(emps?.length||0);
   let gCA=0, gSales=0;
@@ -2022,7 +2059,11 @@ document.getElementById('confirmPermDelEmpBtn').addEventListener('click',async()
 async function loadSalesPage(silent){
   if(!CO)return;
   const filter=document.getElementById('salesDayFilter')?.value||'all';
-  const data=await api('listSales',{companyId:CO.id,filter});
+  const salesBranchFilter = document.getElementById('salesBranchFilter');
+  const salesBranchId = salesBranchFilter ? salesBranchFilter.value : '';
+  let data=await api('listSales',{companyId:CO.id,filter}).catch(()=>({}));
+  let sales = Array.isArray(data.sales) ? data.sales : (Array.isArray(data) ? data : []);
+  if (salesBranchId) sales = sales.filter(s => String(s.branch_id) === String(salesBranchId));
   const payLabels={cash:'Espèces',mobile_money_wave:'Wave',mobile_money_mtn:'MTN',mobile_money_moov:'Moov',card:'Carte',bank_transfer:'Virement'};
   const tbody=document.getElementById('salesTbody');
   let total=0;
@@ -2511,6 +2552,122 @@ async function requestNotifications() {
   else { toast('Permission refusée.','error'); }
 }
 setTimeout(() => requestNotifications(), 30000);
+
+/* ---------- MULTI-AGENCES ---------- */
+let branchFilter = { all: true, id: '' };
+
+async function loadBranchesPage(silent){
+  if (!CO) return;
+  const tbody = document.getElementById('branchesTbody');
+  if (!silent) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--gray)">Chargement...</td></tr>';
+  try {
+    const branches = await api('listBranches', { companyId: CO.id });
+    const emps = await api('listEmployees', { companyId: CO.id }).catch(() => []);
+    tbody.innerHTML = '';
+    const list = Array.isArray(branches) ? branches : [];
+    if (!list.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--gray)">Aucune agence. Créez votre première agence.</td></tr>';
+      return;
+    }
+    for (const br of list) {
+      const count = (Array.isArray(emps) ? emps.filter(e => String(e.branch_id) === String(br.id)).length : 0);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${br.name}</td>
+        <td><span class="badge ${br.is_active ? 'badge-ok' : 'badge-err'}">${br.is_active ? 'Active' : 'Inactive'}</span></td>
+        <td>${fmtDate(br.created_at)}</td>
+        <td>${count}</td>
+        <td>
+          <button class="btn-sm" onclick="editBranch('${br.id}')">Modifier</button>
+          ${br.is_main ? '' : `<button class="btn-sm btn-danger" onclick="removeBranch('${br.id}')">Supprimer</button>`}
+        </td>`;
+      tbody.appendChild(tr);
+    }
+  } catch (e) {
+    if (!silent) tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--red)">${e.message || 'Erreur de chargement'}</td></tr>`;
+  }
+}
+
+let editingBranchId = null;
+function openBranchModal(id){
+  editingBranchId = id || null;
+  document.getElementById('branchErr').textContent = '';
+  if (id) {
+    api('listBranches', { companyId: CO.id }).then(list => {
+      const br = (Array.isArray(list) ? list : []).find(b => b.id === id);
+      if (!br) return toast('Agence introuvable', 'error');
+      document.getElementById('branchModalTitle').textContent = 'Modifier l\'agence';
+      document.getElementById('branchName').value = br.name || '';
+      document.getElementById('branchActive').value = br.is_active ? '1' : '0';
+      document.getElementById('branchModal').style.display = 'flex';
+    });
+  } else {
+    document.getElementById('branchModalTitle').textContent = 'Nouvelle agence';
+    document.getElementById('branchName').value = '';
+    document.getElementById('branchActive').value = '1';
+    document.getElementById('branchModal').style.display = 'flex';
+  }
+}
+function closeBranchModal(){ document.getElementById('branchModal').style.display = 'none'; editingBranchId = null; }
+async function saveBranch(){
+  const name = document.getElementById('branchName').value.trim();
+  const isActive = document.getElementById('branchActive').value === '1';
+  const errEl = document.getElementById('branchErr');
+  errEl.textContent = '';
+  if (!name) { errEl.textContent = 'Le nom est requis.'; return; }
+  try {
+    if (editingBranchId) {
+      await api('updateBranch', { id: editingBranchId, name, isActive });
+      toast('Agence mise à jour', 'success');
+    } else {
+      await api('createBranch', { companyId: CO.id, name, isMain: false, isActive });
+      toast('Agence créée', 'success');
+    }
+    closeBranchModal();
+    loadBranchesPage(false);
+  } catch (e) { errEl.textContent = e.message || 'Erreur'; }
+}
+async function removeBranch(id){
+  if (!confirm('Supprimer cette agence ? Les employés et stocks seront dissociés.')) return;
+  try {
+    await api('deleteBranch', { id });
+    toast('Agence supprimée', 'success');
+    loadBranchesPage(false);
+  } catch (e) { toast(e.message || 'Erreur', 'error'); }
+}
+
+/* ---------- FILTRES PAR AGENCE ---------- */
+async function loadCompanyStats(){
+  if (!CO) return;
+  try {
+    const [sales, stock, emp] = await Promise.all([
+      api('listSales', { companyId: CO.id }).catch(() => []),
+      api('listStock', { companyId: CO.id }).catch(() => []),
+      api('listEmployees', { companyId: CO.id }).catch(() => [])
+    ]);
+    const totalSales = (Array.isArray(sales) ? sales : []).reduce((s, x) => s + (parseFloat(x.total) || 0), 0);
+    const lowStock = (Array.isArray(stock) ? stock : []).filter(s => (parseFloat(s.quantity) || 0) <= (parseFloat(s.min_threshold || 5))).length;
+    document.getElementById('kpi-sales').textContent = fmtAmt(totalSales);
+    document.getElementById('kpi-stock').textContent = (Array.isArray(stock) ? stock.length : 0);
+    document.getElementById('kpi-alert').textContent = lowStock;
+    document.getElementById('kpi-emp').textContent = (Array.isArray(emp) ? emp.length : 0);
+  } catch (e) {}
+}
+
+async function populateBranchFilters(){
+  if (!CO) return;
+  const selects = ['stockBranchFilter','empBranchFilter','salesBranchFilter'];
+  try {
+    const list = await api('listBranches', { companyId: CO.id });
+    const branches = Array.isArray(list) ? list : [];
+    for (const selId of selects) {
+      const sel = document.getElementById(selId);
+      if (!sel) continue;
+      sel.innerHTML = '<option value="">-- Toutes --</option>' +
+        branches.filter(b => b.is_active !== false).map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+    }
+  } catch (e) {}
+}
+
 </script>
 </body>
 </html>
