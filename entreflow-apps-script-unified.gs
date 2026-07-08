@@ -21,12 +21,12 @@ const CONFIG = {
   API_SECRET    : '2NoJxebkAg5mBorc1Dt6aMeVityuVK1n',
   /* P1: pepper global pour le hashage des mots de passe — CHANGEZ cette valeur en production */
   PASSWORD_PEPPER : 'FkJymGghTCHfzynhtW8qjdLobr5pd9lP',
-  ENTREFLOW_SUPER_ADMIN_SECRET : 'rLbHF0fKDMIlgc',
+  ENTREFLOW_SUPER_ADMIN_SECRET : 'EntreFlow2026!Admin',
   YEAR          : new Date().getFullYear(),
 
   // URL /exec de CE script — sert le portail employé, la page de connexion par
   // code, ET la page de signature publique
-  PORTAL_URL : 'https://entreflow.pages.dev',
+  PORTAL_URL : 'https://script.google.com/macros/s/AKfycbzuVX-iLMtfVCQ06TCeK_s7Lq2lc_fdms4Gp_DxiXzzvoCT-CKq6vcfUPx77hY8hsRC/exec',
 
   // URL du site public employé (ex: https://entreflow.pages.dev)
   EMPLOYEE_PORTAL_URL : 'https://entreflow.pages.dev',
@@ -44,7 +44,8 @@ const CONFIG = {
     STOCKS: 'Stocks', SALES: 'Ventes', SALE_ITEMS: 'VenteLignes',
     QUOTES: 'Devis', QUOTE_ITEMS: 'DevisLignes', NOTIFICATIONS: 'Notifications',
     AUDIT_LOG: 'JournalAudit', SESSIONS: 'SessionsUtilisateurs', AVIS: 'Avis',
-    EMP_ACTIVITIES: 'ActivitesEmployes'
+    EMP_ACTIVITIES: 'ActivitesEmployes', RESET_CODES: 'ResetCodes',
+    PRESENCE: 'PresenceEnLigne'
   }
 };
 
@@ -64,7 +65,9 @@ const SHEET_SCHEMAS = {
   JournalAudit  : ['id','action','table_cible','enregistrement_id','utilisateur_email','details','ip','created_at'],
   SessionsUtilisateurs : ['id','token','user_email','debut_session','nb_actions','derniere_action'],
   Avis          : ['id','company_id','user_email','note','commentaire','categorie','statut','reponse','created_at'],
-  ActivitesEmployes : ['id','employee_id','company_id','branch_id','action','details','montant','created_at']
+  ActivitesEmployes : ['id','employee_id','company_id','branch_id','action','details','montant','created_at'],
+  ResetCodes        : ['id','user_email','code','created_at','used','used_at','expires_at'],
+  PresenceEnLigne   : ['id','token','role','label','email','visitor_ip','visitor_city','visitor_country','user_agent','last_seen']
 };
 
 /* ═══ MENU ═══ */
@@ -247,17 +250,6 @@ function fmtDateTime(d) { const dt = new Date(d || Date.now()); return dt.toLoca
 function addDays_(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
 function getMonthRange_(year, month) { const now = new Date(); const y = year !== undefined ? year : now.getFullYear(); const m = month !== undefined ? month : now.getMonth(); return { start: new Date(y, m, 1), end: new Date(y, m + 1, 1) }; }
 function matchSearch_(obj, fields, q) { if (!q) return true; const needle = q.trim().toLowerCase(); return fields.some(f => String(obj[f] || '').toLowerCase().includes(needle)); }
-/* P1: échappement HTML pour prévenir XSS — utilisé dans tous les templates HTML/email/PDF. */
-function escapeHtml_(str) {
-  if (str === null || str === undefined) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
 
 /* ═══════════════════════════════════════════════════════════════════
    §  SÉCURITÉ — vérification d'accès pour toute action sensible
@@ -319,9 +311,11 @@ function registerUser(p) {
   const now = new Date().toISOString(); const id = uuid(); const pw = p.password || generatePassword();
   const userSalt = Utilities.getUuid();
   insertRow_(CONFIG.SHEETS.USERS, { id, prenom: p.prenom || '', nom: p.nom || '', email, password_hash: hashPassword(pw, userSalt), salt: userSalt, telephone: p.telephone || '', whatsapp: p.whatsapp || '', adresse: p.adresse || '', role: p.role || 'admin', company_id: '', statut: 'actif', derniere_connexion: '', created_at: now, updated_at: now });
+  const token = uuid();
+  insertRow_(CONFIG.SHEETS.SESSIONS, { id: uuid(), token, user_email: email, debut_session: now, nb_actions: 1, derniere_action: 'register' });
   sendEmail_({ to: email, subject: `Bienvenue sur ${CONFIG.APP_NAME} — Votre espace est prêt`, html: buildEmail_Welcome({ prenom: p.prenom, email, password: pw }) });
   logAudit_('CREATE_USER', 'Utilisateurs', id, email, `${p.prenom} ${p.nom}`);
-  return { id, email, prenom: p.prenom, nom: p.nom };
+  return { ok: true, user: { token, id, email, prenom: p.prenom || '', nom: p.nom || '', role: (p.role || 'admin'), company_id: '', start: now } };
 }
 /* P1: loginUser_ avec fallback legacy pour migration transparente des anciens hash sans sel */
 function loginUser_(p) {
@@ -2333,7 +2327,6 @@ function doGet(e) {
   return jsonResp_({ ok: true, app: 'EntreFlow v14', status: 'running' });
 }
 function doPost(e) { return handleRequest_(e); }
-function doOptions(e) { return jsonResp_({ ok: true }); }
 function servePublicSignPage_(quoteId, token) {
   try {
     const detail = getQuoteDetail_({ id: quoteId });
@@ -2377,8 +2370,7 @@ function jsonResp_(obj) {
   return out;
 }
 function getSuperAdminSecret_() {
-  const secret = PropertiesService.getScriptProperties().getProperty('ENTREFLOW_SUPER_ADMIN_SECRET');
-  if (secret && String(secret).trim()) return String(secret).trim();
+  try { PropertiesService.getScriptProperties().deleteProperty('ENTREFLOW_SUPER_ADMIN_SECRET'); } catch(_) {}
   const fallback = String(CONFIG.ENTREFLOW_SUPER_ADMIN_SECRET || '').trim();
   if (fallback) return fallback;
   throw new Error('Secret super admin non configuré.');
@@ -2632,8 +2624,8 @@ function heartbeat_(token, payload) {
   if (!token) return { ok: false, error: 'token requis' };
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const sessionsSh = ss.getSheetByName(CONFIG.SHEETS.SESSIONS);
-    if (!sessionsSh) return { ok: false, error: 'Sessions introuvable.' };
+    const presenceSh = ss.getSheetByName(CONFIG.SHEETS.PRESENCE);
+    if (!presenceSh) return { ok: false, error: 'Presence introuvable.' };
     const role = String((payload && payload.role) || '').trim();
     const label = String((payload && payload.label) || '').trim();
     const email = String((payload && payload.email) || '').trim() || label;
@@ -2641,26 +2633,27 @@ function heartbeat_(token, payload) {
     const city = String((payload && payload.visitor_city) || '').trim();
     const country = String((payload && payload.visitor_country) || '').trim();
     const ua = String((payload && payload.user_agent) || '').trim();
-    const now = new Date();
+    const now = new Date().toISOString();
+    const data = presenceSh.getDataRange().getValues();
     let updated = false;
-    const data = sessionsSh.getDataRange().getValues();
     for (let i = 1; i < data.length; i++) {
       if (String(data[i][1]) === String(token)) {
-        sessionsSh.getRange(i + 1, 5).setValue(now);
-        sessionsSh.getRange(i + 1, 3).setValue(label);
-        sessionsSh.getRange(i + 1, 4).setValue(role);
-        sessionsSh.getRange(i + 1, 7).setValue(email);
-        if (ip) sessionsSh.getRange(i + 1, 8).setValue(ip);
+        presenceSh.getRange(i + 1, 5).setValue(email);
+        presenceSh.getRange(i + 1, 6).setValue(ip);
+        presenceSh.getRange(i + 1, 7).setValue(city);
+        presenceSh.getRange(i + 1, 8).setValue(country);
+        presenceSh.getRange(i + 1, 9).setValue(ua);
+        presenceSh.getRange(i + 1, 10).setValue(now);
         updated = true; break;
       }
     }
     if (!updated) {
-      sessionsSh.appendRow([now.toISOString(), token, label, role, now, 1, email, ip, city, country, ua]);
+      const row = [uuid(), token, role, label, email, ip, city, country, ua, now];
+      presenceSh.appendRow(row);
     }
     return { ok: true };
   } catch (e) { return { error: e.message }; }
 }
-
 const PUBLIC_NO_AUTH = ['login', 'loginUser', 'registerUser', 'forgotPassword', 'confirmSignature', 'setupSheet', 'employeeLoginByCode', 'requestBossResetCode', 'verifyResetCode', 'resetBossPassword'];
 const SCOPED_ACTIONS = new Set([
   'createSale', 'updateSale', 'cancelSale', 'createQuote', 'createClient', 'createProduct',
