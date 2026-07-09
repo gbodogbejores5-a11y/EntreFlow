@@ -15,7 +15,7 @@
 const CONFIG = {
   APP_NAME      : 'EntreFlow',
   APP_TAGLINE   : 'Gérez. Vendez. Développez.',
-  APP_URL       : 'https://script.google.com/macros/s/AKfycbyC3kaLfkFywuSraFsLUiQ5DREWRRoRZ_0x4b5DFCd_IwiE1TT-yFKg9ElNLXwBvqz5/exec',
+  APP_URL       : 'https://script.google.com/macros/s/AKfycbzyXP5MBqCZvhS-xndYNH5Xd-hV-9ukfozzkZAODfDG_xPFbE_bo178WS1ARDsDK1nP/exec',
   SUPPORT_EMAIL : 'support@africagoldendigital.com',
   SENDER_NAME   : 'EntreFlow by Africa Golden Digital',
   API_SECRET    : '2NoJxebkAg5mBorc1Dt6aMeVityuVK1n',
@@ -26,10 +26,10 @@ const CONFIG = {
 
   // URL /exec de CE script — sert le portail employé, la page de connexion par
   // code, ET la page de signature publique
-  PORTAL_URL : 'https://script.google.com/macros/s/AKfycbyC3kaLfkFywuSraFsLUiQ5DREWRRoRZ_0x4b5DFCd_IwiE1TT-yFKg9ElNLXwBvqz5/exec',
+  PORTAL_URL : 'https://script.google.com/macros/s/AKfycbzyXP5MBqCZvhS-xndYNH5Xd-hV-9ukfozzkZAODfDG_xPFbE_bo178WS1ARDsDK1nP/exec',
 
-  // URL du site public employé (ex: https://script.google.com/macros/s/AKfycbyC3kaLfkFywuSraFsLUiQ5DREWRRoRZ_0x4b5DFCd_IwiE1TT-yFKg9ElNLXwBvqz5/exec)
-  EMPLOYEE_PORTAL_URL : 'https://script.google.com/macros/s/AKfycbyC3kaLfkFywuSraFsLUiQ5DREWRRoRZ_0x4b5DFCd_IwiE1TT-yFKg9ElNLXwBvqz5/exec',
+  // URL du site public employé (ex: https://script.google.com/macros/s/AKfycbzyXP5MBqCZvhS-xndYNH5Xd-hV-9ukfozzkZAODfDG_xPFbE_bo178WS1ARDsDK1nP/exec)
+  EMPLOYEE_PORTAL_URL : 'https://script.google.com/macros/s/AKfycbzyXP5MBqCZvhS-xndYNH5Xd-hV-9ukfozzkZAODfDG_xPFbE_bo178WS1ARDsDK1nP/exec',
 
   // Logo EntreFlow (le SaaS, pas celui de l'entreprise du client) en base64
   // data URI, ex: "data:image/png;base64,iVBORw0KG...". Collez ici le contenu
@@ -1713,7 +1713,7 @@ function _i(name) {
 }
 
 function getPortalUrl_() {
-  return CONFIG.PORTAL_URL || 'https://script.google.com/macros/s/AKfycbyC3kaLfkFywuSraFsLUiQ5DREWRRoRZ_0x4b5DFCd_IwiE1TT-yFKg9ElNLXwBvqz5/exec';
+  return CONFIG.PORTAL_URL || 'https://script.google.com/macros/s/AKfycbzyXP5MBqCZvhS-xndYNH5Xd-hV-9ukfozzkZAODfDG_xPFbE_bo178WS1ARDsDK1nP/exec';
 }
 function safeJson_(obj) {
   return JSON.stringify(obj)
