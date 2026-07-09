@@ -1420,9 +1420,19 @@ function sendInvoiceEmail_(sale, items) {
     sendEmail_({ to: sale.client_email, subject: `${company.name || CONFIG.APP_NAME} — Facture N° ${sale.sale_number}`, html: buildEmail_SaleConfirmation({ clientNom: sale.client_name || 'Client', saleNumber: sale.sale_number, total: sale.total, company }), attachments: [pdf] });
   } catch (e) { console.error('sendInvoiceEmail_', e); }
 }
+function resendInvoice_(p) {
+  p = p || {};
+  if (!p.saleId) return { ok: false, error: 'id vente requis' };
+  const saleRow = findRow_(CONFIG.SHEETS.SALES, 'id', p.saleId);
+  if (!saleRow) return { ok: false, error: 'Vente introuvable' };
+  const sale = rowToObject_(saleRow);
+  const items = sheetToObjects_(CONFIG.SHEETS.SALE_ITEMS).filter(i => String(i.sale_id) === String(p.saleId));
+  if (!sale.client_email) return { ok: false, error: 'Aucun email client sur cette vente.' };
+  sendInvoiceEmail_(sale, items);
+  return { ok: true };
+}
 
-
-/* ═══════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════ */
    §  EMAIL — wrapper + templates
    ═══════════════════════════════════════════════════════════════════ */
 function sendEmail_(p) {
@@ -2686,7 +2696,7 @@ const SCOPED_ACTIONS = new Set([
   'createSale', 'updateSale', 'cancelSale', 'createQuote', 'createClient', 'createProduct',
   'updateStock', 'restockProduct', 'createEmployee', 'deleteEmployee', 'permanentDeleteEmployee', 'updateCompany', 'updateProduct',
   'deleteProduct', 'permanentDeleteProduct', 'updateClient', 'deleteClient', 'createBranch', 'updateBranch', 'deleteBranch',
-  'deleteQuote', 'signQuote', 'generateQuotePDF', 'restoreTrash'
+  'deleteQuote', 'signQuote', 'generateQuotePDF', 'restoreTrash', 'sendInvoice'
 ]);
 /** Actions strictement réservées au boss (scope 'admin') — jamais un employé */
 /* P1: createCompany retiré de la liste publique — réservé à l'exploitant du SaaS. */
@@ -2771,6 +2781,7 @@ function handleRequest_(e) {
       case 'listQuotes':              result = listQuotes_(data); break;
       case 'getQuoteDetail':          result = getQuoteDetail_(data); break;
       case 'generateQuotePDF':        result = generateQuotePDF_(data); break;
+      case 'sendInvoice':             result = resendInvoice_(data); break;
       case 'sendQuoteSignLink':       result = sendQuoteSignLink_(data); break;
       case 'signQuote':                result = signQuote_(data); break;
       case 'deleteQuote':             result = deleteQuote_(data); break;

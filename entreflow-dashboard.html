@@ -1502,7 +1502,7 @@ async function startDashboard(){
     if(raw){
       const s=JSON.parse(raw);
       if(s.logo && !CO.logo_data) CO.logo_data=s.logo;
-      if(signature && !CO.signature_data) CO.signature_data=s.signature;
+      if(s.signature && !CO.signature_data) CO.signature_data=s.signature;
     }
   }catch(e){}
   document.getElementById('sbName').textContent=CO.name;
