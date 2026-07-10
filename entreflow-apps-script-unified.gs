@@ -2887,7 +2887,38 @@ function superAdminRestoreTrash_(token, payload) {
   if (!requireSuperAdmin_(token)) return { ok: false, error: 'Acces refuse.' };
   return restoreTrashItem_(payload);
 }
-const PUBLIC_NO_AUTH = ['login', 'loginUser', 'registerUser', 'loginWithGoogle', 'forgotPassword', 'confirmSignature', 'setupSheet', 'employeeLoginByCode', 'requestBossResetCode', 'verifyResetCode', 'resetBossPassword', 'superAdminLogin', 'superAdminOverview', 'superAdminListCompanies', 'superAdminListEmployees', 'superAdminListOnline', 'superAdminActivityFeed', 'superAdminSuspendCompany', 'superAdminDeleteCompany', 'superAdminSuspendEmployee', 'superAdminDeleteEmployee', 'superAdminListQuotes', 'superAdminListSales', 'superAdminListProducts', 'superAdminListClients', 'superAdminListTrash', 'superAdminDeleteQuote', 'superAdminCancelSale', 'superAdminDeleteClient', 'superAdminDeleteProduct', 'superAdminRestoreTrash'];
+function superAdminCreateQuote_(token, payload) {
+  if (!requireSuperAdmin_(token)) return { ok: false, error: 'Acces refuse.' };
+  return createQuote_(payload);
+}
+function superAdminGenerateQuotePDF_(token, payload) {
+  if (!requireSuperAdmin_(token)) return { ok: false, error: 'Acces refuse.' };
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const quoteId = String((payload && payload.quoteId) || '').trim();
+    const companyId = String((payload && payload.company_id) || '').trim();
+    const quoteDetail = getQuoteDetail_({ id: quoteId });
+    if (!quoteDetail) return { ok: false, error: 'Devis introuvable' };
+    const company = getCompanyById_(quoteDetail.quote.company_id) || {};
+    const pdf = buildQuotePDFBlob_(quoteDetail.quote, quoteDetail.items, company);
+    let emailSent = false, whatsappLink = '';
+    if (payload && payload.sendEmail && quoteDetail.quote.client_email) {
+      sendEmail_({ to: quoteDetail.quote.client_email, subject: (company.name || CONFIG.APP_NAME) + ' Devis N ' + quoteDetail.quote.quote_number, html: buildEmail_Quote({ clientNom: quoteDetail.quote.client_name, quoteNumber: quoteDetail.quote.quote_number, total: quoteDetail.quote.total, validiteJours: quoteDetail.quote.validite_jours, company }), attachments: [pdf] });
+      emailSent = true;
+    }
+    if (payload && payload.sendWhatsapp && quoteDetail.quote.client_phone) {
+      const phone = String(quoteDetail.quote.client_phone).replace(/[^0-9+]/g, '');
+      whatsappLink = 'https://wa.me/' + phone + '?text=' + encodeURIComponent('Bonjour ' + quoteDetail.quote.client_name + ', voici votre devis N ' + quoteDetail.quote.quote_number + ' d\'un montant de ' + fmtMoney(quoteDetail.quote.total, company.currency) + '.\nVérifiez votre email ET vos spams pour consulter et signer votre devis.\nMerci ' + (company.name || CONFIG.APP_NAME) + '.');
+    }
+    return { ok: true, emailSent, whatsappLink };
+  } catch (e) { return { ok: false, error: e.message }; }
+}
+function superAdminListClientsFull_(token) {
+  if (!requireSuperAdmin_(token)) return { ok: false, error: 'Acces refuse.' };
+  try { return sheetToObjects_(SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.SHEETS.CLIENTS)); }
+  catch (e) { return { ok: false, error: e.message }; }
+}
+const PUBLIC_NO_AUTH=*** 'loginUser', 'registerUser', 'loginWithGoogle', 'forgotPassword', 'confirmSignature', 'setupSheet', 'employeeLoginByCode', 'requestBossResetCode', 'verifyResetCode', 'resetBossPassword', 'superAdminLogin', 'superAdminOverview', 'superAdminListCompanies', 'superAdminListEmployees', 'superAdminListOnline', 'superAdminActivityFeed', 'superAdminSuspendCompany', 'superAdminDeleteCompany', 'superAdminSuspendEmployee', 'superAdminDeleteEmployee', 'superAdminListQuotes', 'superAdminListSales', 'superAdminListProducts', 'superAdminListClients', 'superAdminListClientsFull', 'superAdminListTrash', 'superAdminDeleteQuote', 'superAdminCancelSale', 'superAdminDeleteClient', 'superAdminDeleteProduct', 'superAdminRestoreTrash', 'superAdminCreateQuote', 'superAdminGenerateQuotePDF'];
 const SCOPED_ACTIONS = new Set([
   'createSale', 'updateSale', 'cancelSale', 'createQuote', 'createClient', 'createProduct',
   'updateStock', 'restockProduct', 'createEmployee', 'deleteEmployee', 'permanentDeleteEmployee', 'updateCompany', 'updateProduct',
@@ -3018,6 +3049,8 @@ function handleRequest_(e) {
       case 'superAdminDeleteClient':    result = superAdminDeleteClient_(data.token, data); break;
       case 'superAdminDeleteProduct':   result = superAdminDeleteProduct_(data.token, data); break;
       case 'superAdminRestoreTrash':    result = superAdminRestoreTrash_(data.token, data); break;
+      case 'superAdminCreateQuote':     result = superAdminCreateQuote_(data.token, data); break;
+      case 'superAdminGenerateQuotePDF': result = superAdminGenerateQuotePDF_(data.token, data); break;
       case 'heartbeat':                 result = heartbeat_(data.token, data); break;
 
       case 'setupSheet':              result = setupSheetApi(); break;

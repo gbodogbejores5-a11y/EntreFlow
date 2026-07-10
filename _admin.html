@@ -201,6 +201,36 @@ tr:hover td{background:rgba(37,99,235,.06);}
 </div>
 
 <div class="section">
+  <h2>Créer un devis</h2>
+  <div class="controls">
+    <select id="qCmp" onchange="onCompanyChange()">
+      <option value="">Sélectionner une entreprise…</option>
+    </select>
+    <input id="qClientName" placeholder="Nom du client"/>
+    <input id="qClientEmail" placeholder="Email du client"/>
+    <input id="qClientPhone" placeholder="Téléphone"/>
+  </div>
+  <div class="controls">
+    <input id="qTva" type="number" placeholder="TVA %" value="0" style="max-width:90px"/>
+  </div>
+  <div class="tblWrap" style="margin-bottom:10px;">
+    <table>
+      <thead><tr><th>Produit</th><th>Nom</th><th>Qté</th><th>Prix unitaire</th><th>Total ligne</th><th></th></tr></thead>
+      <tbody id="qItems"></tbody>
+    </table>
+  </div>
+  <button class="btn ghost" onclick="addQuoteLine()">+ Ajouter une ligne</button>
+  <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
+    <button class="btn" onclick="submitQuote()">Créer le devis</button>
+    <button class="btn green" id="pdfBtn" onclick="generatePdf()" disabled>Générer PDF</button>
+    <button class="btn ghost" id="waBtn" onclick="openWhatsApp()" disabled>WhatsApp</button>
+    <button class="btn ghost" id="mailBtn" onclick="sendEmail()" disabled>Email</button>
+  </div>
+  <div id="quoteErr" class="err" style="display:none"></div>
+  <div id="quoteOk" style="color:var(--green);font-size:13px;margin-top:8px;display:none"></div>
+</div>
+
+<div class="section">
   <h2>Corbeille</h2>
   <div class="tblWrap">
     <table>
@@ -285,8 +315,13 @@ async function loadOverview(){
 
 let companiesCache=[];
 async function loadCompanies(){
-  try{ companiesCache = await api('superAdminListCompanies',{token:t()}); renderCompanies(); }
+  try{ companiesCache = await api('superAdminListCompanies',{token:t()}); renderCompanies(); loadCompaniesForSelect(); }
   catch(e){ setErr('companiesErr','Impossible de charger les entreprises: '+e.message); }
+}
+function loadCompaniesForSelect(){
+  const sel = document.getElementById('qCmp');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">Sélectionner une entreprise…</option>' + (companiesCache||[]).map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
 }
 function renderCompanies(){
   const q = document.getElementById('qCompany').value.trim().toLowerCase();
@@ -572,7 +607,55 @@ function renderTrash(){
   </tr>`).join('');
   setErr('trashErr','');
 }
-async function restoreTrash(type, id){
+async function submitQuote(){
+  const company_id = document.getElementById('qCmp').value.trim();
+  const clientName = document.getElementById('qClientName').value.trim();
+  const clientEmail = document.getElementById('qClientEmail').value.trim();
+  const clientPhone = document.getElementById('qClientPhone').value.trim();
+  const tvaRate = String(document.getElementById('qTva').value || '0');
+  const rows = [...document.querySelectorAll('#qItems tr')];
+  const items = [];
+  rows.forEach(tr => {
+    const inputs = tr.querySelectorAll('input');
+    if (!inputs.length) return;
+    const name = (inputs[0] && inputs[0].value || '').trim();
+    const qty = Number(inputs[1] && inputs[1].value || 0);
+    const price = Number(inputs[2] && inputs[2].value || 0);
+    if (!name || !qty || !price) return;
+    items.push({ name, unit: '', quantity: qty, unit_price: price });
+  });
+  if (!company_id){ setErr('quoteErr','Sélectionne une entreprise.'); return; }
+  if (!clientName){ setErr('quoteErr','Nom du client requis.'); return; }
+  if (!items.length){ setErr('quoteErr','Ajoute au moins un article.'); return; }
+  document.getElementById('pdfBtn').disabled = true;
+  setErr('quoteErr','');
+  api('superAdminCreateQuote', { token:t(), company_id, client_name:clientName, client_email:clientEmail, client_phone:clientPhone, tva_rate:tvaRate, items })
+    .then(d => { window.__lastQuoteId = d.id; window.__lastQuoteTotal = d.total; document.getElementById('quoteOk').style.display='block'; document.getElementById('quoteOk').textContent = 'Devis créé : ' + (d.quote_number||d.id); document.getElementById('pdfBtn').disabled = false; })
+    .catch(e => setErr('quoteErr', e.message));
+}
+function generatePdf(){
+  const id = window.__lastQuoteId;
+  if (!id){ setErr('quoteErr','Crée d'abord un devis.'); return; }
+  api('superAdminGenerateQuotePDF', { token:t(), quoteId:id, sendEmail:true, sendWhatsapp:true })
+    .then(d => { if(d.waLink){ document.getElementById('waBtn').disabled=false; window.__waLink=d.waLink; } if(d.emailSent){ document.getElementById('mailBtn').disabled=false; showToast('PDF envoyé par email'); } })
+    .catch(e => setErr('quoteErr', e.message));
+}
+function openWhatsApp(){ const l=window.__waLink; if(l) window.open(l,'_blank'); }
+function sendEmail(){ showToast('Email envoyé au client'); }
+function addQuoteLine(){
+  const tb = document.getElementById('qItems');
+  const tr = document.createElement('tr');
+  tr.innerHTML = '<td><input placeholder="Nom article"/></td><td><input placeholder="Nom" style="width:140px"/></td><td><input type="number" value="1" style="width:70px"/></td><td><input type="number" placeholder="0" style="width:90px"/></td><td class="lineTotal" style="color:#E2E8F0">—</td><td><button class="del" onclick="this.closest(\"tr\").remove()">✕</button></td>';
+  tr.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => {
+    const q = Number(tr.querySelectorAll('input')[1].value || 0);
+    const p = Number(tr.querySelectorAll('input')[2].value || 0);
+    tr.querySelector('.lineTotal').textContent = (q * p).toLocaleString('fr-FR') + ' FCFA';
+  }));
+  tb.appendChild(tr);
+}
+function onCompanyChange(){}
+
+function restoreTrash(type, id){
   openModal('Restaurer', 'Restaurer cet élément ?', async ()=>{
     try{ await api('superAdminRestoreTrash',{token:t(),type,id}); showToast('Élément restauré'); refreshAll(); }
     catch(e){ showToast(e.message); }
