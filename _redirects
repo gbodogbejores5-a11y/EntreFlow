@@ -1,1 +1,2 @@
-# /api/* direct Apps Script call is already handled in frontend code
+# Cloudflare Pages: no external proxy redirects allowed
+# Frontend already calls Apps Script /exec directly
