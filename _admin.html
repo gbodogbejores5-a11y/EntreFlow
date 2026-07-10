@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>EntreFlow — Super Admin</title>
+<style>
+:root{--bg:#050A1A;--card:#0A1030;--blue:#2563EB;--blue-m:#3B82F6;--white:#F1F5FF;--gray:#8A99C2;--border:rgba(59,130,246,.18);--red:#F87171;--green:#10B981;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--white);font-family:'DM Sans',system-ui,sans-serif;min-height:100vh;padding:18px;}
+.header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
+.header h1{font-family:'Syne',system-ui,sans-serif;font-size:18px;font-weight:700;}
+.header .btn{padding:9px 14px;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;color:#fff;background:linear-gradient(105deg,#F87171,#EF4444);font-family:inherit;}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px;}
+.card{background:rgba(10,16,48,.55);backdrop-filter:blur(24px);border:1px solid var(--border);border-radius:18px;padding:18px;box-shadow:0 18px 60px -14px rgba(0,0,0,.55);}
+.card .k{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:.08em;}
+.card .v{font-family:'Syne',system-ui,sans-serif;font-size:26px;font-weight:700;margin-top:6px;}
+.sec{margin-top:14px;}
+.sec h2{font-size:13px;font-weight:700;margin-bottom:8px;color:#CBD5E1;}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:640px;}
+th{text-align:left;color:#94A3B8;font-weight:600;padding:7px 5px;border-bottom:1px solid rgba(59,130,246,.12);}
+td{padding:8px 5px;border-bottom:1px solid rgba(59,130,246,.06);color:#E2E8F0;}
+.badge{font-size:11px;padding:3px 8px;border-radius:999px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.22);color:#6EE7B7;font-weight:700;}
+.badge.red{background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.22);color:#FCA5A5;}
+.err{color:var(--red);font-size:13px;}
+.loader{color:var(--gray);font-size:13px;}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>Super Admin</h1>
+    <p class="sub" style="color:var(--gray);font-size:12px;">Vue système</p>
+  </div>
+  <button class="btn" onclick="logout()">Déconnexion</button>
+</div>
+
+<div class="grid" id="stats">
+  <div class="card"><div class="k">Entreprises</div><div class="v" id="companies">—</div></div>
+  <div class="card"><div class="k">Employés</div><div class="v" id="employees">—</div></div>
+  <div class="card"><div class="k">En ligne</div><div class="v" id="online">—</div></div>
+  <div class="card"><div class="k">Suspendus</div><div class="v" id="suspended">—</div></div>
+  <div class="card"><div class="k">Ventes aujourd'hui</div><div class="v" id="salesToday">—</div></div>
+</div>
+
+<div class="card sec">
+  <h2>Activité récente</h2>
+  <div style="overflow-x:auto;">
+    <table>
+      <thead><tr><th>Action</th><th>Détails</th><th>Utilisateur</th><th>Date</th></tr></thead>
+      <tbody id="activity"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const API_BASE='https://script.google.com/macros/s/AKfycbzyXP5MBqCZvhS-xndYNH5Xd-hV-9ukfozzkZAODfDG_xPFbE_bo178WS1ARDsDK1nP/exec';
+function token(){ return localStorage.getItem('entreflowSuperAdmin') || ''; }
+async function api(action, payload={}){
+  const r=await fetch(API_BASE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,...payload})});
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok || data?.ok === false || data?.error) throw new Error((data&&(data.error||data.message))||'Erreur API ('+r.status+')');
+  return data;
+}
+async function refresh(){
+  const t = token();
+  if(!t){ location.href='/ _admin-login.html'; return; }
+  try{
+    const overview = await api('superAdminOverview', {token:t});
+    document.getElementById('companies').textContent = overview.companies_count ?? '—';
+    document.getElementById('employees').textContent = overview.employees_count ?? '—';
+    document.getElementById('online').textContent = overview.online_count ?? '—';
+    document.getElementById('suspended').textContent = overview.suspended_count ?? '—';
+    document.getElementById('salesToday').textContent = overview.sales_today_count ?? '—';
+    const tbody = document.getElementById('activity');
+    tbody.innerHTML = '';
+    const rows = overview.recent_activity || [];
+    rows.forEach(r=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${esc(r.action)}</td><td>${esc(r.details)}</td><td>${esc(r.utilisateur_email)}</td><td>${esc(r.created_at)}</td>`;
+      tbody.appendChild(tr);
+    });
+    if(!rows.length){
+      const tr=document.createElement('tr');tr.innerHTML='<td colspan="4" style="color:#64748B">Aucune activité</td>';tbody.appendChild(tr);
+    }
+  } catch(e){
+    document.getElementById('stats').innerHTML = '<div class="err">' + esc(e.message) + '</div>';
+  }
+}
+function esc(v){ return String(v??'').replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;','\'':'&#39;'}[c])); }
+function logout(){ localStorage.removeItem('entreflowSuperAdmin'); location.href='/ _admin-login.html'; }
+if(!token()) location.href='/ _admin-login.html'; else refresh();
+</script>
+</body>
+</html>
