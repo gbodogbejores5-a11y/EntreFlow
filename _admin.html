@@ -144,6 +144,73 @@ tr:hover td{background:rgba(37,99,235,.06);}
   <div id="activityErr" class="err" style="display:none"></div>
 </div>
 
+<div class="section">
+  <h2>Devis <span class="badge b" style="font-size:10px;margin-left:6px;">Toutes entreprises</span></h2>
+  <div class="controls">
+    <input id="qQuote" placeholder="Rechercher devis/email/client…" oninput="renderQuotes()"/>
+  </div>
+  <div class="tblWrap">
+    <table>
+      <thead><tr><th>Numéro</th><th>Entreprise</th><th>Client</th><th>Total</th><th>Statut</th><th>Date</th><th>Actions</th></tr></thead>
+      <tbody id="quotesBody"></tbody>
+    </table>
+  </div>
+  <div id="quotesErr" class="err" style="display:none"></div>
+</div>
+
+<div class="section">
+  <h2>Ventes</h2>
+  <div class="controls">
+    <input id="qSale" placeholder="Rechercher vente/client…" oninput="renderSales()"/>
+  </div>
+  <div class="tblWrap">
+    <table>
+      <thead><tr><th>Numéro</th><th>Entreprise</th><th>Client</th><th>Total</th><th>Statut</th><th>Date</th><th>Actions</th></tr></thead>
+      <tbody id="salesBody"></tbody>
+    </table>
+  </div>
+  <div id="salesErr" class="err" style="display:none"></div>
+</div>
+
+<div class="section">
+  <h2>Produits</h2>
+  <div class="controls">
+    <input id="qProduct" placeholder="Rechercher produit/catégorie…" oninput="renderProducts()"/>
+  </div>
+  <div class="tblWrap">
+    <table>
+      <thead><tr><th>ID</th><th>Nom</th><th>Entreprise</th><th>Catégorie</th><th>Prix</th><th>Statut</th><th>Actions</th></tr></thead>
+      <tbody id="productsBody"></tbody>
+    </table>
+  </div>
+  <div id="productsErr" class="err" style="display:none"></div>
+</div>
+
+<div class="section">
+  <h2>Clients</h2>
+  <div class="controls">
+    <input id="qClient" placeholder="Rechercher client/email/ville…" oninput="renderClients()"/>
+  </div>
+  <div class="tblWrap">
+    <table>
+      <thead><tr><th>ID</th><th>Nom</th><th>Entreprise</th><th>Email</th><th>Téléphone</th><th>Ville</th><th>Statut</th><th>Actions</th></tr></thead>
+      <tbody id="clientsBody"></tbody>
+    </table>
+  </div>
+  <div id="clientsErr" class="err" style="display:none"></div>
+</div>
+
+<div class="section">
+  <h2>Corbeille</h2>
+  <div class="tblWrap">
+    <table>
+      <thead><tr><th>Type</th><th>Nom</th><th>ID</th><th>Date</th><th>Actions</th></tr></thead>
+      <tbody id="trashBody"></tbody>
+    </table>
+  </div>
+  <div id="trashErr" class="err" style="display:none"></div>
+</div>
+
 <div id="toast" class="toast" style="display:none"></div>
 
 <div id="confirm" class="modal-bg" onclick="if(event.target===this)closeModal()">
@@ -196,7 +263,7 @@ async function refreshAll(){
   const btns = document.querySelectorAll('.btn');
   btns.forEach(b=>b.disabled=true);
   try{
-    await Promise.all([loadOverview(), loadCompanies(), loadEmployees(), loadOnline(), loadActivity()]);
+    await Promise.all([loadOverview(), loadCompanies(), loadEmployees(), loadOnline(), loadActivity(), loadQuotes(), loadSales(), loadProducts(), loadClients(), loadTrash()]);
     showToast('Données actualisées');
   } catch(e){
     showToast('Erreur: ' + e.message);
@@ -353,6 +420,163 @@ function renderActivity(){
     <td>${fmt(r.created_at)}</td>
   </tr>`).join('');
   setErr('activityErr','');
+}
+
+let quotesCache=[];
+async function loadQuotes(){
+  try{ quotesCache = await api('superAdminListQuotes',{token:t()}); renderQuotes(); }
+  catch(e){ setErr('quotesErr','Devis: '+e.message); }
+}
+function renderQuotes(){
+  const q = document.getElementById('qQuote').value.trim().toLowerCase();
+  let rows = quotesCache||[];
+  if(q) rows = rows.filter(r => String((r.quote_number||'')+' '+(r.client_name||'')+' '+(r.client_email||'')+' '+(r.company_name||'')).toLowerCase().includes(q));
+  const tb = document.getElementById('quotesBody');
+  if(!rows.length){ tb.innerHTML='<tr><td colspan="7" class="empty">Aucun devis</td></tr>'; setErr('quotesErr',''); return; }
+  tb.innerHTML = rows.map(r => `<tr>
+    <td><span style="font-weight:700">${esc(r.quote_number)}</span></td>
+    <td>${esc(r.company_name)}</td>
+    <td><div>${esc(r.client_name)}</div><div style="font-size:11px;color:#94A3B8">${esc(r.client_email||'')}</div></td>
+    <td>${money(r.total)}</td>
+    <td>${badge(r.statut)}</td>
+    <td>${fmt(r.created_at)}</td>
+    <td><div class="acts">
+      <button class="del" onclick="delQuote('${r.id}')">Supprimer</button>
+    </div></td>
+  </tr>`).join('');
+  setErr('quotesErr','');
+}
+function money(v){ const n = Number(v||0); return n.toLocaleString('fr-FR')+' FCFA'; }
+async function delQuote(id){
+  openModal('Supprimer', 'Supprimer ce devis ?', async ()=>{
+    try{ await api('superAdminDeleteQuote',{token:t(),id}); showToast('Devis supprimé'); refreshAll(); }
+    catch(e){ showToast(e.message); }
+  });
+}
+
+let salesCache=[];
+async function loadSales(){
+  try{ salesCache = await api('superAdminListSales',{token:t()}); renderSales(); }
+  catch(e){ setErr('salesErr','Ventes: '+e.message); }
+}
+function renderSales(){
+  const q = document.getElementById('qSale').value.trim().toLowerCase();
+  let rows = salesCache||[];
+  if(q) rows = rows.filter(r => String((r.sale_number||'')+' '+(r.client_name||'')+' '+(r.company_name||'')).toLowerCase().includes(q));
+  const tb = document.getElementById('salesBody');
+  if(!rows.length){ tb.innerHTML='<tr><td colspan="7" class="empty">Aucune vente</td></tr>'; setErr('salesErr',''); return; }
+  tb.innerHTML = rows.map(r => `<tr>
+    <td><span style="font-weight:700">${esc(r.sale_number||r.id)}</span></td>
+    <td>${esc(r.company_name)}</td>
+    <td><div>${esc(r.client_name)}</div><div style="font-size:11px;color:#94A3B8">${esc(r.client_email||'')}</div></td>
+    <td>${money(r.total)}</td>
+    <td>${badge(r.statut)}</td>
+    <td>${fmt(r.created_at)}</td>
+    <td><div class="acts">
+      ${String(r.statut||'').toLowerCase() !== 'cancelled'
+        ? `<button class="suspend" onclick="cancelSale('${r.id}')">Annuler</button>`
+        : `<span style="color:#64748B;font-size:11px;">Annulée</span>`}
+    </div></td>
+  </tr>`).join('');
+  setErr('salesErr','');
+}
+async function cancelSale(id){
+  openModal('Annuler', 'Annuler cette vente ?', async ()=>{
+    try{ await api('superAdminCancelSale',{token:t(),id}); showToast('Vente annulée'); refreshAll(); }
+    catch(e){ showToast(e.message); }
+  });
+}
+
+let productsCache=[];
+async function loadProducts(){
+  try{ productsCache = await api('superAdminListProducts',{token:t()}); renderProducts(); }
+  catch(e){ setErr('productsErr','Produits: '+e.message); }
+}
+function renderProducts(){
+  const q = document.getElementById('qProduct').value.trim().toLowerCase();
+  let rows = productsCache||[];
+  if(q) rows = rows.filter(r => String((r.name||'')+' '+(r.category||'')+' '+(r.company_name||'')).toLowerCase().includes(q));
+  const tb = document.getElementById('productsBody');
+  if(!rows.length){ tb.innerHTML='<tr><td colspan="7" class="empty">Aucun produit</td></tr>'; setErr('productsErr',''); return; }
+  tb.innerHTML = rows.map(r => `<tr>
+    <td>${esc(r.id.slice(0,8))}</td>
+    <td><div style="font-weight:700">${esc(r.name)}</div></td>
+    <td>${esc(r.company_name)}</td>
+    <td>${esc(r.category)}</td>
+    <td>${money(r.unit_sell_price)}</td>
+    <td>${badge(r.statut)}</td>
+    <td><div class="acts">
+      ${String(r.statut||'').toLowerCase() !== 'inactif'
+        ? `<button class="suspend" onclick="delProduct('${r.id}')">Désactiver</button>`
+        : `<button class="restore" onclick="delProduct('${r.id}')">Réactiver</button>`}
+    </div></td>
+  </tr>`).join('');
+  setErr('productsErr','');
+}
+async function delProduct(id){
+  openModal('Confirmer', 'Changer le statut de ce produit ?', async ()=>{
+    try{ await api('superAdminDeleteProduct',{token:t(),id}); showToast('Statut produit changé'); refreshAll(); }
+    catch(e){ showToast(e.message); }
+  });
+}
+
+let clientsCache=[];
+async function loadClients(){
+  try{ clientsCache = await api('superAdminListClients',{token:t()}); renderClients(); }
+  catch(e){ setErr('clientsErr','Clients: '+e.message); }
+}
+function renderClients(){
+  const q = document.getElementById('qClient').value.trim().toLowerCase();
+  let rows = clientsCache||[];
+  if(q) rows = rows.filter(r => String((r.name||'')+' '+(r.email||'')+' '+(r.city||'')+' '+(r.company_name||'')).toLowerCase().includes(q));
+  const tb = document.getElementById('clientsBody');
+  if(!rows.length){ tb.innerHTML='<tr><td colspan="8" class="empty">Aucun client</td></tr>'; setErr('clientsErr',''); return; }
+  tb.innerHTML = rows.map(r => `<tr>
+    <td>${esc(r.id.slice(0,8))}</td>
+    <td><div style="font-weight:700">${esc(r.name)}</div></td>
+    <td>${esc(r.company_name)}</td>
+    <td>${esc(r.email)}</td>
+    <td>${esc(r.phone)}</td>
+    <td>${esc(r.city)}</td>
+    <td>${badge(r.statut)}</td>
+    <td><div class="acts">
+      <button class="del" onclick="delClient('${r.id}')">Supprimer</button>
+    </div></td>
+  </tr>`).join('');
+  setErr('clientsErr','');
+}
+async function delClient(id){
+  openModal('Supprimer', 'Supprimer ce client ?', async ()=>{
+    try{ await api('superAdminDeleteClient',{token:t(),id}); showToast('Client supprimé'); refreshAll(); }
+    catch(e){ showToast(e.message); }
+  });
+}
+
+let trashCache=[];
+async function loadTrash(){
+  try{ trashCache = await api('superAdminListTrash',{token:t()}); renderTrash(); }
+  catch(e){ setErr('trashErr','Corbeille: '+e.message); }
+}
+function renderTrash(){
+  const tb = document.getElementById('trashBody');
+  const rows = trashCache || [];
+  if(!rows.length){ tb.innerHTML='<tr><td colspan="5" class="empty">Corbeille vide</td></tr>'; setErr('trashErr',''); return; }
+  tb.innerHTML = rows.map(r => `<tr>
+    <td><span class="badge b">${esc(r.type)}</span></td>
+    <td><div style="font-weight:700">${esc(r.name)}</div></td>
+    <td style="font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(r.id)}</td>
+    <td>${fmt(r.date)}</td>
+    <td><div class="acts">
+      <button class="restore" onclick="restoreTrash('${esc(r.type)}','${esc(r.id)}')">Restaurer</button>
+    </div></td>
+  </tr>`).join('');
+  setErr('trashErr','');
+}
+async function restoreTrash(type, id){
+  openModal('Restaurer', 'Restaurer cet élément ?', async ()=>{
+    try{ await api('superAdminRestoreTrash',{token:t(),type,id}); showToast('Élément restauré'); refreshAll(); }
+    catch(e){ showToast(e.message); }
+  });
 }
 
 function logout(){ localStorage.removeItem('entreflowSuperAdmin'); location.href='/_admin-login.html'; }
