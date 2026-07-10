@@ -2,246 +2,524 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
 <title>EntreFlow — Super Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#050A1A;--bg2:#0A1030;--blue:#2563EB;--blue-m:#3B82F6;--white:#F1F5FF;--gray:#8A99C2;--muted:#4B5B82;--border:rgba(59,130,246,.18);--red:#F87171;--green:#10B981;--orange:#F59E0B;}
-*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#06080F;
+  --bg-surface:#0A0F20;
+  --bg-elevated:#111730;
+  --bg-elevated-2:#161D3D;
+  --blue:#3B82F6;
+  --indigo:#6366F1;
+  --cyan:#22D3EE;
+  --white:#EDF1FF;
+  --text-dim:#8A93B8;
+  --text-faint:#5B658A;
+  --border:rgba(110,145,255,.14);
+  --border-strong:rgba(110,145,255,.28);
+  --red:#F87171;
+  --green:#10B981;
+  --orange:#F59E0B;
+  --radius:16px;
+  --radius-sm:10px;
+  --disp:'Syne',system-ui,sans-serif;
+  --body:'DM Sans',system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --sidebar-w:236px;
+  --header-h:60px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{scroll-behavior:smooth;}
 html,body{height:100%;}
-body{background:var(--bg);color:var(--white);font-family:'DM Sans',system-ui,sans-serif;min-height:100vh;padding:18px;}
-.top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
-.top h1{font-family:'Syne',system-ui,sans-serif;font-size:18px;font-weight:700;letter-spacing:.02em;}
-.top-actions{display:flex;gap:8px;flex-wrap:wrap;}
-.btn{padding:9px 14px;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;color:#fff;background:linear-gradient(105deg,var(--blue),var(--blue-m));font-family:inherit;transition:.2s;box-shadow:0 6px 18px rgba(37,99,235,.3);}
-.btn:hover{filter:brightness(1.08);}
-.btn.ghost{background:rgba(255,255,255,.06);border:1px solid var(--border);box-shadow:none;}
-.btn.red{background:linear-gradient(105deg,#EF4444,#F87171);}
-.btn.green{background:linear-gradient(105deg,#059669,#10B981);}
-.btn:disabled{opacity:.5;cursor:not-allowed;}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px;}
-.card{background:rgba(10,16,48,.55);backdrop-filter:blur(24px);border:1px solid var(--border);border-radius:18px;padding:16px;box-shadow:0 18px 60px -14px rgba(0,0,0,.55);}
-.card .k{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.1em;}
-.card .v{font-family:'Syne',system-ui,sans-serif;font-size:24px;font-weight:700;margin-top:5px;}
-.section{margin-top:12px;}
-.section h2{font-size:13px;font-weight:700;color:#CBD5E1;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
-.controls{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
-.controls input,.controls select{padding:9px 12px;background:rgba(8,13,38,.7);border:1px solid var(--border);border-radius:10px;color:var(--white);font-family:inherit;font-size:12px;outline:none;min-width:180px;}
-.controls input:focus,.controls select:focus{border-color:var(--blue-m);}
-.tblWrap{overflow-x:auto;border-radius:16px;border:1px solid var(--border);background:rgba(8,13,38,.45);}
-table{width:100%;border-collapse:collapse;font-size:12px;min-width:720px;}
-th{text-align:left;color:#94A3B8;font-weight:600;padding:9px 6px;border-bottom:1px solid rgba(59,130,246,.12);background:rgba(10,16,48,.4);position:sticky;top:0;}
-td{padding:10px 6px;border-bottom:1px solid rgba(59,130,246,.05);color:#E2E8F0;vertical-align:top;}
-tr:hover td{background:rgba(37,99,235,.06);}
-.badge{font-size:11px;padding:3px 8px;border-radius:999px;font-weight:700;white-space:nowrap;}
-.badge.g{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.22);color:#6EE7B7;}
-.badge.r{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.22);color:#FCA5A5;}
-.badge.o{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.22);color:#FCD34D;}
-.badge.b{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.22);color:#93C5FD;}
+body{
+  background:
+    radial-gradient(1100px 560px at 85% -10%, rgba(59,130,246,.14), transparent 60%),
+    radial-gradient(900px 500px at -10% 10%, rgba(99,102,241,.10), transparent 55%),
+    var(--bg);
+  color:var(--white);
+  font-family:var(--body);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+::selection{background:rgba(59,130,246,.35);}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(110,145,255,.25);border-radius:10px;}
+::-webkit-scrollbar-thumb:hover{background:rgba(110,145,255,.4);}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.55);}50%{box-shadow:0 0 0 6px rgba(16,185,129,0);}}
+@keyframes shimmer{0%{background-position:-400px 0;}100%{background-position:400px 0;}}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes slideInDrawer{from{transform:translateX(-100%);}to{transform:translateX(0);}}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,-14px);}to{opacity:1;transform:translate(-50%,0);}}
+@keyframes modalPop{from{opacity:0;transform:scale(.94) translateY(8px);}to{opacity:1;transform:scale(1) translateY(0);}}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;scroll-behavior:auto !important;}
+}
+
+/* ---------- Layout shell ---------- */
+.shell{display:flex;min-height:100vh;}
+
+.sidebar{
+  width:var(--sidebar-w);flex:0 0 var(--sidebar-w);
+  background:linear-gradient(180deg,var(--bg-surface),var(--bg));
+  border-right:1px solid var(--border);
+  padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto;
+  display:flex;flex-direction:column;gap:18px;z-index:40;
+}
+.brand{display:flex;align-items:center;gap:10px;padding:2px 8px 14px;}
+.brand .mark{
+  width:34px;height:34px;border-radius:10px;flex:0 0 34px;
+  background:linear-gradient(135deg,var(--blue),var(--indigo));
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--disp);font-weight:800;font-size:15px;color:#fff;
+  box-shadow:0 8px 20px -4px rgba(59,130,246,.55);
+}
+.brand .txt div:first-child{font-family:var(--disp);font-weight:800;font-size:15px;letter-spacing:.01em;}
+.brand .txt div:last-child{font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.14em;margin-top:1px;}
+
+.nav-group{display:flex;flex-direction:column;gap:2px;}
+.nav-label{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--text-faint);padding:10px 10px 4px;}
+.nav-link{
+  display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;
+  color:var(--text-dim);text-decoration:none;font-size:13px;font-weight:500;
+  border:1px solid transparent;cursor:pointer;transition:background .18s,color .18s,border-color .18s;
+  position:relative;
+}
+.nav-link .ico{width:16px;height:16px;flex:0 0 16px;display:flex;align-items:center;justify-content:center;opacity:.85;}
+.nav-link svg{width:16px;height:16px;}
+.nav-link:hover{background:rgba(110,145,255,.07);color:var(--white);}
+.nav-link.active{background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.28);color:var(--white);}
+.nav-link.active::before{content:'';position:absolute;left:-14px;top:50%;transform:translateY(-50%);width:3px;height:16px;border-radius:3px;background:linear-gradient(180deg,var(--blue),var(--cyan));}
+
+.sidebar-foot{margin-top:auto;padding-top:12px;border-top:1px solid var(--border);}
+.sess-pill{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-dim);padding:6px 8px;}
+.livedot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulseDot 2s infinite;}
+
+.main{flex:1;min-width:0;display:flex;flex-direction:column;}
+
+/* ---------- Header ---------- */
+.topbar{
+  height:var(--header-h);position:sticky;top:0;z-index:35;
+  display:flex;align-items:center;gap:12px;padding:0 20px;
+  background:rgba(6,8,15,.72);backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--border);
+}
+.burger{display:none;width:36px;height:36px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,.03);color:var(--white);align-items:center;justify-content:center;cursor:pointer;flex:0 0 36px;}
+.burger svg{width:18px;height:18px;}
+.topbar h1{font-family:var(--disp);font-size:15px;font-weight:700;flex:1;}
+.topbar .sub{font-size:11px;color:var(--text-faint);display:block;font-weight:400;margin-top:1px;}
+.top-actions{display:flex;gap:8px;}
+
+.btn{
+  padding:9px 15px;border:none;border-radius:10px;font-size:12.5px;font-weight:700;cursor:pointer;color:#fff;
+  background:linear-gradient(120deg,var(--blue),var(--indigo));font-family:var(--body);
+  transition:filter .16s,transform .12s,box-shadow .16s;box-shadow:0 6px 18px -4px rgba(59,130,246,.4);
+  display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
+}
+.btn:hover{filter:brightness(1.1);transform:translateY(-1px);}
+.btn:active{transform:translateY(0) scale(.98);}
+.btn.ghost{background:rgba(255,255,255,.05);border:1px solid var(--border-strong);box-shadow:none;color:var(--white);}
+.btn.ghost:hover{background:rgba(255,255,255,.09);}
+.btn.red{background:linear-gradient(120deg,#DC2626,#F87171);box-shadow:0 6px 18px -4px rgba(248,113,113,.4);}
+.btn.green{background:linear-gradient(120deg,#059669,#10B981);box-shadow:0 6px 18px -4px rgba(16,185,129,.4);}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+.btn.icon-only{padding:9px;}
+.spin{width:13px;height:13px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:spin .7s linear infinite;}
+
+/* ---------- Content ---------- */
+.content{padding:20px;max-width:1400px;width:100%;margin:0 auto;}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px;}
+.card{
+  background:linear-gradient(165deg,var(--bg-elevated),var(--bg-surface));
+  border:1px solid var(--border);border-radius:var(--radius);padding:16px 16px 14px;
+  box-shadow:0 18px 40px -22px rgba(0,0,0,.7);
+  animation:fadeUp .5s ease both;transition:border-color .18s,transform .18s;
+  position:relative;overflow:hidden;
+}
+.card::after{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent,rgba(255,255,255,.03),transparent);pointer-events:none;}
+.card:hover{border-color:var(--border-strong);transform:translateY(-2px);}
+.card .k{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.11em;display:flex;align-items:center;gap:6px;}
+.card .v{font-family:var(--disp);font-size:26px;font-weight:800;margin-top:7px;letter-spacing:-.01em;}
+.card .v.skel{color:transparent;}
+.card.online .k .livedot{display:inline-block;}
+
+.skel{position:relative;background:linear-gradient(90deg,rgba(255,255,255,.05) 25%,rgba(255,255,255,.11) 37%,rgba(255,255,255,.05) 63%);background-size:400px 100%;animation:shimmer 1.4s ease infinite;border-radius:6px;}
+.skel-text{display:inline-block;width:42px;height:20px;}
+
+.panel{
+  background:rgba(10,15,32,.55);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px;margin-bottom:18px;scroll-margin-top:76px;animation:fadeUp .5s ease both;
+}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+.panel-head h2{font-family:var(--disp);font-size:14.5px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.panel-head h2 .ico{width:17px;height:17px;color:var(--blue);display:flex;}
+.panel-head h2 .ico svg{width:17px;height:17px;}
+.count-badge{font-family:var(--mono);font-size:10.5px;color:var(--text-dim);background:rgba(255,255,255,.05);border:1px solid var(--border);padding:2px 8px;border-radius:999px;}
+
+.controls{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.controls input,.controls select{
+  padding:9px 12px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;
+  color:var(--white);font-family:var(--body);font-size:12.5px;outline:none;min-width:170px;flex:1 1 170px;
+  transition:border-color .15s,background .15s;
+}
+.controls input::placeholder{color:var(--text-faint);}
+.controls input:focus,.controls select:focus{border-color:var(--blue);background:rgba(59,130,246,.06);}
+.controls select{cursor:pointer;flex:0 0 auto;min-width:130px;}
+
+.tblWrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border);background:rgba(0,0,0,.15);}
+table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px;}
+th{text-align:left;color:var(--text-dim);font-weight:600;padding:10px 10px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02);position:sticky;top:0;font-size:11px;text-transform:uppercase;letter-spacing:.05em;}
+td{padding:11px 10px;border-bottom:1px solid rgba(110,145,255,.06);color:#E2E8F0;vertical-align:top;}
+tbody tr{transition:background .14s;}
+tbody tr:hover td{background:rgba(59,130,246,.06);}
+tbody tr:last-child td{border-bottom:none;}
+
+.badge{font-size:10.5px;padding:3px 9px;border-radius:999px;font-weight:700;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+.badge.g{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.24);color:#6EE7B7;}
+.badge.r{background:rgba(248,113,113,.09);border:1px solid rgba(248,113,113,.24);color:#FCA5A5;}
+.badge.o{background:rgba(245,158,11,.09);border:1px solid rgba(245,158,11,.24);color:#FCD34D;}
+.badge.b{background:rgba(59,130,246,.09);border:1px solid rgba(59,130,246,.24);color:#93C5FD;}
+
 .acts{display:flex;gap:6px;flex-wrap:wrap;}
-.acts button{ padding:5px 9px; border:none; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; color:#fff; font-family:inherit;}
-.acts .suspend{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.25);color:#FCD34D;}
-.acts .restore{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.25);color:#6EE7B7;}
-.acts .del{background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.25);color:#FCA5A5;}
-.empty{color:var(--muted);font-size:12px;padding:12px;}
-.err{color:var(--red);font-size:13px;margin:8px 0;}
-.toast{position:fixed;top:14px;right:14px;background:rgba(10,16,48,.92);border:1px solid var(--border);backdrop-filter:blur(16px);padding:12px 16px;border-radius:14px;font-size:13px;box-shadow:0 14px 40px rgba(0,0,0,.45);z-index:100;}
-.modal-bg{position:fixed;inset:0;background:rgba(4,7,18,.7);backdrop-filter:blur(6px);z-index:90;display:none;align-items:center;justify-content:center;padding:18px;}
+.acts button{padding:6px 10px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;color:#fff;font-family:var(--body);transition:filter .15s,transform .12s;}
+.acts button:hover{filter:brightness(1.15);transform:translateY(-1px);}
+.acts .suspend{background:rgba(245,158,11,.16);border:1px solid rgba(245,158,11,.3);color:#FCD34D;}
+.acts .restore{background:rgba(16,185,129,.16);border:1px solid rgba(16,185,129,.3);color:#6EE7B7;}
+.acts .del{background:rgba(248,113,113,.16);border:1px solid rgba(248,113,113,.3);color:#FCA5A5;}
+
+.empty{color:var(--text-faint);font-size:12.5px;padding:22px 10px;text-align:center;}
+.err{color:var(--red);font-size:12.5px;margin-top:8px;padding:9px 12px;background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.2);border-radius:10px;display:none;}
+
+/* Responsive card-mode tables */
+@media (max-width:760px){
+  .tblWrap{border:none;background:none;overflow:visible;}
+  table{min-width:0;}
+  thead{display:none;}
+  table,tbody,tr,td{display:block;width:100%;}
+  tbody tr{
+    background:linear-gradient(165deg,var(--bg-elevated),var(--bg-surface));
+    border:1px solid var(--border);border-radius:12px;padding:4px 12px;margin-bottom:10px;
+  }
+  tbody tr:hover td{background:transparent;}
+  td{border-bottom:1px dashed rgba(110,145,255,.08);padding:9px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:right;}
+  td:last-child{border-bottom:none;}
+  td::before{content:attr(data-label);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);font-weight:600;text-align:left;flex:0 0 auto;}
+  td .acts{justify-content:flex-end;}
+}
+
+/* ---------- Toast ---------- */
+.toast{
+  position:fixed;top:16px;left:50%;transform:translateX(-50%);
+  background:rgba(14,20,42,.95);border:1px solid var(--border-strong);backdrop-filter:blur(16px);
+  padding:12px 18px;border-radius:12px;font-size:13px;box-shadow:0 18px 50px rgba(0,0,0,.5);
+  z-index:200;display:none;align-items:center;gap:10px;animation:toastIn .25s ease;max-width:90vw;
+}
+.toast.show{display:flex;}
+.toast .dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);flex:0 0 7px;}
+
+/* ---------- Modal ---------- */
+.modal-bg{position:fixed;inset:0;background:rgba(3,5,12,.72);backdrop-filter:blur(6px);z-index:190;display:none;align-items:center;justify-content:center;padding:18px;}
 .modal-bg.open{display:flex;}
-.modal{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:22px;max-width:420px;width:100%;box-shadow:0 24px 70px rgba(0,0,0,.6);}
-.modal h3{font-family:'Syne',system-ui,sans-serif;font-size:16px;margin-bottom:8px;}
-.modal p{color:#CBD5E1;font-size:13px;margin-bottom:14px;line-height:1.5;}
+.modal{background:linear-gradient(165deg,var(--bg-elevated-2),var(--bg-surface));border:1px solid var(--border-strong);border-radius:18px;padding:22px;max-width:420px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,.6);animation:modalPop .2s ease;}
+.modal h3{font-family:var(--disp);font-size:16px;margin-bottom:8px;font-weight:700;}
+.modal p{color:#CBD5E1;font-size:13px;margin-bottom:16px;line-height:1.55;}
 .modal .row{display:flex;gap:10px;justify-content:flex-end;}
+
+/* ---------- Mobile drawer ---------- */
+.scrim{position:fixed;inset:0;background:rgba(3,5,12,.6);backdrop-filter:blur(3px);z-index:38;display:none;}
+.scrim.show{display:block;}
+
+@media (max-width:900px){
+  .sidebar{position:fixed;left:0;top:0;bottom:0;transform:translateX(-100%);transition:transform .25s ease;box-shadow:0 0 60px rgba(0,0,0,.5);}
+  .sidebar.open{transform:translateX(0);animation:slideInDrawer .25s ease;}
+  .burger{display:flex;}
+  .content{padding:16px;}
+  .topbar{padding:0 14px;}
+  .top-actions .btn span.lbl{display:none;}
+}
+@media (max-width:520px){
+  .stats{grid-template-columns:repeat(2,1fr);}
+  .card .v{font-size:22px;}
+  .topbar h1{font-size:13.5px;}
+}
+
+.money{font-family:var(--mono);font-weight:600;}
 </style>
 </head>
 <body>
-<div class="top">
-  <div>
-    <h1>Super Admin</h1>
-    <p style="color:var(--gray);font-size:12px;">Contrôle total du système</p>
-  </div>
-  <div class="top-actions">
-    <button class="btn" onclick="refreshAll()">Actualiser</button>
-    <button class="btn ghost" onclick="logout()">Déconnexion</button>
+
+<div class="shell">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="mark">EF</div>
+      <div class="txt">
+        <div>EntreFlow</div>
+        <div>Super Admin</div>
+      </div>
+    </div>
+
+    <nav class="nav-group">
+      <div class="nav-label">Vue d'ensemble</div>
+      <a class="nav-link" data-target="statsPanel"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18M8 17V9m5 8V5m5 12v-6"/></svg></span>Statistiques</a>
+      <a class="nav-link" data-target="onlineSec"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg></span>En ligne</a>
+    </nav>
+
+    <nav class="nav-group">
+      <div class="nav-label">Comptes</div>
+      <a class="nav-link" data-target="companiesSec"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M6 21V7l6-4 6 4v14M10 21v-6h4v6"/></svg></span>Entreprises</a>
+      <a class="nav-link" data-target="employeesSec"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2M17 8a3 3 0 0 1 0 6M22 21v-2a4 4 0 0 0-3-3.87"/></svg></span>Employés</a>
+      <a class="nav-link" data-target="clientsSec"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h10M7 16h6"/></svg></span>Clients</a>
+    </nav>
+
+    <nav class="nav-group">
+      <div class="nav-label">Activité</div>
+      <a class="nav-link" data-target="activitySec"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l2 8 6-16 2 8h4"/></svg></span>Journal</a>
+      <a class="nav-link" data-target="quotesSec"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6z"/><path d="M14 3v6h6M9 13h6M9 17h6"/></svg></span>Devis</a>
+      <a class="nav-link" data-target="salesSec"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2l1.5 3h9L18 2M4 5h16l-1.5 12a2 2 0 0 1-2 1.8H7.5a2 2 0 0 1-2-1.8L4 5z"/><circle cx="9" cy="21" r="1"/><circle cx="16" cy="21" r="1"/></svg></span>Ventes</a>
+      <a class="nav-link" data-target="productsSec"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3.5 8.5l8.5 5 8.5-5M12 21.5V13"/></svg></span>Produits</a>
+    </nav>
+
+    <nav class="nav-group">
+      <div class="nav-label">Outils</div>
+      <a class="nav-link" data-target="createQuoteSec"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></span>Créer un devis</a>
+      <a class="nav-link" data-target="trashSec"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m-9 0v14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V6"/></svg></span>Corbeille</a>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="sess-pill"><span class="livedot"></span> Session super admin active</div>
+      <button class="btn ghost" style="width:100%;justify-content:center;margin-top:8px;" onclick="logout()">Déconnexion</button>
+    </div>
+  </aside>
+
+  <div class="scrim" id="scrim" onclick="closeDrawer()"></div>
+
+  <div class="main">
+    <div class="topbar">
+      <button class="burger" id="burgerBtn" onclick="openDrawer()" aria-label="Menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+      <h1>Contrôle total du système<span class="sub" id="clock">—</span></h1>
+      <div class="top-actions">
+        <button class="btn ghost icon-only" id="refreshBtn" onclick="refreshAll()" aria-label="Actualiser">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M21 2v6h-6M3 22v-6h6M3.5 9a9 9 0 0 1 15-4.5L21 8M20.5 15a9 9 0 0 1-15 4.5L3 16"/></svg>
+          <span class="lbl">Actualiser</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <div class="stats" id="statsPanel">
+        <div class="card"><div class="k">Entreprises</div><div class="v skel" id="companies"><span class="skel skel-text"></span></div></div>
+        <div class="card"><div class="k">Employés</div><div class="v skel" id="employees"><span class="skel skel-text"></span></div></div>
+        <div class="card online"><div class="k"><span class="livedot"></span>En ligne</div><div class="v skel" id="online"><span class="skel skel-text"></span></div></div>
+        <div class="card"><div class="k">Suspendus</div><div class="v skel" id="suspended"><span class="skel skel-text"></span></div></div>
+        <div class="card"><div class="k">Ventes aujourd'hui</div><div class="v skel" id="salesToday"><span class="skel skel-text"></span></div></div>
+      </div>
+
+      <div class="panel" id="companiesSec">
+        <div class="panel-head">
+          <h2><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M6 21V7l6-4 6 4v14M10 21v-6h4v6"/></svg></span>Entreprises</h2>
+        </div>
+        <div class="controls">
+          <input id="qCompany" placeholder="Rechercher entreprise/email…" oninput="renderCompanies()"/>
+          <select id="fCompany" onchange="renderCompanies()">
+            <option value="">Tous les statuts</option>
+            <option value="actif">Actif</option>
+            <option value="suspendu">Suspendu</option>
+            <option value="supprimee">Supprimée</option>
+          </select>
+        </div>
+        <div class="tblWrap">
+          <table>
+            <thead><tr><th>ID</th><th>Entreprise</th><th>Propriétaire</th><th>Employés</th><th>Statut</th><th>Créé</th><th>Actions</th></tr></thead>
+            <tbody id="companiesBody"></tbody>
+          </table>
+        </div>
+        <div id="companiesErr" class="err"></div>
+      </div>
+
+      <div class="panel" id="employeesSec">
+        <div class="panel-head">
+          <h2><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2"/></svg></span>Employés</h2>
+        </div>
+        <div class="controls">
+          <input id="qEmployee" placeholder="Rechercher nom/entreprise…" oninput="renderEmployees()"/>
+          <select id="fEmployee" onchange="renderEmployees()">
+            <option value="">Tous les statuts</option>
+            <option value="actif">Actif</option>
+            <option value="inactif">Inactif</option>
+            <option value="suspendu">Suspendu</option>
+            <option value="supprime">Supprimé</option>
+          </select>
+        </div>
+        <div class="tblWrap">
+          <table>
+            <thead><tr><th>ID</th><th>Nom</th><th>Entreprise</th><th>Poste</th><th>Téléphone</th><th>Statut</th><th>Créé</th><th>Actions</th></tr></thead>
+            <tbody id="employeesBody"></tbody>
+          </table>
+        </div>
+        <div id="employeesErr" class="err"></div>
+      </div>
+
+      <div class="panel" id="onlineSec">
+        <div class="panel-head">
+          <h2><span class="livedot" style="margin-right:2px"></span>En ligne maintenant</h2>
+        </div>
+        <div class="tblWrap">
+          <table>
+            <thead><tr><th>Label</th><th>Rôle</th><th>Entreprise</th><th>Ville</th><th>Pays</th><th>IP</th><th>Dernier vu</th></tr></thead>
+            <tbody id="onlineBody"></tbody>
+          </table>
+        </div>
+        <div id="onlineErr" class="err"></div>
+      </div>
+
+      <div class="panel" id="activitySec">
+        <div class="panel-head">
+          <h2><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l2 8 6-16 2 8h4"/></svg></span>Activité récente</h2>
+        </div>
+        <div class="controls">
+          <input id="qActivity" placeholder="Rechercher action/détails/email…" oninput="renderActivity()"/>
+          <select id="fActivityLimit" onchange="loadActivity()">
+            <option value="50">50</option>
+            <option value="150" selected>150</option>
+            <option value="300">300</option>
+          </select>
+        </div>
+        <div class="tblWrap">
+          <table>
+            <thead><tr><th>Action</th><th>Détails</th><th>Utilisateur</th><th>Date</th></tr></thead>
+            <tbody id="activityBody"></tbody>
+          </table>
+        </div>
+        <div id="activityErr" class="err"></div>
+      </div>
+
+      <div class="panel" id="quotesSec">
+        <div class="panel-head">
+          <h2><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6z"/></svg></span>Devis <span class="badge b" style="margin-left:4px;">Toutes entreprises</span></h2>
+        </div>
+        <div class="controls">
+          <input id="qQuote" placeholder="Rechercher devis/email/client…" oninput="renderQuotes()"/>
+        </div>
+        <div class="tblWrap">
+          <table>
+            <thead><tr><th>Numéro</th><th>Entreprise</th><th>Client</th><th>Total</th><th>Statut</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody id="quotesBody"></tbody>
+          </table>
+        </div>
+        <div id="quotesErr" class="err"></div>
+      </div>
+
+      <div class="panel" id="salesSec">
+        <div class="panel-head">
+          <h2><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16l-1.5 12a2 2 0 0 1-2 1.8H7.5a2 2 0 0 1-2-1.8L4 5z"/></svg></span>Ventes</h2>
+        </div>
+        <div class="controls">
+          <input id="qSale" placeholder="Rechercher vente/client…" oninput="renderSales()"/>
+        </div>
+        <div class="tblWrap">
+          <table>
+            <thead><tr><th>Numéro</th><th>Entreprise</th><th>Client</th><th>Total</th><th>Statut</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody id="salesBody"></tbody>
+          </table>
+        </div>
+        <div id="salesErr" class="err"></div>
+      </div>
+
+      <div class="panel" id="productsSec">
+        <div class="panel-head">
+          <h2><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/></svg></span>Produits</h2>
+        </div>
+        <div class="controls">
+          <input id="qProduct" placeholder="Rechercher produit/catégorie…" oninput="renderProducts()"/>
+        </div>
+        <div class="tblWrap">
+          <table>
+            <thead><tr><th>ID</th><th>Nom</th><th>Entreprise</th><th>Catégorie</th><th>Prix</th><th>Statut</th><th>Actions</th></tr></thead>
+            <tbody id="productsBody"></tbody>
+          </table>
+        </div>
+        <div id="productsErr" class="err"></div>
+      </div>
+
+      <div class="panel" id="clientsSec">
+        <div class="panel-head">
+          <h2><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/></svg></span>Clients</h2>
+        </div>
+        <div class="controls">
+          <input id="qClient" placeholder="Rechercher client/email/ville…" oninput="renderClients()"/>
+        </div>
+        <div class="tblWrap">
+          <table>
+            <thead><tr><th>ID</th><th>Nom</th><th>Entreprise</th><th>Email</th><th>Téléphone</th><th>Ville</th><th>Statut</th><th>Actions</th></tr></thead>
+            <tbody id="clientsBody"></tbody>
+          </table>
+        </div>
+        <div id="clientsErr" class="err"></div>
+      </div>
+
+      <div class="panel" id="createQuoteSec">
+        <div class="panel-head">
+          <h2><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></span>Créer un devis</h2>
+        </div>
+        <div class="controls">
+          <select id="qCmp" onchange="onCompanyChange()">
+            <option value="">Sélectionner une entreprise…</option>
+          </select>
+          <input id="qClientName" placeholder="Nom du client"/>
+          <input id="qClientEmail" placeholder="Email du client"/>
+          <input id="qClientPhone" placeholder="Téléphone"/>
+        </div>
+        <div class="controls">
+          <input id="qTva" type="number" placeholder="TVA %" value="0" style="max-width:110px;flex:0 0 110px;"/>
+        </div>
+        <div class="tblWrap" style="margin-bottom:12px;">
+          <table>
+            <thead><tr><th>Produit</th><th>Nom</th><th>Qté</th><th>Prix unitaire</th><th>Total ligne</th><th></th></tr></thead>
+            <tbody id="qItems"></tbody>
+          </table>
+        </div>
+        <button class="btn ghost" onclick="addQuoteLine()">+ Ajouter une ligne</button>
+        <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+          <button class="btn" onclick="submitQuote()">Créer le devis</button>
+          <button class="btn green" id="pdfBtn" onclick="generatePdf()" disabled>Générer PDF</button>
+          <button class="btn ghost" id="waBtn" onclick="openWhatsApp()" disabled>WhatsApp</button>
+          <button class="btn ghost" id="mailBtn" onclick="sendEmail()" disabled>Email</button>
+        </div>
+        <div id="quoteErr" class="err"></div>
+        <div id="quoteOk" style="color:var(--green);font-size:13px;margin-top:10px;display:none"></div>
+      </div>
+
+      <div class="panel" id="trashSec">
+        <div class="panel-head">
+          <h2><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m-9 0v14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V6"/></svg></span>Corbeille</h2>
+        </div>
+        <div class="tblWrap">
+          <table>
+            <thead><tr><th>Type</th><th>Nom</th><th>ID</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody id="trashBody"></tbody>
+          </table>
+        </div>
+        <div id="trashErr" class="err"></div>
+      </div>
+
+    </div>
   </div>
 </div>
 
-<div class="stats" id="stats">
-  <div class="card"><div class="k">Entreprises</div><div class="v" id="companies">—</div></div>
-  <div class="card"><div class="k">Employés</div><div class="v" id="employees">—</div></div>
-  <div class="card"><div class="k">En ligne <span style="font-size:11px;color:var(--green);">●</span></div><div class="v" id="online">—</div></div>
-  <div class="card"><div class="k">Suspendus</div><div class="v" id="suspended">—</div></div>
-  <div class="card"><div class="k">Ventes aujourd'hui</div><div class="v" id="salesToday">—</div></div>
-</div>
-
-<div class="section">
-  <h2>Entreprises</h2>
-  <div class="controls">
-    <input id="qCompany" placeholder="Rechercher entreprise/email…" oninput="renderCompanies()"/>
-    <select id="fCompany" onchange="renderCompanies()">
-      <option value="">Tous les statuts</option>
-      <option value="actif">Actif</option>
-      <option value="suspendu">Suspendu</option>
-      <option value="supprimee">Supprimée</option>
-    </select>
-  </div>
-  <div class="tblWrap">
-    <table>
-      <thead><tr><th>ID</th><th>Entreprise</th><th>Propriétaire</th><th>Employés</th><th>Statut</th><th>Créé</th><th>Actions</th></tr></thead>
-      <tbody id="companiesBody"></tbody>
-    </table>
-  </div>
-  <div id="companiesErr" class="err" style="display:none"></div>
-</div>
-
-<div class="section">
-  <h2>Employés</h2>
-  <div class="controls">
-    <input id="qEmployee" placeholder="Rechercher nom/entreprise…" oninput="renderEmployees()"/>
-    <select id="fEmployee" onchange="renderEmployees()">
-      <option value="">Tous les statuts</option>
-      <option value="actif">Actif</option>
-      <option value="inactif">Inactif</option>
-      <option value="suspendu">Suspendu</option>
-      <option value="supprime">Supprimé</option>
-    </select>
-  </div>
-  <div class="tblWrap">
-    <table>
-      <thead><tr><th>ID</th><th>Nom</th><th>Entreprise</th><th>Poste</th><th>Téléphone</th><th>Statut</th><th>Créé</th><th>Actions</th></tr></thead>
-      <tbody id="employeesBody"></tbody>
-    </table>
-  </div>
-  <div id="employeesErr" class="err" style="display:none"></div>
-</div>
-
-<div class="section">
-  <h2><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);"></span> En ligne maintenant</h2>
-  <div class="tblWrap">
-    <table>
-      <thead><tr><th>Label</th><th>Rôle</th><th>Entreprise</th><th>Ville</th><th>Pays</th><th>IP</th><th>Dernier vu</th></tr></thead>
-      <tbody id="onlineBody"></tbody>
-    </table>
-  </div>
-  <div id="onlineErr" class="err" style="display:none"></div>
-</div>
-
-<div class="section">
-  <h2>Activité récente</h2>
-  <div class="controls">
-    <input id="qActivity" placeholder="Rechercher action/détails/email…" oninput="renderActivity()"/>
-    <select id="fActivityLimit" onchange="renderActivity()">
-      <option value="50">50</option>
-      <option value="150" selected>150</option>
-      <option value="300">300</option>
-    </select>
-  </div>
-  <div class="tblWrap">
-    <table>
-      <thead><tr><th>Action</th><th>Détails</th><th>Utilisateur</th><th>Date</th></tr></thead>
-      <tbody id="activityBody"></tbody>
-    </table>
-  </div>
-  <div id="activityErr" class="err" style="display:none"></div>
-</div>
-
-<div class="section">
-  <h2>Devis <span class="badge b" style="font-size:10px;margin-left:6px;">Toutes entreprises</span></h2>
-  <div class="controls">
-    <input id="qQuote" placeholder="Rechercher devis/email/client…" oninput="renderQuotes()"/>
-  </div>
-  <div class="tblWrap">
-    <table>
-      <thead><tr><th>Numéro</th><th>Entreprise</th><th>Client</th><th>Total</th><th>Statut</th><th>Date</th><th>Actions</th></tr></thead>
-      <tbody id="quotesBody"></tbody>
-    </table>
-  </div>
-  <div id="quotesErr" class="err" style="display:none"></div>
-</div>
-
-<div class="section">
-  <h2>Ventes</h2>
-  <div class="controls">
-    <input id="qSale" placeholder="Rechercher vente/client…" oninput="renderSales()"/>
-  </div>
-  <div class="tblWrap">
-    <table>
-      <thead><tr><th>Numéro</th><th>Entreprise</th><th>Client</th><th>Total</th><th>Statut</th><th>Date</th><th>Actions</th></tr></thead>
-      <tbody id="salesBody"></tbody>
-    </table>
-  </div>
-  <div id="salesErr" class="err" style="display:none"></div>
-</div>
-
-<div class="section">
-  <h2>Produits</h2>
-  <div class="controls">
-    <input id="qProduct" placeholder="Rechercher produit/catégorie…" oninput="renderProducts()"/>
-  </div>
-  <div class="tblWrap">
-    <table>
-      <thead><tr><th>ID</th><th>Nom</th><th>Entreprise</th><th>Catégorie</th><th>Prix</th><th>Statut</th><th>Actions</th></tr></thead>
-      <tbody id="productsBody"></tbody>
-    </table>
-  </div>
-  <div id="productsErr" class="err" style="display:none"></div>
-</div>
-
-<div class="section">
-  <h2>Clients</h2>
-  <div class="controls">
-    <input id="qClient" placeholder="Rechercher client/email/ville…" oninput="renderClients()"/>
-  </div>
-  <div class="tblWrap">
-    <table>
-      <thead><tr><th>ID</th><th>Nom</th><th>Entreprise</th><th>Email</th><th>Téléphone</th><th>Ville</th><th>Statut</th><th>Actions</th></tr></thead>
-      <tbody id="clientsBody"></tbody>
-    </table>
-  </div>
-  <div id="clientsErr" class="err" style="display:none"></div>
-</div>
-
-<div class="section">
-  <h2>Créer un devis</h2>
-  <div class="controls">
-    <select id="qCmp" onchange="onCompanyChange()">
-      <option value="">Sélectionner une entreprise…</option>
-    </select>
-    <input id="qClientName" placeholder="Nom du client"/>
-    <input id="qClientEmail" placeholder="Email du client"/>
-    <input id="qClientPhone" placeholder="Téléphone"/>
-  </div>
-  <div class="controls">
-    <input id="qTva" type="number" placeholder="TVA %" value="0" style="max-width:90px"/>
-  </div>
-  <div class="tblWrap" style="margin-bottom:10px;">
-    <table>
-      <thead><tr><th>Produit</th><th>Nom</th><th>Qté</th><th>Prix unitaire</th><th>Total ligne</th><th></th></tr></thead>
-      <tbody id="qItems"></tbody>
-    </table>
-  </div>
-  <button class="btn ghost" onclick="addQuoteLine()">+ Ajouter une ligne</button>
-  <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
-    <button class="btn" onclick="submitQuote()">Créer le devis</button>
-    <button class="btn green" id="pdfBtn" onclick="generatePdf()" disabled>Générer PDF</button>
-    <button class="btn ghost" id="waBtn" onclick="openWhatsApp()" disabled>WhatsApp</button>
-    <button class="btn ghost" id="mailBtn" onclick="sendEmail()" disabled>Email</button>
-  </div>
-  <div id="quoteErr" class="err" style="display:none"></div>
-  <div id="quoteOk" style="color:var(--green);font-size:13px;margin-top:8px;display:none"></div>
-</div>
-
-<div class="section">
-  <h2>Corbeille</h2>
-  <div class="tblWrap">
-    <table>
-      <thead><tr><th>Type</th><th>Nom</th><th>ID</th><th>Date</th><th>Actions</th></tr></thead>
-      <tbody id="trashBody"></tbody>
-    </table>
-  </div>
-  <div id="trashErr" class="err" style="display:none"></div>
-</div>
-
-<div id="toast" class="toast" style="display:none"></div>
+<div id="toast" class="toast"><span class="dot"></span><span id="toastMsg"></span></div>
 
 <div id="confirm" class="modal-bg" onclick="if(event.target===this)closeModal()">
   <div class="modal">
@@ -259,6 +537,7 @@ const API_BASE='https://script.google.com/macros/s/AKfycbzyXP5MBqCZvhS-xndYNH5Xd
 function t(){ return localStorage.getItem('entreflowSuperAdmin') || ''; }
 function esc(v){ return String(v??'').replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;','\'':'&#39;'}[c])); }
 function fmt(d){ if(!d) return '—'; const dt = new Date(d); if(isNaN(dt)) return String(d); return dt.toLocaleString('fr-FR'); }
+function money(v){ const n = Number(v||0); return n.toLocaleString('fr-FR')+' FCFA'; }
 function badge(s){
   s = String(s||'').toLowerCase();
   if(s==='actif') return '<span class="badge g">Actif</span>';
@@ -268,14 +547,41 @@ function badge(s){
   return '<span class="badge">'+esc(s)+'</span>';
 }
 
+/* ---------- mobile drawer ---------- */
+function openDrawer(){ document.getElementById('sidebar').classList.add('open'); document.getElementById('scrim').classList.add('show'); }
+function closeDrawer(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('scrim').classList.remove('show'); }
+document.querySelectorAll('.nav-link').forEach(a=>{
+  a.addEventListener('click', ()=>{
+    document.querySelectorAll('.nav-link').forEach(x=>x.classList.remove('active'));
+    a.classList.add('active');
+    const target = document.getElementById(a.dataset.target);
+    if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
+    closeDrawer();
+  });
+});
+
+/* ---------- clock ---------- */
+function tickClock(){
+  const el = document.getElementById('clock');
+  if(el) el.textContent = new Date().toLocaleString('fr-FR', {weekday:'short', hour:'2-digit', minute:'2-digit'});
+}
+tickClock(); setInterval(tickClock, 30000);
+
 async function api(action, payload={}){
   const r=await fetch(API_BASE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,...payload})});
   const data=await r.json().catch(()=>({}));
   if(!r.ok || data?.ok === false || data?.error) throw new Error((data&&(data.error||data.message))||'Erreur API ('+r.status+')');
   return data;
 }
-function showToast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.style.display='block'; setTimeout(()=>el.style.display='none',2500); }
+let toastTimer=null;
+function showToast(msg){
+  const el=document.getElementById('toast'); const m=document.getElementById('toastMsg');
+  m.textContent=msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),2600);
+}
 function setErr(id, msg){ const el=document.getElementById(id); if(!el) return; el.textContent=msg||''; el.style.display=msg?'block':'none'; }
+
 let pendingAction = null;
 function openModal(title, text, onConfirm){
   document.getElementById('mTitle').textContent = title;
@@ -289,27 +595,36 @@ document.getElementById('mConfirm').addEventListener('click', async ()=>{
 });
 function closeModal(){ document.getElementById('confirm').classList.remove('open'); pendingAction=null; }
 
+function setStat(id, val){
+  const el = document.getElementById(id);
+  el.classList.remove('skel');
+  el.innerHTML = (val===undefined||val===null||val==='') ? '—' : val;
+}
+
 async function refreshAll(){
-  const btns = document.querySelectorAll('.btn');
-  btns.forEach(b=>b.disabled=true);
+  const refreshBtn = document.getElementById('refreshBtn');
+  const icon = refreshBtn.querySelector('svg');
+  refreshBtn.disabled = true;
+  if(icon) icon.style.animation = 'spin .8s linear infinite';
   try{
     await Promise.all([loadOverview(), loadCompanies(), loadEmployees(), loadOnline(), loadActivity(), loadQuotes(), loadSales(), loadProducts(), loadClients(), loadTrash()]);
     showToast('Données actualisées');
   } catch(e){
     showToast('Erreur: ' + e.message);
   } finally {
-    btns.forEach(b=>b.disabled=false);
+    refreshBtn.disabled = false;
+    if(icon) icon.style.animation = '';
   }
 }
 
 async function loadOverview(){
   try{
     const d = await api('superAdminOverview',{token:t()});
-    document.getElementById('companies').textContent = d.companies_count ?? '—';
-    document.getElementById('employees').textContent = d.employees_count ?? '—';
-    document.getElementById('online').textContent = d.online_count ?? '—';
-    document.getElementById('suspended').textContent = d.suspended_count ?? '—';
-    document.getElementById('salesToday').textContent = d.sales_today_count ?? '—';
+    setStat('companies', d.companies_count ?? '—');
+    setStat('employees', d.employees_count ?? '—');
+    setStat('online', d.online_count ?? '—');
+    setStat('suspended', d.suspended_count ?? '—');
+    setStat('salesToday', d.sales_today_count ?? '—');
   } catch(e){ showToast('Erreur overview: ' + e.message); }
 }
 
@@ -332,13 +647,13 @@ function renderCompanies(){
   const tb = document.getElementById('companiesBody');
   if(!rows.length){ tb.innerHTML='<tr><td colspan="7" class="empty">Aucune entreprise</td></tr>'; return; }
   tb.innerHTML = rows.map(r => `<tr>
-    <td>${esc(r.id)}</td>
-    <td><div style="font-weight:700">${esc(r.name)}</div><div style="font-size:11px;color:#94A3B8">${esc(r.phone||'')}</div></td>
-    <td><div>${esc(r.owner_name)}</div><div style="font-size:11px;color:#94A3B8">${esc(r.owner_email)}</div></td>
-    <td>${esc(r.employees_count)}</td>
-    <td>${badge(r.statut)}</td>
-    <td>${fmt(r.created_at)}</td>
-    <td><div class="acts">
+    <td data-label="ID">${esc(r.id)}</td>
+    <td data-label="Entreprise"><div style="font-weight:700">${esc(r.name)}</div><div style="font-size:11px;color:#94A3B8">${esc(r.phone||'')}</div></td>
+    <td data-label="Propriétaire"><div>${esc(r.owner_name)}</div><div style="font-size:11px;color:#94A3B8">${esc(r.owner_email)}</div></td>
+    <td data-label="Employés">${esc(r.employees_count)}</td>
+    <td data-label="Statut">${badge(r.statut)}</td>
+    <td data-label="Créé">${fmt(r.created_at)}</td>
+    <td data-label="Actions"><div class="acts">
       ${String(r.statut||'').toLowerCase()==='suspendu'
         ? `<button class="restore" onclick="actCompany('${r.id}',false)">Réactiver</button>`
         : `<button class="suspend" onclick="actCompany('${r.id}',true)">Suspendre</button>`}
@@ -379,14 +694,14 @@ function renderEmployees(){
   const tb = document.getElementById('employeesBody');
   if(!rows.length){ tb.innerHTML='<tr><td colspan="8" class="empty">Aucun employé</td></tr>'; return; }
   tb.innerHTML = rows.map(r => `<tr>
-    <td>${esc(r.id)}</td>
-    <td><div style="font-weight:700">${esc(r.full_name)}</div></td>
-    <td>${esc(r.company_name)}</td>
-    <td>${esc(r.poste)}</td>
-    <td>${esc(r.phone)}</td>
-    <td>${badge(r.statut)}</td>
-    <td>${fmt(r.created_at)}</td>
-    <td><div class="acts">
+    <td data-label="ID">${esc(r.id)}</td>
+    <td data-label="Nom"><div style="font-weight:700">${esc(r.full_name)}</div></td>
+    <td data-label="Entreprise">${esc(r.company_name)}</td>
+    <td data-label="Poste">${esc(r.poste)}</td>
+    <td data-label="Téléphone">${esc(r.phone)}</td>
+    <td data-label="Statut">${badge(r.statut)}</td>
+    <td data-label="Créé">${fmt(r.created_at)}</td>
+    <td data-label="Actions"><div class="acts">
       ${String(r.statut||'').toLowerCase()==='suspendu'
         ? `<button class="restore" onclick="actEmployee('${r.id}',false)">Réactiver</button>`
         : `<button class="suspend" onclick="actEmployee('${r.id}',true)">Suspendre</button>`}
@@ -421,13 +736,13 @@ async function loadOnline(){
     const rows = onlineCache || [];
     if(!rows.length){ tb.innerHTML='<tr><td colspan="7" class="empty">Aucune session en ligne</td></tr>'; return; }
     tb.innerHTML = rows.map(r=>`<tr>
-      <td><div style="font-weight:700">${esc(r.label)}</div></td>
-      <td>${esc(r.role)}</td>
-      <td>${esc(r.company_name)}</td>
-      <td>${esc([r.city,r.country].filter(Boolean).join(', ')||'—')}</td>
-      <td>${esc(r.ip)}</td>
-      <td style="font-size:11px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(r.user_agent_short)}">${esc(r.user_agent_short)}</td>
-      <td>${fmt(r.last_seen)}</td>
+      <td data-label="Label"><div style="font-weight:700">${esc(r.label)}</div></td>
+      <td data-label="Rôle">${esc(r.role)}</td>
+      <td data-label="Entreprise">${esc(r.company_name)}</td>
+      <td data-label="Ville">${esc([r.city,r.country].filter(Boolean).join(', ')||'—')}</td>
+      <td data-label="Pays">${esc(r.ip)}</td>
+      <td data-label="Agent" style="font-size:11px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(r.user_agent_short)}">${esc(r.user_agent_short)}</td>
+      <td data-label="Dernier vu">${fmt(r.last_seen)}</td>
     </tr>`).join('');
     setErr('onlineErr','');
   } catch(e){ setErr('onlineErr','En ligne: '+e.message); }
@@ -449,10 +764,10 @@ function renderActivity(){
   if(q) rows = rows.filter(r => String((r.action||'')+' '+(r.details||'')+' '+(r.utilisateur_email||'')).toLowerCase().includes(q));
   if(!rows.length){ tb.innerHTML='<tr><td colspan="4" class="empty">Aucune activité</td></tr>'; setErr('activityErr',''); return; }
   tb.innerHTML = rows.map(r=>`<tr>
-    <td><span class="badge b">${esc(r.action)}</span></td>
-    <td>${esc(r.details)}</td>
-    <td>${esc(r.utilisateur_email)}</td>
-    <td>${fmt(r.created_at)}</td>
+    <td data-label="Action"><span class="badge b">${esc(r.action)}</span></td>
+    <td data-label="Détails">${esc(r.details)}</td>
+    <td data-label="Utilisateur">${esc(r.utilisateur_email)}</td>
+    <td data-label="Date">${fmt(r.created_at)}</td>
   </tr>`).join('');
   setErr('activityErr','');
 }
@@ -469,19 +784,18 @@ function renderQuotes(){
   const tb = document.getElementById('quotesBody');
   if(!rows.length){ tb.innerHTML='<tr><td colspan="7" class="empty">Aucun devis</td></tr>'; setErr('quotesErr',''); return; }
   tb.innerHTML = rows.map(r => `<tr>
-    <td><span style="font-weight:700">${esc(r.quote_number)}</span></td>
-    <td>${esc(r.company_name)}</td>
-    <td><div>${esc(r.client_name)}</div><div style="font-size:11px;color:#94A3B8">${esc(r.client_email||'')}</div></td>
-    <td>${money(r.total)}</td>
-    <td>${badge(r.statut)}</td>
-    <td>${fmt(r.created_at)}</td>
-    <td><div class="acts">
+    <td data-label="Numéro"><span style="font-weight:700">${esc(r.quote_number)}</span></td>
+    <td data-label="Entreprise">${esc(r.company_name)}</td>
+    <td data-label="Client"><div>${esc(r.client_name)}</div><div style="font-size:11px;color:#94A3B8">${esc(r.client_email||'')}</div></td>
+    <td data-label="Total" class="money">${money(r.total)}</td>
+    <td data-label="Statut">${badge(r.statut)}</td>
+    <td data-label="Date">${fmt(r.created_at)}</td>
+    <td data-label="Actions"><div class="acts">
       <button class="del" onclick="delQuote('${r.id}')">Supprimer</button>
     </div></td>
   </tr>`).join('');
   setErr('quotesErr','');
 }
-function money(v){ const n = Number(v||0); return n.toLocaleString('fr-FR')+' FCFA'; }
 async function delQuote(id){
   openModal('Supprimer', 'Supprimer ce devis ?', async ()=>{
     try{ await api('superAdminDeleteQuote',{token:t(),id}); showToast('Devis supprimé'); refreshAll(); }
@@ -501,13 +815,13 @@ function renderSales(){
   const tb = document.getElementById('salesBody');
   if(!rows.length){ tb.innerHTML='<tr><td colspan="7" class="empty">Aucune vente</td></tr>'; setErr('salesErr',''); return; }
   tb.innerHTML = rows.map(r => `<tr>
-    <td><span style="font-weight:700">${esc(r.sale_number||r.id)}</span></td>
-    <td>${esc(r.company_name)}</td>
-    <td><div>${esc(r.client_name)}</div><div style="font-size:11px;color:#94A3B8">${esc(r.client_email||'')}</div></td>
-    <td>${money(r.total)}</td>
-    <td>${badge(r.statut)}</td>
-    <td>${fmt(r.created_at)}</td>
-    <td><div class="acts">
+    <td data-label="Numéro"><span style="font-weight:700">${esc(r.sale_number||r.id)}</span></td>
+    <td data-label="Entreprise">${esc(r.company_name)}</td>
+    <td data-label="Client"><div>${esc(r.client_name)}</div><div style="font-size:11px;color:#94A3B8">${esc(r.client_email||'')}</div></td>
+    <td data-label="Total" class="money">${money(r.total)}</td>
+    <td data-label="Statut">${badge(r.statut)}</td>
+    <td data-label="Date">${fmt(r.created_at)}</td>
+    <td data-label="Actions"><div class="acts">
       ${String(r.statut||'').toLowerCase() !== 'cancelled'
         ? `<button class="suspend" onclick="cancelSale('${r.id}')">Annuler</button>`
         : `<span style="color:#64748B;font-size:11px;">Annulée</span>`}
@@ -534,13 +848,13 @@ function renderProducts(){
   const tb = document.getElementById('productsBody');
   if(!rows.length){ tb.innerHTML='<tr><td colspan="7" class="empty">Aucun produit</td></tr>'; setErr('productsErr',''); return; }
   tb.innerHTML = rows.map(r => `<tr>
-    <td>${esc(r.id.slice(0,8))}</td>
-    <td><div style="font-weight:700">${esc(r.name)}</div></td>
-    <td>${esc(r.company_name)}</td>
-    <td>${esc(r.category)}</td>
-    <td>${money(r.unit_sell_price)}</td>
-    <td>${badge(r.statut)}</td>
-    <td><div class="acts">
+    <td data-label="ID">${esc(r.id.slice(0,8))}</td>
+    <td data-label="Nom"><div style="font-weight:700">${esc(r.name)}</div></td>
+    <td data-label="Entreprise">${esc(r.company_name)}</td>
+    <td data-label="Catégorie">${esc(r.category)}</td>
+    <td data-label="Prix" class="money">${money(r.unit_sell_price)}</td>
+    <td data-label="Statut">${badge(r.statut)}</td>
+    <td data-label="Actions"><div class="acts">
       ${String(r.statut||'').toLowerCase() !== 'inactif'
         ? `<button class="suspend" onclick="delProduct('${r.id}')">Désactiver</button>`
         : `<button class="restore" onclick="delProduct('${r.id}')">Réactiver</button>`}
@@ -567,14 +881,14 @@ function renderClients(){
   const tb = document.getElementById('clientsBody');
   if(!rows.length){ tb.innerHTML='<tr><td colspan="8" class="empty">Aucun client</td></tr>'; setErr('clientsErr',''); return; }
   tb.innerHTML = rows.map(r => `<tr>
-    <td>${esc(r.id.slice(0,8))}</td>
-    <td><div style="font-weight:700">${esc(r.name)}</div></td>
-    <td>${esc(r.company_name)}</td>
-    <td>${esc(r.email)}</td>
-    <td>${esc(r.phone)}</td>
-    <td>${esc(r.city)}</td>
-    <td>${badge(r.statut)}</td>
-    <td><div class="acts">
+    <td data-label="ID">${esc(r.id.slice(0,8))}</td>
+    <td data-label="Nom"><div style="font-weight:700">${esc(r.name)}</div></td>
+    <td data-label="Entreprise">${esc(r.company_name)}</td>
+    <td data-label="Email">${esc(r.email)}</td>
+    <td data-label="Téléphone">${esc(r.phone)}</td>
+    <td data-label="Ville">${esc(r.city)}</td>
+    <td data-label="Statut">${badge(r.statut)}</td>
+    <td data-label="Actions"><div class="acts">
       <button class="del" onclick="delClient('${r.id}')">Supprimer</button>
     </div></td>
   </tr>`).join('');
@@ -597,11 +911,11 @@ function renderTrash(){
   const rows = trashCache || [];
   if(!rows.length){ tb.innerHTML='<tr><td colspan="5" class="empty">Corbeille vide</td></tr>'; setErr('trashErr',''); return; }
   tb.innerHTML = rows.map(r => `<tr>
-    <td><span class="badge b">${esc(r.type)}</span></td>
-    <td><div style="font-weight:700">${esc(r.name)}</div></td>
-    <td style="font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(r.id)}</td>
-    <td>${fmt(r.date)}</td>
-    <td><div class="acts">
+    <td data-label="Type"><span class="badge b">${esc(r.type)}</span></td>
+    <td data-label="Nom"><div style="font-weight:700">${esc(r.name)}</div></td>
+    <td data-label="ID" style="font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(r.id)}</td>
+    <td data-label="Date">${fmt(r.date)}</td>
+    <td data-label="Actions"><div class="acts">
       <button class="restore" onclick="restoreTrash('${esc(r.type)}','${esc(r.id)}')">Restaurer</button>
     </div></td>
   </tr>`).join('');
@@ -635,7 +949,7 @@ async function submitQuote(){
 }
 function generatePdf(){
   const id = window.__lastQuoteId;
-  if (!id){ setErr('quoteErr','Crée d'abord un devis.'); return; }
+  if (!id){ setErr('quoteErr',"Crée d'abord un devis."); return; }
   api('superAdminGenerateQuotePDF', { token:t(), quoteId:id, sendEmail:true, sendWhatsapp:true })
     .then(d => { if(d.waLink){ document.getElementById('waBtn').disabled=false; window.__waLink=d.waLink; } if(d.emailSent){ document.getElementById('mailBtn').disabled=false; showToast('PDF envoyé par email'); } })
     .catch(e => setErr('quoteErr', e.message));
@@ -645,7 +959,7 @@ function sendEmail(){ showToast('Email envoyé au client'); }
 function addQuoteLine(){
   const tb = document.getElementById('qItems');
   const tr = document.createElement('tr');
-  tr.innerHTML = '<td><input placeholder="Nom article"/></td><td><input placeholder="Nom" style="width:140px"/></td><td><input type="number" value="1" style="width:70px"/></td><td><input type="number" placeholder="0" style="width:90px"/></td><td class="lineTotal" style="color:#E2E8F0">—</td><td><button class="del" onclick="this.closest(\"tr\").remove()">✕</button></td>';
+  tr.innerHTML = '<td data-label="Produit"><input placeholder="Nom article"/></td><td data-label="Nom"><input placeholder="Nom" style="width:140px"/></td><td data-label="Qté"><input type="number" value="1" style="width:70px"/></td><td data-label="Prix unitaire"><input type="number" placeholder="0" style="width:90px"/></td><td data-label="Total ligne" class="lineTotal" style="color:#E2E8F0">—</td><td data-label=""><button class="del" onclick="this.closest(\'tr\').remove()">✕</button></td>';
   tr.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => {
     const q = Number(tr.querySelectorAll('input')[1].value || 0);
     const p = Number(tr.querySelectorAll('input')[2].value || 0);
