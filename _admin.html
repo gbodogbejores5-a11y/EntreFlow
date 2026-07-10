@@ -5,91 +5,361 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>EntreFlow — Super Admin</title>
 <style>
-:root{--bg:#050A1A;--card:#0A1030;--blue:#2563EB;--blue-m:#3B82F6;--white:#F1F5FF;--gray:#8A99C2;--border:rgba(59,130,246,.18);--red:#F87171;--green:#10B981;}
+:root{--bg:#050A1A;--bg2:#0A1030;--blue:#2563EB;--blue-m:#3B82F6;--white:#F1F5FF;--gray:#8A99C2;--muted:#4B5B82;--border:rgba(59,130,246,.18);--red:#F87171;--green:#10B981;--orange:#F59E0B;}
 *{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;}
 body{background:var(--bg);color:var(--white);font-family:'DM Sans',system-ui,sans-serif;min-height:100vh;padding:18px;}
-.header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
-.header h1{font-family:'Syne',system-ui,sans-serif;font-size:18px;font-weight:700;}
-.header .btn{padding:9px 14px;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;color:#fff;background:linear-gradient(105deg,#F87171,#EF4444);font-family:inherit;}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px;}
-.card{background:rgba(10,16,48,.55);backdrop-filter:blur(24px);border:1px solid var(--border);border-radius:18px;padding:18px;box-shadow:0 18px 60px -14px rgba(0,0,0,.55);}
-.card .k{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:.08em;}
-.card .v{font-family:'Syne',system-ui,sans-serif;font-size:26px;font-weight:700;margin-top:6px;}
-.sec{margin-top:14px;}
-.sec h2{font-size:13px;font-weight:700;margin-bottom:8px;color:#CBD5E1;}
-table{width:100%;border-collapse:collapse;font-size:12px;min-width:640px;}
-th{text-align:left;color:#94A3B8;font-weight:600;padding:7px 5px;border-bottom:1px solid rgba(59,130,246,.12);}
-td{padding:8px 5px;border-bottom:1px solid rgba(59,130,246,.06);color:#E2E8F0;}
-.badge{font-size:11px;padding:3px 8px;border-radius:999px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.22);color:#6EE7B7;font-weight:700;}
-.badge.red{background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.22);color:#FCA5A5;}
-.err{color:var(--red);font-size:13px;}
-.loader{color:var(--gray);font-size:13px;}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
+.top h1{font-family:'Syne',system-ui,sans-serif;font-size:18px;font-weight:700;letter-spacing:.02em;}
+.top-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.btn{padding:9px 14px;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;color:#fff;background:linear-gradient(105deg,var(--blue),var(--blue-m));font-family:inherit;transition:.2s;box-shadow:0 6px 18px rgba(37,99,235,.3);}
+.btn:hover{filter:brightness(1.08);}
+.btn.ghost{background:rgba(255,255,255,.06);border:1px solid var(--border);box-shadow:none;}
+.btn.red{background:linear-gradient(105deg,#EF4444,#F87171);}
+.btn.green{background:linear-gradient(105deg,#059669,#10B981);}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px;}
+.card{background:rgba(10,16,48,.55);backdrop-filter:blur(24px);border:1px solid var(--border);border-radius:18px;padding:16px;box-shadow:0 18px 60px -14px rgba(0,0,0,.55);}
+.card .k{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.1em;}
+.card .v{font-family:'Syne',system-ui,sans-serif;font-size:24px;font-weight:700;margin-top:5px;}
+.section{margin-top:12px;}
+.section h2{font-size:13px;font-weight:700;color:#CBD5E1;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.controls{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.controls input,.controls select{padding:9px 12px;background:rgba(8,13,38,.7);border:1px solid var(--border);border-radius:10px;color:var(--white);font-family:inherit;font-size:12px;outline:none;min-width:180px;}
+.controls input:focus,.controls select:focus{border-color:var(--blue-m);}
+.tblWrap{overflow-x:auto;border-radius:16px;border:1px solid var(--border);background:rgba(8,13,38,.45);}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:720px;}
+th{text-align:left;color:#94A3B8;font-weight:600;padding:9px 6px;border-bottom:1px solid rgba(59,130,246,.12);background:rgba(10,16,48,.4);position:sticky;top:0;}
+td{padding:10px 6px;border-bottom:1px solid rgba(59,130,246,.05);color:#E2E8F0;vertical-align:top;}
+tr:hover td{background:rgba(37,99,235,.06);}
+.badge{font-size:11px;padding:3px 8px;border-radius:999px;font-weight:700;white-space:nowrap;}
+.badge.g{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.22);color:#6EE7B7;}
+.badge.r{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.22);color:#FCA5A5;}
+.badge.o{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.22);color:#FCD34D;}
+.badge.b{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.22);color:#93C5FD;}
+.acts{display:flex;gap:6px;flex-wrap:wrap;}
+.acts button{ padding:5px 9px; border:none; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; color:#fff; font-family:inherit;}
+.acts .suspend{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.25);color:#FCD34D;}
+.acts .restore{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.25);color:#6EE7B7;}
+.acts .del{background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.25);color:#FCA5A5;}
+.empty{color:var(--muted);font-size:12px;padding:12px;}
+.err{color:var(--red);font-size:13px;margin:8px 0;}
+.toast{position:fixed;top:14px;right:14px;background:rgba(10,16,48,.92);border:1px solid var(--border);backdrop-filter:blur(16px);padding:12px 16px;border-radius:14px;font-size:13px;box-shadow:0 14px 40px rgba(0,0,0,.45);z-index:100;}
+.modal-bg{position:fixed;inset:0;background:rgba(4,7,18,.7);backdrop-filter:blur(6px);z-index:90;display:none;align-items:center;justify-content:center;padding:18px;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:22px;max-width:420px;width:100%;box-shadow:0 24px 70px rgba(0,0,0,.6);}
+.modal h3{font-family:'Syne',system-ui,sans-serif;font-size:16px;margin-bottom:8px;}
+.modal p{color:#CBD5E1;font-size:13px;margin-bottom:14px;line-height:1.5;}
+.modal .row{display:flex;gap:10px;justify-content:flex-end;}
 </style>
 </head>
 <body>
-<div class="header">
+<div class="top">
   <div>
     <h1>Super Admin</h1>
-    <p class="sub" style="color:var(--gray);font-size:12px;">Vue système</p>
+    <p style="color:var(--gray);font-size:12px;">Contrôle total du système</p>
   </div>
-  <button class="btn" onclick="logout()">Déconnexion</button>
+  <div class="top-actions">
+    <button class="btn" onclick="refreshAll()">Actualiser</button>
+    <button class="btn ghost" onclick="logout()">Déconnexion</button>
+  </div>
 </div>
 
-<div class="grid" id="stats">
+<div class="stats" id="stats">
   <div class="card"><div class="k">Entreprises</div><div class="v" id="companies">—</div></div>
   <div class="card"><div class="k">Employés</div><div class="v" id="employees">—</div></div>
-  <div class="card"><div class="k">En ligne</div><div class="v" id="online">—</div></div>
+  <div class="card"><div class="k">En ligne <span style="font-size:11px;color:var(--green);">●</span></div><div class="v" id="online">—</div></div>
   <div class="card"><div class="k">Suspendus</div><div class="v" id="suspended">—</div></div>
   <div class="card"><div class="k">Ventes aujourd'hui</div><div class="v" id="salesToday">—</div></div>
 </div>
 
-<div class="card sec">
+<div class="section">
+  <h2>Entreprises</h2>
+  <div class="controls">
+    <input id="qCompany" placeholder="Rechercher entreprise/email…" oninput="renderCompanies()"/>
+    <select id="fCompany" onchange="renderCompanies()">
+      <option value="">Tous les statuts</option>
+      <option value="actif">Actif</option>
+      <option value="suspendu">Suspendu</option>
+      <option value="supprimee">Supprimée</option>
+    </select>
+  </div>
+  <div class="tblWrap">
+    <table>
+      <thead><tr><th>ID</th><th>Entreprise</th><th>Propriétaire</th><th>Employés</th><th>Statut</th><th>Créé</th><th>Actions</th></tr></thead>
+      <tbody id="companiesBody"></tbody>
+    </table>
+  </div>
+  <div id="companiesErr" class="err" style="display:none"></div>
+</div>
+
+<div class="section">
+  <h2>Employés</h2>
+  <div class="controls">
+    <input id="qEmployee" placeholder="Rechercher nom/entreprise…" oninput="renderEmployees()"/>
+    <select id="fEmployee" onchange="renderEmployees()">
+      <option value="">Tous les statuts</option>
+      <option value="actif">Actif</option>
+      <option value="inactif">Inactif</option>
+      <option value="suspendu">Suspendu</option>
+      <option value="supprime">Supprimé</option>
+    </select>
+  </div>
+  <div class="tblWrap">
+    <table>
+      <thead><tr><th>ID</th><th>Nom</th><th>Entreprise</th><th>Poste</th><th>Téléphone</th><th>Statut</th><th>Créé</th><th>Actions</th></tr></thead>
+      <tbody id="employeesBody"></tbody>
+    </table>
+  </div>
+  <div id="employeesErr" class="err" style="display:none"></div>
+</div>
+
+<div class="section">
+  <h2><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);"></span> En ligne maintenant</h2>
+  <div class="tblWrap">
+    <table>
+      <thead><tr><th>Label</th><th>Rôle</th><th>Entreprise</th><th>Ville</th><th>Pays</th><th>IP</th><th>Dernier vu</th></tr></thead>
+      <tbody id="onlineBody"></tbody>
+    </table>
+  </div>
+  <div id="onlineErr" class="err" style="display:none"></div>
+</div>
+
+<div class="section">
   <h2>Activité récente</h2>
-  <div style="overflow-x:auto;">
+  <div class="controls">
+    <input id="qActivity" placeholder="Rechercher action/détails/email…" oninput="renderActivity()"/>
+    <select id="fActivityLimit" onchange="renderActivity()">
+      <option value="50">50</option>
+      <option value="150" selected>150</option>
+      <option value="300">300</option>
+    </select>
+  </div>
+  <div class="tblWrap">
     <table>
       <thead><tr><th>Action</th><th>Détails</th><th>Utilisateur</th><th>Date</th></tr></thead>
-      <tbody id="activity"></tbody>
+      <tbody id="activityBody"></tbody>
     </table>
+  </div>
+  <div id="activityErr" class="err" style="display:none"></div>
+</div>
+
+<div id="toast" class="toast" style="display:none"></div>
+
+<div id="confirm" class="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h3 id="mTitle">Confirmer</h3>
+    <p id="mText">Es-tu sûr ?</p>
+    <div class="row">
+      <button class="btn ghost" onclick="closeModal()">Annuler</button>
+      <button class="btn red" id="mConfirm">Confirmer</button>
+    </div>
   </div>
 </div>
 
 <script>
 const API_BASE='https://script.google.com/macros/s/AKfycbzyXP5MBqCZvhS-xndYNH5Xd-hV-9ukfozzkZAODfDG_xPFbE_bo178WS1ARDsDK1nP/exec';
-function token(){ return localStorage.getItem('entreflowSuperAdmin') || ''; }
+function t(){ return localStorage.getItem('entreflowSuperAdmin') || ''; }
+function esc(v){ return String(v??'').replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;','\'':'&#39;'}[c])); }
+function fmt(d){ if(!d) return '—'; const dt = new Date(d); if(isNaN(dt)) return String(d); return dt.toLocaleString('fr-FR'); }
+function badge(s){
+  s = String(s||'').toLowerCase();
+  if(s==='actif') return '<span class="badge g">Actif</span>';
+  if(s==='suspendu') return '<span class="badge o">Suspendu</span>';
+  if(s==='supprime' || s==='supprimee') return '<span class="badge r">Supprimé</span>';
+  if(s==='inactif') return '<span class="badge b">Inactif</span>';
+  return '<span class="badge">'+esc(s)+'</span>';
+}
+
 async function api(action, payload={}){
   const r=await fetch(API_BASE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,...payload})});
   const data=await r.json().catch(()=>({}));
   if(!r.ok || data?.ok === false || data?.error) throw new Error((data&&(data.error||data.message))||'Erreur API ('+r.status+')');
   return data;
 }
-async function refresh(){
-  const t = token();
-  if(!t){ location.href='/ _admin-login.html'; return; }
+function showToast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.style.display='block'; setTimeout(()=>el.style.display='none',2500); }
+function setErr(id, msg){ const el=document.getElementById(id); if(!el) return; el.textContent=msg||''; el.style.display=msg?'block':'none'; }
+let pendingAction = null;
+function openModal(title, text, onConfirm){
+  document.getElementById('mTitle').textContent = title;
+  document.getElementById('mText').textContent = text;
+  pendingAction = onConfirm;
+  document.getElementById('confirm').classList.add('open');
+}
+document.getElementById('mConfirm').addEventListener('click', async ()=>{
+  document.getElementById('confirm').classList.remove('open');
+  if(pendingAction){ await pendingAction(); pendingAction=null; }
+});
+function closeModal(){ document.getElementById('confirm').classList.remove('open'); pendingAction=null; }
+
+async function refreshAll(){
+  const btns = document.querySelectorAll('.btn');
+  btns.forEach(b=>b.disabled=true);
   try{
-    const overview = await api('superAdminOverview', {token:t});
-    document.getElementById('companies').textContent = overview.companies_count ?? '—';
-    document.getElementById('employees').textContent = overview.employees_count ?? '—';
-    document.getElementById('online').textContent = overview.online_count ?? '—';
-    document.getElementById('suspended').textContent = overview.suspended_count ?? '—';
-    document.getElementById('salesToday').textContent = overview.sales_today_count ?? '—';
-    const tbody = document.getElementById('activity');
-    tbody.innerHTML = '';
-    const rows = overview.recent_activity || [];
-    rows.forEach(r=>{
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${esc(r.action)}</td><td>${esc(r.details)}</td><td>${esc(r.utilisateur_email)}</td><td>${esc(r.created_at)}</td>`;
-      tbody.appendChild(tr);
-    });
-    if(!rows.length){
-      const tr=document.createElement('tr');tr.innerHTML='<td colspan="4" style="color:#64748B">Aucune activité</td>';tbody.appendChild(tr);
-    }
+    await Promise.all([loadOverview(), loadCompanies(), loadEmployees(), loadOnline(), loadActivity()]);
+    showToast('Données actualisées');
   } catch(e){
-    document.getElementById('stats').innerHTML = '<div class="err">' + esc(e.message) + '</div>';
+    showToast('Erreur: ' + e.message);
+  } finally {
+    btns.forEach(b=>b.disabled=false);
   }
 }
-function esc(v){ return String(v??'').replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;','\'':'&#39;'}[c])); }
-function logout(){ localStorage.removeItem('entreflowSuperAdmin'); location.href='/ _admin-login.html'; }
-if(!token()) location.href='/ _admin-login.html'; else refresh();
+
+async function loadOverview(){
+  try{
+    const d = await api('superAdminOverview',{token:t()});
+    document.getElementById('companies').textContent = d.companies_count ?? '—';
+    document.getElementById('employees').textContent = d.employees_count ?? '—';
+    document.getElementById('online').textContent = d.online_count ?? '—';
+    document.getElementById('suspended').textContent = d.suspended_count ?? '—';
+    document.getElementById('salesToday').textContent = d.sales_today_count ?? '—';
+  } catch(e){ showToast('Erreur overview: ' + e.message); }
+}
+
+let companiesCache=[];
+async function loadCompanies(){
+  try{ companiesCache = await api('superAdminListCompanies',{token:t()}); renderCompanies(); }
+  catch(e){ setErr('companiesErr','Impossible de charger les entreprises: '+e.message); }
+}
+function renderCompanies(){
+  const q = document.getElementById('qCompany').value.trim().toLowerCase();
+  const f = document.getElementById('fCompany').value;
+  let rows = companiesCache||[];
+  if(q) rows = rows.filter(r => String((r.name||'')+' '+(r.owner_email||'')+' '+(r.id||'')).toLowerCase().includes(q));
+  if(f) rows = rows.filter(r => String(r.statut||'').toLowerCase() === f);
+  const tb = document.getElementById('companiesBody');
+  if(!rows.length){ tb.innerHTML='<tr><td colspan="7" class="empty">Aucune entreprise</td></tr>'; return; }
+  tb.innerHTML = rows.map(r => `<tr>
+    <td>${esc(r.id)}</td>
+    <td><div style="font-weight:700">${esc(r.name)}</div><div style="font-size:11px;color:#94A3B8">${esc(r.phone||'')}</div></td>
+    <td><div>${esc(r.owner_name)}</div><div style="font-size:11px;color:#94A3B8">${esc(r.owner_email)}</div></td>
+    <td>${esc(r.employees_count)}</td>
+    <td>${badge(r.statut)}</td>
+    <td>${fmt(r.created_at)}</td>
+    <td><div class="acts">
+      ${String(r.statut||'').toLowerCase()==='suspendu'
+        ? `<button class="restore" onclick="actCompany('${r.id}',false)">Réactiver</button>`
+        : `<button class="suspend" onclick="actCompany('${r.id}',true)">Suspendre</button>`}
+      <button class="del" onclick="delCompany('${r.id}')">Supprimer</button>
+    </div></td>
+  </tr>`).join('');
+}
+async function actCompany(id, suspend){
+  openModal('Confirmer', suspend ? 'Suspendre cette entreprise et ses employés ?' : 'Réactiver cette entreprise ?', async ()=>{
+    try{
+      await api('superAdminSuspendCompany',{token:t(), companyId:id, suspend});
+      showToast(suspend?'Entreprise suspendue':'Entreprise réactivée');
+      refreshAll();
+    } catch(e){ showToast(e.message); }
+  });
+}
+async function delCompany(id){
+  openModal('Supprimer', 'Supprimer cette entreprise et son propriétaire ? Action irréversible.', async ()=>{
+    try{
+      await api('superAdminDeleteCompany',{token:t(), companyId:id});
+      showToast('Entreprise supprimée');
+      refreshAll();
+    } catch(e){ showToast(e.message); }
+  });
+}
+
+let employeesCache=[];
+async function loadEmployees(){
+  try{ employeesCache = await api('superAdminListEmployees',{token:t()}); renderEmployees(); }
+  catch(e){ setErr('employeesErr','Impossible de charger les employés: '+e.message); }
+}
+function renderEmployees(){
+  const q = document.getElementById('qEmployee').value.trim().toLowerCase();
+  const f = document.getElementById('fEmployee').value;
+  let rows = employeesCache||[];
+  if(q) rows = rows.filter(r => String((r.full_name||'')+' '+(r.company_name||'')+' '+(r.poste||'')).toLowerCase().includes(q));
+  if(f) rows = rows.filter(r => String(r.statut||'').toLowerCase() === f);
+  const tb = document.getElementById('employeesBody');
+  if(!rows.length){ tb.innerHTML='<tr><td colspan="8" class="empty">Aucun employé</td></tr>'; return; }
+  tb.innerHTML = rows.map(r => `<tr>
+    <td>${esc(r.id)}</td>
+    <td><div style="font-weight:700">${esc(r.full_name)}</div></td>
+    <td>${esc(r.company_name)}</td>
+    <td>${esc(r.poste)}</td>
+    <td>${esc(r.phone)}</td>
+    <td>${badge(r.statut)}</td>
+    <td>${fmt(r.created_at)}</td>
+    <td><div class="acts">
+      ${String(r.statut||'').toLowerCase()==='suspendu'
+        ? `<button class="restore" onclick="actEmployee('${r.id}',false)">Réactiver</button>`
+        : `<button class="suspend" onclick="actEmployee('${r.id}',true)">Suspendre</button>`}
+      <button class="del" onclick="delEmployee('${r.id}')">Supprimer</button>
+    </div></td>
+  </tr>`).join('');
+}
+async function actEmployee(id, suspend){
+  openModal('Confirmer', suspend ? 'Suspendre cet employé ?' : 'Réactiver cet employé ?', async ()=>{
+    try{
+      await api('superAdminSuspendEmployee',{token:t(), employeeId:id, suspend});
+      showToast(suspend?'Employé suspendu':'Employé réactivé');
+      refreshAll();
+    } catch(e){ showToast(e.message); }
+  });
+}
+async function delEmployee(id){
+  openModal('Supprimer', 'Supprimer cet employé ? Action irréversible.', async ()=>{
+    try{
+      await api('superAdminDeleteEmployee',{token:t(), employeeId:id});
+      showToast('Employé supprimé');
+      refreshAll();
+    } catch(e){ showToast(e.message); }
+  });
+}
+
+let onlineCache=[];
+async function loadOnline(){
+  try{
+    onlineCache = await api('superAdminListOnline',{token:t()});
+    const tb = document.getElementById('onlineBody');
+    const rows = onlineCache || [];
+    if(!rows.length){ tb.innerHTML='<tr><td colspan="7" class="empty">Aucune session en ligne</td></tr>'; return; }
+    tb.innerHTML = rows.map(r=>`<tr>
+      <td><div style="font-weight:700">${esc(r.label)}</div></td>
+      <td>${esc(r.role)}</td>
+      <td>${esc(r.company_name)}</td>
+      <td>${esc([r.city,r.country].filter(Boolean).join(', ')||'—')}</td>
+      <td>${esc(r.ip)}</td>
+      <td style="font-size:11px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(r.user_agent_short)}">${esc(r.user_agent_short)}</td>
+      <td>${fmt(r.last_seen)}</td>
+    </tr>`).join('');
+    setErr('onlineErr','');
+  } catch(e){ setErr('onlineErr','En ligne: '+e.message); }
+}
+
+let activityCache={items:[]};
+async function loadActivity(){
+  try{
+    const limit = parseInt(document.getElementById('fActivityLimit').value||'150',10);
+    const d = await api('superAdminActivityFeed',{token:t(), limit});
+    activityCache = d;
+    renderActivity();
+  } catch(e){ setErr('activityErr','Activité: '+e.message); }
+}
+function renderActivity(){
+  const q = document.getElementById('qActivity').value.trim().toLowerCase();
+  const tb = document.getElementById('activityBody');
+  let rows = activityCache.items || [];
+  if(q) rows = rows.filter(r => String((r.action||'')+' '+(r.details||'')+' '+(r.utilisateur_email||'')).toLowerCase().includes(q));
+  if(!rows.length){ tb.innerHTML='<tr><td colspan="4" class="empty">Aucune activité</td></tr>'; setErr('activityErr',''); return; }
+  tb.innerHTML = rows.map(r=>`<tr>
+    <td><span class="badge b">${esc(r.action)}</span></td>
+    <td>${esc(r.details)}</td>
+    <td>${esc(r.utilisateur_email)}</td>
+    <td>${fmt(r.created_at)}</td>
+  </tr>`).join('');
+  setErr('activityErr','');
+}
+
+function logout(){ localStorage.removeItem('entreflowSuperAdmin'); location.href='/_admin-login.html'; }
+
+if(!t()){ location.href='/_admin-login.html'; }
+else refreshAll();
+setInterval(refreshAll, 30000);
 </script>
 </body>
 </html>
