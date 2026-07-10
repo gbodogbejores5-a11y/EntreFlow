@@ -388,8 +388,10 @@ body.ef-xs .sidebar, body.ef-sm .sidebar {
 body.ef-xs .sidebar.ef-open, body.ef-sm .sidebar.ef-open {
   transform: translateX(0);
 }
-body.ef-md .sidebar, body.ef-lg .sidebar, body.ef-xl .sidebar {
-  transform: translateX(0) !important;
+body.ef-md .sidebar:not(.collapsed),
+body.ef-lg .sidebar:not(.collapsed),
+body.ef-xl .sidebar:not(.collapsed) {
+  transform: translateX(0);
 }
 
 body.ef-sidebar-veil::before{

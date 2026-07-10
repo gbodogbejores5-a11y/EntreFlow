@@ -256,7 +256,8 @@ async function doSuperLogin(){
   try{
     ADMIN_TOKEN='';
     const res = await api('superAdminLogin',{secret:val});
-    ADMIN_TOKEN = String((res&&res.token)||'').trim() || ADMIN_TOKEN;
+    if (!res || !res.token) throw new Error('Secret invalide.');
+    ADMIN_TOKEN = String(res.token).trim();
     sessionStorage.setItem('ef_admin_secret',ADMIN_TOKEN);
     document.getElementById('loginScreen').style.display='none';
     document.getElementById('dash').style.display='block';

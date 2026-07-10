@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src fonts.gstatic.com; connect-src 'self' http://127.0.0.1:4001 https://script.google.com https://script.googleusercontent.com https://cdn.jsdelivr.net; img-src 'self' data: blob: *;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://accounts.google.com; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src fonts.gstatic.com; connect-src 'self' http://127.0.0.1:4001 https://script.google.com https://script.googleusercontent.com https://cdn.jsdelivr.net https://accounts.google.com https://oauth2.googleapis.com; img-src 'self' data: blob: *;">
 <title>EntreFlow — Dashboard</title>
 <link rel="manifest" href="/manifest-dashboard.json">
 <meta name="theme-color" content="#2563EB">
@@ -415,8 +415,10 @@ body.ef-xs .sidebar, body.ef-sm .sidebar {
 body.ef-xs .sidebar.ef-open, body.ef-sm .sidebar.ef-open {
   transform: translateX(0);
 }
-body.ef-md .sidebar, body.ef-lg .sidebar, body.ef-xl .sidebar {
-  transform: translateX(0) !important;
+body.ef-md .sidebar:not(.collapsed),
+body.ef-lg .sidebar:not(.collapsed),
+body.ef-xl .sidebar:not(.collapsed) {
+  transform: translateX(0);
 }
 
 @keyframes ef-fadein{from{opacity:0}to{opacity:1}}
@@ -1156,19 +1158,21 @@ function writeCache(action, payload, data){
   try { localStorage.setItem(cacheKey(action, payload), JSON.stringify({ ts: Date.now(), data })); } catch (e) {}
 }
 async function api(action, payload={}, opts={}){
-  const API_SECRET = '2NoJxebkAg5mBorc1Dt6aMeVityuVK1n';
   const isMutation = ['signQuote','createSale','createQuote','updateCompany','createProduct','updateProduct','deleteProduct','createClient','createEmployee','sendQuoteVia','cancelSale','createBranch'].includes(action);
   const silent = opts.silent === true;
   if (!isMutation) {
     const cached = readCache(action, payload);
     if (cached) {
       if (!silent) {
-        // For explicit actions, still fire network in background if stale data could be outdated
         void (async () => {
           try {
+            const stored = localStorage.getItem('entreflowUser');
+            const session = stored ? JSON.parse(stored) : null;
+            const token = session?.token;
+            if (!token) return;
             const r = await fetch('https://script.google.com/macros/s/AKfycbzyXP5MBqCZvhS-xndYNH5Xd-hV-9ukfozzkZAODfDG_xPFbE_bo178WS1ARDsDK1nP/exec', {
               method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-              body: JSON.stringify({ action, ...payload })
+              body: JSON.stringify({ action, ...payload, token })
             });
             const clean = (await r.text().catch(()=>'')).replace(/^[\s\S]*?<html[\s\S]*?<body[^>]*>/i,'').replace(/<\/body>[\s\S]*$/i,'');
             const data = clean ? JSON.parse(clean) : {};
@@ -1183,8 +1187,11 @@ async function api(action, payload={}, opts={}){
   }
   const stored = localStorage.getItem('entreflowUser');
   const session = stored ? JSON.parse(stored) : null;
-  if (session && session.token) payload.token = session.token;
-  else payload.token = API_SECRET;
+  if (!session?.token) {
+    location.href = location.origin + location.pathname.replace(/\/[^/]*$/, '/') + 'entreflow-login.html';
+    throw new Error('Session requise');
+  }
+  payload.token = session.token;
   const r = await fetch('https://script.google.com/macros/s/AKfycbzyXP5MBqCZvhS-xndYNH5Xd-hV-9ukfozzkZAODfDG_xPFbE_bo178WS1ARDsDK1nP/exec', {
     method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
     body: JSON.stringify({ action, ...payload })
@@ -1871,6 +1878,11 @@ document.getElementById('addAnotherBtn').addEventListener('click',async()=>{
 async function softDeleteProduct(id){if(!confirm('Supprimer ce produit ?'))return;const btn=event.target.closest('button');if(btn){setBtnLoading(btn,true);}await api('deleteProduct',{id});clearApiCache();toast('Produit supprimé','info');loadStockPage(false);loadHomePage(false);if(btn){setBtnLoading(btn,false);}}
 
 /* ══ STOCK ══ */
+function esc(str){
+  if(str===null||str===undefined) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(str){ return esc(str); }
 async function loadStockPage(silent){
   if(!CO)return;
   const filterSel = document.getElementById('stockBranchFilter');
@@ -1903,7 +1915,7 @@ async function loadStockPage(silent){
       const barCol={ok:'var(--green)',warn:'var(--amber)',err:'var(--red)'}[status];
       const barPct=Math.max(0,Math.min(100,(qty/(thresh*3||1))*100));
       const actionBtn=status==='err'||status==='warn'?`<button class="btn btn-sm" style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.35);color:var(--green)" onclick="restockPrompt('${r.product_id}',${qty},${thresh})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Réappro.</button>`:`<span style="color:var(--gray);font-size:12px">—</span>`;
-      const branchName = r.branch_name ? `<span class="badge b-info" style="margin-right:6px">${escapeHtml_(r.branch_name)}</span>` : '';
+      const branchName = r.branch_name ? `<span class="badge b-info" style="margin-right:6px">${esc(r.branch_name)}</span>` : '';
       return `<tr><td style="font-weight:500">${branchName}${prod?.name||'—'}</td><td>${qty}</td><td>${thresh}</td><td><div class="stk-bar" style="width:80px"><div class="stk-bar-fill" style="width:${barPct}%;background:${barCol}"></div></div></td><td><span class="badge b-${status}">${label}</span></td><td>${actionBtn}</td></tr>`;
     }).join('');
     if (!silent) tbody.innerHTML = rowsHtml;
@@ -2405,7 +2417,7 @@ async function doLogout(){
   localStorage.removeItem('entreflowUser');
   localStorage.removeItem('entreflowEmpToken');
   try{await api('logout',{email:U?.email,token:U?.token});}catch(e){}
-  location.href = location.origin + location.pathname.replace(/\/[^/]*$/, '/') + 'entreflow-auth.html';
+  location.href = location.origin + location.pathname.replace(/\/[^/]*$/, '/') + 'entreflow-login.html';
 }
 
 /* ══ PERSISTANCE LOCAL STORAGE ═ */
@@ -2443,7 +2455,7 @@ async function init(){
 
     const r=await api('init',{email:U.email});
     const comp=r.company||null;
-    if(!comp&&!localStorage.getItem('entreflowSetupDone')){
+    if(!comp){
       document.getElementById('loadingScreen').classList.add('hide');
       setTimeout(()=>{
         document.getElementById('loadingScreen').style.display='none';
