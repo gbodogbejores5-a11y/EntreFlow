@@ -535,8 +535,8 @@ function createProduct_(p) {
   const id = uuid(); const now = new Date().toISOString();
   const obj = { id, company_id: p.company_id || '', name: p.name, category: p.category || '', unit: p.unit || 'pice', pack_qty: Number(p.pack_qty || 1), pack_buy_price: Number(p.pack_buy_price || 0), unit_sell_price: Number(p.unit_sell_price || 0), min_threshold: Number(p.min_threshold || 5), statut: 'actif', created_at: now, updated_at: now };
   insertRow_(CONFIG.SHEETS.PRODUCTS, obj); logAudit_('CREATE_PRODUCT', 'Produits', id, '', p.name);
-  if (p.branchId && p.quantity !== undefined) {
-    updateStock_({ companyId: p.company_id, branchId: p.branchId, productId: id, quantity: Number(p.quantity || 0), min_threshold: Number(p.min_threshold || 5) });
+  if (p.quantity !== undefined) {
+    updateStock_({ companyId: p.company_id, branchId: p.branchId || '', productId: id, quantity: Number(p.quantity || 0), min_threshold: Number(p.min_threshold || 5) });
   }
   return { id, ok: true };
 }
