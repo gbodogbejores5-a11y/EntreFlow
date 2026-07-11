@@ -1354,11 +1354,45 @@ function openPanel(){
     if(CO.logo_data) document.getElementById('logoPreview').innerHTML=`<img src="${CO.logo_data}" style="max-height:56px;border-radius:9px;border:1px solid var(--border)">`;
     if(CO.signature_data) document.getElementById('signaturePreview').innerHTML=`<img src="${CO.signature_data}" style="max-height:46px;border-radius:6px;border:1px solid var(--border)">`;
   }
-  document.getElementById('cp-logo').onchange=e=>{readFileAsDataURL(e.target.files[0],url=>{document.getElementById('logoPreview').innerHTML=`<img src="${url}" style="max-height:56px;border-radius:9px;border:1px solid var(--border)">`;CO._newLogo=url;saveState_();});};
+  document.getElementById('cp-logo').onchange=async e=>{
+    const file=e.target.files[0];
+    if(file){
+      const jpegUrl=await new Promise(resolve=>readFileAsDataURL(file,resolve));
+      const color=await extractDominantColor_(jpegUrl);
+      document.getElementById('logoPreview').innerHTML=`<img src="${jpegUrl}" style="max-height:56px;border-radius:9px;border:1px solid var(--border)">`;
+      CO._newLogo=jpegUrl;CO._newLogoColor=color||CO.logo_color||'';saveState_();
+    }
+  };
   document.getElementById('cp-signature').onchange=e=>{readFileAsDataURL(e.target.files[0],url=>{document.getElementById('signaturePreview').innerHTML=`<img src="${url}" style="max-height:46px;border-radius:6px;border:1px solid var(--border)">`;CO._newSignature=url;saveState_();});};
   document.getElementById('companyPanel').classList.add('show');
 }
 function closePanel(){document.getElementById('companyPanel').classList.remove('show');}
+function rgbToHex(r,g,b){return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');}
+function extractDominantColor_(url){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      try{
+        const c=document.createElement('canvas');
+        const MAX=80;const r=Math.max(1,Math.min(MAX,img.width)),s=Math.max(1,Math.min(MAX,img.height));
+        c.width=r;c.height=s;
+        const ctx=c.getContext('2d');ctx.drawImage(img,0,0,r,s);
+        const d=ctx.getImageData(0,0,r,s).data;
+        let tr=0,tg=0,tb=0,cnt=0;
+        for(let i=0;i<d.length;i+=4){
+          const a=d[i+3];if(a<120)continue;
+          const dr=d[i],dg=d[i+1],db=d[i+2];
+          if(dr>240&&dg>240&&db>240)continue;
+          tr+=dr;tg+=dg;tb+=db;cnt++;
+        }
+        if(!cnt){resolve(null);return;}
+        resolve(rgbToHex(Math.round(tr/cnt),Math.round(tg/cnt),Math.round(tb/cnt)));
+      }catch(e){resolve(null);}
+    };
+    img.onerror=()=>resolve(null);
+    img.src=url;
+  });
+}
 function readFileAsDataURL(file,cb){
   if(!file)return;
   const r=new FileReader();
@@ -1384,6 +1418,7 @@ async function saveCompanySettings(){
   try{
     const updates={name,phone:document.getElementById('cp-phone').value.trim(),email:document.getElementById('cp-email').value.trim(),address:document.getElementById('cp-address').value.trim(),tax_id:document.getElementById('cp-nif').value.trim(),rccm:document.getElementById('cp-rccm').value.trim(),currency:document.getElementById('cp-currency').value,tva_rate:parseFloat(document.getElementById('cp-tva').value)||18,quote_prefix:document.getElementById('cp-prefix').value.trim()||'EF-'};
     if(CO._newLogo) updates.logo_data=CO._newLogo;
+    if(CO._newLogoColor) updates.logo_color=CO._newLogoColor;
     if(CO._newSignature) updates.signature_data=CO._newSignature;
     setBtnLoading('saveCompanyBtn',true);
     await api('updateCompany',{id:CO.id,updates});
@@ -1447,22 +1482,17 @@ async function startDashboard(){
   document.getElementById('ownerGreeting').textContent=firstName?`${greet}, ${firstName}`:`${greet} !`;
   document.getElementById('userAv').textContent=(firstName||U.email||'U')[0].toUpperCase();
   document.getElementById('dateChip').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
-  try{await api('setupSheet',{});}catch(err){console.warn(err);}
   saveState_();
-  loadHomePage(false);
-  checkAvisPrompt();
-  // Initialize seen IDs for realtime
+  document.getElementById('dashboard').style.display='block';
+  const [iniErr]=await Promise.all([api('setupSheet',{}).catch(e=>e), loadHomePage(false), checkAvisPrompt()]);
+  if(iniErr)console.warn(iniErr);
+  window._entRealState=window._entRealState||{seenSaleIds:new Set(),seenClientIds:new Set()};
   try {
-    const initSales = await api('listSales', { companyId: CO.id });
-    (initSales || []).forEach(s => window._entRealState.seenSaleIds.add(s.id));
-    const initClients = await api('listClients', { companyId: CO.id });
-    (initClients || []).forEach(c => window._entRealState.seenClientIds.add(c.id));
+    const [initSales, initClients]=await Promise.all([api('listSales',{companyId:CO.id}), api('listClients',{companyId:CO.id})]);
+    (initSales||[]).forEach(s=>window._entRealState.seenSaleIds.add(s.id));
+    (initClients||[]).forEach(c=>window._entRealState.seenClientIds.add(c.id));
   } catch (e) {}
-  // Silent background refresh every 9 seconds
-  setInterval(async () => {
-    await silentRefreshCurrentPage();
-    await checkRealtimeNotifications();
-  }, 9000);
+  setInterval(async()=>{await silentRefreshCurrentPage();await checkRealtimeNotifications();},9000);
 }
 function getGreeting(){const h=new Date().getHours();return h<12?'Bonjour':h<18?'Bon après-midi':'Bonsoir';}
 
