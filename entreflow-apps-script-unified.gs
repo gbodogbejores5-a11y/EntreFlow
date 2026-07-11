@@ -289,10 +289,17 @@ function verifyAccess_(data) {
       const ucol = k => userFound.header.findIndex(h => h.trim() === k);
       if (String(userFound.row[ucol('statut')]).toLowerCase() !== 'suspendu') {
         const obj = rowToObject_(userFound);
+        const companyId = obj.company_id || '';
+        if (companyId) {
+          const company = getCompanyById_(companyId);
+          if (company && String(company.statut).toLowerCase() === 'suspendu') {
+            return { ok: false, error: 'Cette entreprise a été suspendue. Contactez le support.' };
+          }
+        }
         return {
           ok: true,
           scope: 'owner',
-          company_id: obj.company_id || '',
+          company_id: companyId,
           user: obj
         };
       }
@@ -368,6 +375,13 @@ function loginUser_(p) {
     return { ok: false, error: 'Mot de passe incorrect. Utilisez "Mot de passe oubli ?" pour rinitialiser.' };
   }
   if (String(found.row[col('statut')]).toLowerCase() === 'suspendu') return { ok: false, error: 'Compte suspendu. Contactez le support.' };
+  const companyId = found.row[col('company_id')];
+  if (companyId) {
+    const company = getCompanyById_(companyId);
+    if (company && String(company.statut).toLowerCase() === 'suspendu') {
+      return { ok: false, error: 'Cette entreprise a été suspendue. Contactez le support.' };
+    }
+  }
   const token = uuid(); const now = new Date().toISOString();
   insertRow_(CONFIG.SHEETS.SESSIONS, { id: uuid(), token, user_email: email, debut_session: now, nb_actions: 1, derniere_action: 'login' });
   updateRow_(CONFIG.SHEETS.USERS, found.row[col('id')], { derniere_connexion: now });
@@ -2779,8 +2793,8 @@ function superAdminListQuotes_(token) {
   if (!requireSuperAdmin_(token)) return { ok: false, error: 'Acces refuse.' };
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const quotes = sheetToObjects_(ss.getSheetByName(CONFIG.SHEETS.QUOTES));
-    const companies = ss.getSheetByName(CONFIG.SHEETS.COMPANIES) ? sheetToObjects_(ss.getSheetByName(CONFIG.SHEETS.COMPANIES)) : [];
+    const quotes = sheetToObjects_(CONFIG.SHEETS.QUOTES);
+    const companies = sheetToObjects_(CONFIG.SHEETS.COMPANIES);
     const map = {};
     companies.forEach(c => { map[String(c.id)] = c.name; });
     return quotes.filter(q => q.statut !== 'supprime').map(q => ({ ...q, company_name: map[String(q.company_id)] || '' })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -2790,8 +2804,8 @@ function superAdminListSales_(token) {
   if (!requireSuperAdmin_(token)) return { ok: false, error: 'Acces refuse.' };
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const sales = sheetToObjects_(ss.getSheetByName(CONFIG.SHEETS.SALES));
-    const companies = ss.getSheetByName(CONFIG.SHEETS.COMPANIES) ? sheetToObjects_(ss.getSheetByName(CONFIG.SHEETS.COMPANIES)) : [];
+    const sales = sheetToObjects_(CONFIG.SHEETS.SALES);
+    const companies = sheetToObjects_(CONFIG.SHEETS.COMPANIES);
     const map = {};
     companies.forEach(c => { map[String(c.id)] = c.name; });
     return sales.filter(s => s.statut !== 'cancelled').map(s => ({ ...s, company_name: map[String(s.company_id)] || '' })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -2801,8 +2815,8 @@ function superAdminListProducts_(token) {
   if (!requireSuperAdmin_(token)) return { ok: false, error: 'Acces refuse.' };
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const products = sheetToObjects_(ss.getSheetByName(CONFIG.SHEETS.PRODUCTS));
-    const companies = ss.getSheetByName(CONFIG.SHEETS.COMPANIES) ? sheetToObjects_(ss.getSheetByName(CONFIG.SHEETS.COMPANIES)) : [];
+    const products = sheetToObjects_(CONFIG.SHEETS.PRODUCTS);
+    const companies = sheetToObjects_(CONFIG.SHEETS.COMPANIES);
     const map = {};
     companies.forEach(c => { map[String(c.id)] = c.name; });
     return products.map(p => ({ ...p, company_name: map[String(p.company_id)] || '' })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -2812,8 +2826,8 @@ function superAdminListClients_(token) {
   if (!requireSuperAdmin_(token)) return { ok: false, error: 'Acces refuse.' };
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const clients = sheetToObjects_(ss.getSheetByName(CONFIG.SHEETS.CLIENTS));
-    const companies = ss.getSheetByName(CONFIG.SHEETS.COMPANIES) ? sheetToObjects_(ss.getSheetByName(CONFIG.SHEETS.COMPANIES)) : [];
+    const clients = sheetToObjects_(CONFIG.SHEETS.CLIENTS);
+    const companies = sheetToObjects_(CONFIG.SHEETS.COMPANIES);
     const map = {};
     companies.forEach(c => { map[String(c.id)] = c.name; });
     return clients.filter(c => c.statut !== 'inactif').map(c => ({ ...c, company_name: map[String(c.company_id)] || '' })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -2825,7 +2839,7 @@ function superAdminListTrash_(token) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const items = [];
     [[CONFIG.SHEETS.QUOTES, q => q.statut === 'supprime', 'Devis', q => q.quote_number || 'Sans N'], [CONFIG.SHEETS.SALES, s => s.statut === 'cancelled', 'Vente', s => s.sale_number || 'Sans N'], [CONFIG.SHEETS.CLIENTS, c => c.statut === 'inactif', 'Client', c => c.name], [CONFIG.SHEETS.PRODUCTS, p => p.statut === 'inactif', 'Produit', p => p.name], [CONFIG.SHEETS.EMPLOYEES, e => e.statut === 'supprime', 'Employe', e => e.full_name]]
-      .forEach(([sheet, filter, type, getName]) => { sheetToObjects_(ss.getSheetByName(sheet)).filter(filter).forEach(x => items.push({ type, id: x.id, name: getName(x) || '', date: x.updated_at || x.created_at, company_id: x.company_id || '' })); });
+      .forEach(([sheet, filter, type, getName]) => { sheetToObjects_(sheet).filter(filter).forEach(x => items.push({ type, id: x.id, name: getName(x) || '', date: x.updated_at || x.created_at, company_id: x.company_id || '' })); });
     return items.sort((a, b) => new Date(b.date) - new Date(a.date));
   } catch (e) { return { ok: false, error: e.message }; }
 }
