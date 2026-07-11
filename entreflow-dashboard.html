@@ -39,16 +39,6 @@ h1,h2,h3,h4{font-family:'Syne',sans-serif;letter-spacing:-.02em;}
 #loadingScreen.hide{opacity:0;pointer-events:none;}
 .spinner{width:42px;height:42px;border:2.5px solid rgba(96,165,250,.12);border-top-color:var(--blue-l);border-radius:50%;animation:spin .75s linear infinite;}
 
-#setupScreen{position:fixed;inset:0;background:rgba(4,6,18,.98);backdrop-filter:blur(16px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
-#setupScreen.show{display:flex;}
-.setup-box{max-width:520px;width:100%;background:rgba(6,10,30,.96);border:1px solid var(--border);border-radius:24px;padding:36px;max-height:92vh;overflow-y:auto;animation:popIn .35s ease;}
-.setup-logo{display:flex;align-items:center;gap:12px;margin-bottom:26px;}
-.logo-icon{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#1D4ED8,#60A5FA);display:flex;align-items:center;justify-content:center;flex-shrink:0;animation:pulse-ring 3s ease-in-out infinite, float-y 4.5s ease-in-out infinite;}
-.logo-icon svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
-.logo-text{font-size:22px;font-weight:800;font-family:'Syne',sans-serif;background:linear-gradient(90deg,#fff 30%,var(--blue-l));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.setup-title{font-size:20px;font-weight:700;margin-bottom:6px;}
-.setup-sub{font-size:13px;color:var(--gray);margin-bottom:26px;line-height:1.65;}
-
 .fg{margin-bottom:14px;}
 .fg label{display:block;font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;}
 .fg input,.fg select,.fg textarea{width:100%;padding:10px 13px;background:rgba(4,6,18,.65);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--white);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:.2s;}
@@ -510,43 +500,6 @@ body.ef-xs .toast-wrap, body.ef-sm .toast-wrap {
 <div id="loadingScreen">
   <div class="spinner"></div>
   <p style="color:var(--gray);font-size:13px">Chargement de votre espace…</p>
-</div>
-
-<div id="setupScreen">
-  <div class="setup-box">
-    <div class="setup-logo">
-      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
-      <span class="logo-text">EntreFlow</span>
-    </div>
-    <h2 class="setup-title">Bienvenue ! Configurez votre entreprise</h2>
-    <p class="setup-sub">Ces informations apparaîtront sur vos devis et factures.</p>
-    <div class="fg"><label>Nom de l'entreprise *</label><input id="s-name" type="text" placeholder="Ex : SARL KANDE, Pharmacie Moderne…"></div>
-    <div class="row2">
-      <div class="fg"><label>Téléphone</label><input id="s-phone" type="tel" placeholder="+229 XX XX XX XX"></div>
-      <div class="fg"><label>Email professionnel</label><input id="s-email" type="email" placeholder="contact@…"></div>
-    </div>
-    <div class="fg"><label>Adresse complète</label><input id="s-address" type="text" placeholder="Rue, quartier, ville…"></div>
-    <div class="row2">
-      <div class="fg"><label>NIF (optionnel)</label><input id="s-nif" type="text" placeholder="Numéro fiscal"></div>
-      <div class="fg"><label>RCCM (optionnel)</label><input id="s-rccm" type="text" placeholder="RB/AB/…"></div>
-    </div>
-    <div class="fg"><label>Devise</label>
-      <select id="s-currency">
-        <option value="XOF">F CFA (XOF)</option><option value="XAF">F CFA (XAF)</option><option value="EUR">Euro</option><option value="USD">Dollar</option>
-      </select>
-    </div>
-    <div class="row2">
-      <div class="fg"><label>Logo (optionnel)</label><input id="s-logo" type="file" accept="image/*"><div id="s-logoPrev" style="margin-top:6px;height:44px;"></div></div>
-      <div class="fg"><label>Signature (optionnel)</label><input id="s-sig" type="file" accept="image/*"><div id="s-sigPrev" style="margin-top:6px;height:36px;"></div></div>
-    </div>
-    <div style="display:flex;flex-direction:column;margin-top:22px;gap:12px;">
-      <button class="btn btn-primary btn-full" id="setupSaveBtn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-        Créer mon espace professionnel
-      </button>
-      <button id="setupSkipBtn" type="button" style="align-self:center;color:var(--gray);background:none;border:none;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;">Passer pour l'instant</button>
-    </div>
-  </div>
 </div>
 
 <!-- PANNEAU ENTREPRISE -->
@@ -1455,44 +1408,7 @@ async function submitContactAdmin(){
   }catch(e){toast('Erreur : '+e.message,'error');}
 }
 
-/* ══ SETUP ═ */
-let _sLogo=null,_sSig=null;
-document.getElementById('s-logo').onchange=e=>{_sLogo=null;readFileAsDataURL(e.target.files[0],url=>{_sLogo=url;document.getElementById('s-logoPrev').innerHTML=_sLogo?`<img src="${_sLogo}" style="max-height:44px;border-radius:8px;border:1px solid var(--border)">`:'';});};
-document.getElementById('s-sig').onchange=e=>{_sSig=null;readFileAsDataURL(e.target.files[0],url=>{_sSig=url;document.getElementById('s-sigPrev').innerHTML=_sSig?`<img src="${_sSig}" style="max-height:36px;border-radius:6px;border:1px solid var(--border)">`:'';});};
-async function handleSetup(){
-  const name=document.getElementById('s-name').value.trim();
-  if(!name){toast("Nom de l'entreprise requis",'error');return;}
-  const btn=document.getElementById('setupSaveBtn');
-  try{
-    setBtnLoading(btn,true);
-    const comp=await api('createCompany',{ownerId:U.id,name,phone:document.getElementById('s-phone').value.trim(),email:document.getElementById('s-email').value.trim()||U.email,address:document.getElementById('s-address').value.trim(),tax_id:document.getElementById('s-nif').value.trim(),rccm:document.getElementById('s-rccm').value.trim(),currency:document.getElementById('s-currency').value,logo_data:_sLogo,signature_data:_sSig});
-    CO=comp;await ensureBranch();
-    localStorage.setItem('entreflowSetupDone','1');
-    saveState_();
-    document.getElementById('setupScreen').classList.remove('show');
-    startDashboard();toast(`Bienvenue ${name} !`,'success');
-  }catch(err){toast('Erreur : '+err.message,'error');btn.disabled=false;btn.textContent='Créer mon espace professionnel';}
-  finally{setBtnLoading(btn,false);}
-}
-document.getElementById('setupSaveBtn').addEventListener('click',handleSetup);
-document.getElementById('setupSkipBtn').addEventListener('click',async(e)=>{
-  e.preventDefault();
-  document.getElementById('setupScreen').classList.remove('show');
-  if(U&&!CO){
-    try{
-      CO=await api('createDefaultCompany',{ownerId:U.id,email:U.email});
-      await ensureBranch();
-      localStorage.setItem('entreflowSetupDone','1');
-      saveState_();
-    }catch(err){
-      toast('Impossible de créer l\'espace par défaut : '+err.message,'error');
-      document.getElementById('setupScreen').classList.add('show');
-      return;
-    }
-  }
-  startDashboard();
-});
-
+/* ══ ENSURE BRANCH ══ */
 async function ensureBranch(){
   if(!CO)return;
   const branches=await api('listBranches',{companyId:CO.id});
@@ -2456,19 +2372,19 @@ async function init(){
     document.getElementById('dateChip').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
 
     const r=await api('init',{email:U.email});
-    const comp=r.company||null;
+    let comp=r.company||null;
     if(!comp){
-      document.getElementById('loadingScreen').classList.add('hide');
-      setTimeout(()=>{
-        document.getElementById('loadingScreen').style.display='none';
-        if(U.email)document.getElementById('s-email').value=U.email;
-        document.getElementById('setupScreen').classList.add('show');
-      },400);
-      return;
+      try{
+        const defCompany=await api('createDefaultCompany',{ownerId:U.id,email:U.email});
+        comp=defCompany||{ id: U.company_id || '', name: U.prenom || U.nom || 'Mon entreprise', email: U.email };
+        if(defCompany?.branches?.length){BR=defCompany.branches[0];}
+      }catch(err){
+        comp={ id: U.company_id || '', name: U.prenom || U.nom || 'Mon entreprise', email: U.email };
+      }
     }
-    CO=comp||{ id: U.company_id || '', name: U.prenom || U.nom || 'Mon entreprise', email: U.email };
+    CO=comp;
     BR=(r.branches&&r.branches.length)?r.branches[0]:{ id: r.branchId || '', name: 'Agence principale' };
-    window._ENTREFLOW_INIT = r; // on garde les données en cache
+    window._ENTREFLOW_INIT = r;
     document.getElementById('loadingScreen').classList.add('hide');
     setTimeout(()=>document.getElementById('loadingScreen').style.display='none',400);
     startDashboard();
