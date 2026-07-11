@@ -649,7 +649,7 @@ body.ef-xs .toast-wrap, body.ef-sm .toast-wrap {
     <input type="hidden" id="pm-id">
     <div class="fg"><label>Nom du produit *</label><input id="pm-name" type="text" placeholder="Ex : Riz 25 kg"></div>
     <div class="row2">
-      <div class="fg"><label>Agence de stock</label><select id="pm-branch"><option value="">-- Choisir --</option></select></div>
+      <div class="fg"><label>Agence de stock</label><select id="pm-branch"></select></div>
       <div class="fg"><label>Unité de vente</label>
         <select id="pm-unit">
           <option value="pièce">Pièce</option>
@@ -1766,9 +1766,10 @@ function openProductModal(id=null){
   if(branchSel && !branchSel.children.length){
     (async ()=>{
       const branches=await api('listBranches',{companyId:CO.id});
-      branchSel.innerHTML='<option value=\"\">-- Choisir --</option>'+(branches||[]).map(b=>`<option value=\"${b.id}\">${esc(b.name)}</option>`).join('');
+      branchSel.innerHTML = (branches||[]).map(b=>`<option value="${b.id}"${b.id===BR?.id?' selected':''}>${esc(b.name)}</option>`).join('');
     })();
   }
+  if(branchSel && BR?.id) branchSel.value = BR.id;
   updateProductUnitHints();
   openModal('productModal');
 }
