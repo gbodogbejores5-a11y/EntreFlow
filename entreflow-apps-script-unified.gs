@@ -27,8 +27,8 @@ const CONFIG = {
   // code, ET la page de signature publique
   PORTAL_URL : 'https://script.google.com/macros/s/AKfycbyiqfU7uiPrSSsD0-z3VYtS2DXkPM4QFEYd9Pdygu44QDJEfM9Nx8EBogKAU_70CLDY/exec',
 
-  // URL du site public employ (ex: https://script.google.com/macros/s/AKfycbyiqfU7uiPrSSsD0-z3VYtS2DXkPM4QFEYd9Pdygu44QDJEfM9Nx8EBogKAU_70CLDY/exec)
-  EMPLOYEE_PORTAL_URL : 'https://script.google.com/macros/s/AKfycbyiqfU7uiPrSSsD0-z3VYtS2DXkPM4QFEYd9Pdygu44QDJEfM9Nx8EBogKAU_70CLDY/exec',
+  // URL frontend du portail employe
+  EMPLOYEE_PORTAL_URL : 'https://entreflow.pages.dev/employee',
 
   // Logo EntreFlow (le SaaS, pas celui de l'entreprise du client) en base64
   // data URI, ex: "data:image/png;base64,iVBORw0KG...". Collez ici le contenu
@@ -699,7 +699,7 @@ function createEmployee_(p) {
   p = p || {}; const id = uuid(); const token = generateToken_(); const code = generateEmployeeCode_(); const now = new Date().toISOString();
   const obj = { id, company_id: p.companyId || '', branch_id: p.branchId || '', full_name: p.fullName || '', phone: p.phone || '', email: p.email || '', whatsapp: p.whatsapp || '', poste: p.poste || 'Vendeur', salaire: Number(p.salaire || 0), access_token: token, access_code: code, statut: 'actif', created_at: now };
   insertRow_(CONFIG.SHEETS.EMPLOYEES, obj);
-  const loginLink = CONFIG.EMPLOYEE_PORTAL_URL + '/employee.html?employeeToken=' + token;
+  const loginLink = CONFIG.EMPLOYEE_PORTAL_URL + '?token=' + token;
   // TODO P1: token employ permanent sans expiration  envisager une date d'expiration si besoin.
   const company = getCompanyById_(obj.company_id) || {};
   if (p.email) { try { sendEmail_({ to: p.email, subject: `${company.name || CONFIG.APP_NAME}  Votre code d'accs employ`, html: buildEmail_EmployeeWelcome({ nom: p.fullName, poste: p.poste || 'Employ', company, code, loginLink }) }); } catch (e) {} }
@@ -713,13 +713,13 @@ function createEmployee_(p) {
 function listEmployees_(p) {
   p = p || {}; const emps = sheetToObjects_(CONFIG.SHEETS.EMPLOYEES).filter(e => String(e.company_id) === String(p.companyId || '') && e.statut !== 'inactif');
   const branches = sheetToObjects_(CONFIG.SHEETS.BRANCHES);
-  return emps.map(e => { const b = branches.find(br => String(br.id) === String(e.branch_id)); e.branches = b ? { name: b.name } : { name: '' }; e.portal_link = CONFIG.EMPLOYEE_PORTAL_URL + '/employee.html?employeeToken=' + e.access_token; return e;});
+  return emps.map(e => { const b = branches.find(br => String(br.id) === String(e.branch_id)); e.branches = b ? { name: b.name } : { name: '' }; e.portal_link = CONFIG.EMPLOYEE_PORTAL_URL + '?token=' + e.access_token; return e;});
 }
 function deleteEmployee_(p) { p = p || {}; if (!p.id) return { ok: false }; assertBelongsToCompany_(CONFIG.SHEETS.EMPLOYEES, p.id, p.company_id); return updateRow_(CONFIG.SHEETS.EMPLOYEES, p.id, { statut: 'inactif' }); }
 function permanentDeleteEmployee_(p) { p = p || {}; assertBelongsToCompany_(CONFIG.SHEETS.EMPLOYEES, p.id, p.company_id); deleteRowPermanently_(CONFIG.SHEETS.EMPLOYEES, p.id); return { ok: true }; }
 function findEmployeeByToken_(p) {
   const found = findRow_(CONFIG.SHEETS.EMPLOYEES, 'access_token', (p || {}).token || '');
-  const item = rowToObject_(found); if (item) item.portal_link = CONFIG.EMPLOYEE_PORTAL_URL + '/employee.html?employeeToken=' + item.access_token;
+  const item = rowToObject_(found); if (item) item.portal_link = CONFIG.EMPLOYEE_PORTAL_URL + '?token=' + item.access_token;
   return item;
 }
 /**
@@ -733,7 +733,7 @@ function findEmployeeByCode_(p) {
   const code = String((p || {}).code || '').trim().toUpperCase();
   if (!code) return null;
   const found = findRow_(CONFIG.SHEETS.EMPLOYEES, 'access_code', code);
-  const item = rowToObject_(found); if (item) item.portal_link = CONFIG.EMPLOYEE_PORTAL_URL + '/employee.html?employeeToken=' + item.access_token;
+  const item = rowToObject_(found); if (item) item.portal_link = CONFIG.EMPLOYEE_PORTAL_URL + '?token=' + item.access_token;
   return item;
 }
 /** Action de connexion employ  appele depuis la page de code publique */
