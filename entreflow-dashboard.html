@@ -1834,7 +1834,8 @@ document.getElementById('saveProductBtn').addEventListener('click',async()=>{
     }else if(productBatch.length){
       const branchId=document.getElementById('pm-branch')?.value;
       for(const item of productBatch){
-        const res=await api('createProduct',{company_id:CO.id,branchId,...item});
+        const { stock, ...rest } = item;
+        const res = await api('createProduct', {company_id:CO.id, branchId, quantity: stock, ...rest});
       }
       toast('"'+productBatch.length+' produit(s) enregistrés !','success');
     }else{
