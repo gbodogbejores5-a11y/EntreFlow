@@ -15,7 +15,7 @@
 const CONFIG = {
   APP_NAME      : 'EntreFlow',
   APP_TAGLINE   : 'Grez. Vendez. Dveloppez.',
-  APP_URL       : 'https://script.google.com/macros/s/AKfycbzyXP5MBqCZvhS-xndYNH5Xd-hV-9ukfozzkZAODfDG_xPFbE_bo178WS1ARDsDK1nP/exec',
+  APP_URL       : 'https://script.google.com/macros/s/AKfycbyiqfU7uiPrSSsD0-z3VYtS2DXkPM4QFEYd9Pdygu44QDJEfM9Nx8EBogKAU_70CLDY/exec',
   SUPPORT_EMAIL : 'support@africagoldendigital.com',
   SENDER_NAME   : 'EntreFlow by Africa Golden Digital',
   API_SECRET    : '',
@@ -25,10 +25,10 @@ const CONFIG = {
 
   // URL /exec de CE script  sert le portail employ, la page de connexion par
   // code, ET la page de signature publique
-  PORTAL_URL : 'https://script.google.com/macros/s/AKfycbzyXP5MBqCZvhS-xndYNH5Xd-hV-9ukfozzkZAODfDG_xPFbE_bo178WS1ARDsDK1nP/exec',
+  PORTAL_URL : 'https://script.google.com/macros/s/AKfycbyiqfU7uiPrSSsD0-z3VYtS2DXkPM4QFEYd9Pdygu44QDJEfM9Nx8EBogKAU_70CLDY/exec',
 
-  // URL du site public employ (ex: https://script.google.com/macros/s/AKfycbzyXP5MBqCZvhS-xndYNH5Xd-hV-9ukfozzkZAODfDG_xPFbE_bo178WS1ARDsDK1nP/exec)
-  EMPLOYEE_PORTAL_URL : 'https://script.google.com/macros/s/AKfycbzyXP5MBqCZvhS-xndYNH5Xd-hV-9ukfozzkZAODfDG_xPFbE_bo178WS1ARDsDK1nP/exec',
+  // URL du site public employ (ex: https://script.google.com/macros/s/AKfycbyiqfU7uiPrSSsD0-z3VYtS2DXkPM4QFEYd9Pdygu44QDJEfM9Nx8EBogKAU_70CLDY/exec)
+  EMPLOYEE_PORTAL_URL : 'https://script.google.com/macros/s/AKfycbyiqfU7uiPrSSsD0-z3VYtS2DXkPM4QFEYd9Pdygu44QDJEfM9Nx8EBogKAU_70CLDY/exec',
 
   // Logo EntreFlow (le SaaS, pas celui de l'entreprise du client) en base64
   // data URI, ex: "data:image/png;base64,iVBORw0KG...". Collez ici le contenu
