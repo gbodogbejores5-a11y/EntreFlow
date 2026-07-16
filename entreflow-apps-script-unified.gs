@@ -2671,6 +2671,7 @@ function superAdminListCompanies_(token) {
     const list = [];
     for (let i = 1; i < companies.length; i++) {
       const row = companies[i]; const owner = userMap[String(row[1])];
+      if (String(row[13]).toLowerCase() === 'supprimee') continue;
       list.push({ id: String(row[0]), name: row[2] || '', owner_name: owner ? (owner[1] + ' ' + owner[2]) : '', owner_email: owner ? owner[3] : '', phone: row[3] || '', employees_count: empCountByCompany[String(row[0])] || 0, statut: row[13] || 'actif', created_at: row[14] });
     }
     return list;
@@ -2689,6 +2690,7 @@ function superAdminListEmployees_(token) {
     const list = [];
     for (let i = 1; i < employees.length; i++) {
       const row = employees[i];
+      if (String(row[11]).toLowerCase() === 'supprime') continue;
       list.push({ id: String(row[0]), full_name: row[3] || '', company_name: compMap[String(row[1])] || '', poste: row[7] || '', phone: row[4] || '', statut: row[11] || '', created_at: row[12] });
     }
     return list;
@@ -2918,7 +2920,7 @@ function superAdminListProducts_(token) {
     const companies = sheetToObjects_(CONFIG.SHEETS.COMPANIES);
     const map = {};
     companies.forEach(c => { map[String(c.id)] = c.name; });
-    return products.map(p => ({ ...p, company_name: map[String(p.company_id)] || '' })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    return products.filter(p => String(p.statut).toLowerCase() !== 'inactif').map(p => ({ ...p, company_name: map[String(p.company_id)] || '' })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   } catch (e) { return { ok: false, error: e.message }; }
 }
 function superAdminListClients_(token) {
@@ -2937,7 +2939,12 @@ function superAdminListTrash_(token) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const items = [];
-    [[CONFIG.SHEETS.QUOTES, q => q.statut === 'supprime', 'Devis', q => q.quote_number || 'Sans N'], [CONFIG.SHEETS.SALES, s => s.statut === 'cancelled', 'Vente', s => s.sale_number || 'Sans N'], [CONFIG.SHEETS.CLIENTS, c => c.statut === 'inactif', 'Client', c => c.name], [CONFIG.SHEETS.PRODUCTS, p => p.statut === 'inactif', 'Produit', p => p.name], [CONFIG.SHEETS.EMPLOYEES, e => e.statut === 'supprime', 'Employe', e => e.full_name]]
+    [[CONFIG.SHEETS.COMPANIES, c => String(c.statut||'').toLowerCase() === 'supprimee', 'Entreprise', c => c.name || ('Entreprise ' + c.id)],
+     [CONFIG.SHEETS.QUOTES, q => q.statut === 'supprime', 'Devis', q => q.quote_number || 'Sans N'],
+     [CONFIG.SHEETS.SALES, s => s.statut === 'cancelled', 'Vente', s => s.sale_number || 'Sans N'],
+     [CONFIG.SHEETS.CLIENTS, c => c.statut === 'inactif', 'Client', c => c.name],
+     [CONFIG.SHEETS.PRODUCTS, p => p.statut === 'inactif', 'Produit', p => p.name],
+     [CONFIG.SHEETS.EMPLOYEES, e => e.statut === 'supprime', 'Employe', e => e.full_name]]
       .forEach(([sheet, filter, type, getName]) => { sheetToObjects_(sheet).filter(filter).forEach(x => items.push({ type, id: x.id, name: getName(x) || '', date: x.updated_at || x.created_at, company_id: x.company_id || '' })); });
     return items.sort((a, b) => new Date(b.date) - new Date(a.date));
   } catch (e) { return { ok: false, error: e.message }; }
@@ -5853,6 +5860,7 @@ function superAdminListCompanies_(token) {
     const list = [];
     for (let i = 1; i < companies.length; i++) {
       const row = companies[i]; const owner = userMap[String(row[1])];
+      if (String(row[13]).toLowerCase() === 'supprimee') continue;
       list.push({ id: String(row[0]), name: row[2] || '', owner_name: owner ? (owner[1] + ' ' + owner[2]) : '', owner_email: owner ? owner[3] : '', phone: row[3] || '', employees_count: empCountByCompany[String(row[0])] || 0, statut: row[13] || 'actif', created_at: row[14] });
     }
     return list;
@@ -5871,6 +5879,7 @@ function superAdminListEmployees_(token) {
     const list = [];
     for (let i = 1; i < employees.length; i++) {
       const row = employees[i];
+      if (String(row[11]).toLowerCase() === 'supprime') continue;
       list.push({ id: String(row[0]), full_name: row[3] || '', company_name: compMap[String(row[1])] || '', poste: row[7] || '', phone: row[4] || '', statut: row[11] || '', created_at: row[12] });
     }
     return list;
@@ -6100,7 +6109,7 @@ function superAdminListProducts_(token) {
     const companies = sheetToObjects_(CONFIG.SHEETS.COMPANIES);
     const map = {};
     companies.forEach(c => { map[String(c.id)] = c.name; });
-    return products.map(p => ({ ...p, company_name: map[String(p.company_id)] || '' })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    return products.filter(p => String(p.statut).toLowerCase() !== 'inactif').map(p => ({ ...p, company_name: map[String(p.company_id)] || '' })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   } catch (e) { return { ok: false, error: e.message }; }
 }
 function superAdminListClients_(token) {
@@ -6119,7 +6128,12 @@ function superAdminListTrash_(token) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const items = [];
-    [[CONFIG.SHEETS.QUOTES, q => q.statut === 'supprime', 'Devis', q => q.quote_number || 'Sans N'], [CONFIG.SHEETS.SALES, s => s.statut === 'cancelled', 'Vente', s => s.sale_number || 'Sans N'], [CONFIG.SHEETS.CLIENTS, c => c.statut === 'inactif', 'Client', c => c.name], [CONFIG.SHEETS.PRODUCTS, p => p.statut === 'inactif', 'Produit', p => p.name], [CONFIG.SHEETS.EMPLOYEES, e => e.statut === 'supprime', 'Employe', e => e.full_name]]
+    [[CONFIG.SHEETS.COMPANIES, c => String(c.statut||'').toLowerCase() === 'supprimee', 'Entreprise', c => c.name || ('Entreprise ' + c.id)],
+     [CONFIG.SHEETS.QUOTES, q => q.statut === 'supprime', 'Devis', q => q.quote_number || 'Sans N'],
+     [CONFIG.SHEETS.SALES, s => s.statut === 'cancelled', 'Vente', s => s.sale_number || 'Sans N'],
+     [CONFIG.SHEETS.CLIENTS, c => c.statut === 'inactif', 'Client', c => c.name],
+     [CONFIG.SHEETS.PRODUCTS, p => p.statut === 'inactif', 'Produit', p => p.name],
+     [CONFIG.SHEETS.EMPLOYEES, e => e.statut === 'supprime', 'Employe', e => e.full_name]]
       .forEach(([sheet, filter, type, getName]) => { sheetToObjects_(sheet).filter(filter).forEach(x => items.push({ type, id: x.id, name: getName(x) || '', date: x.updated_at || x.created_at, company_id: x.company_id || '' })); });
     return items.sort((a, b) => new Date(b.date) - new Date(a.date));
   } catch (e) { return { ok: false, error: e.message }; }
@@ -9035,6 +9049,7 @@ function superAdminListCompanies_(token) {
     const list = [];
     for (let i = 1; i < companies.length; i++) {
       const row = companies[i]; const owner = userMap[String(row[1])];
+      if (String(row[13]).toLowerCase() === 'supprimee') continue;
       list.push({ id: String(row[0]), name: row[2] || '', owner_name: owner ? (owner[1] + ' ' + owner[2]) : '', owner_email: owner ? owner[3] : '', phone: row[3] || '', employees_count: empCountByCompany[String(row[0])] || 0, statut: row[13] || 'actif', created_at: row[14] });
     }
     return list;
@@ -9053,6 +9068,7 @@ function superAdminListEmployees_(token) {
     const list = [];
     for (let i = 1; i < employees.length; i++) {
       const row = employees[i];
+      if (String(row[11]).toLowerCase() === 'supprime') continue;
       list.push({ id: String(row[0]), full_name: row[3] || '', company_name: compMap[String(row[1])] || '', poste: row[7] || '', phone: row[4] || '', statut: row[11] || '', created_at: row[12] });
     }
     return list;
@@ -9282,7 +9298,7 @@ function superAdminListProducts_(token) {
     const companies = sheetToObjects_(CONFIG.SHEETS.COMPANIES);
     const map = {};
     companies.forEach(c => { map[String(c.id)] = c.name; });
-    return products.map(p => ({ ...p, company_name: map[String(p.company_id)] || '' })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    return products.filter(p => String(p.statut).toLowerCase() !== 'inactif').map(p => ({ ...p, company_name: map[String(p.company_id)] || '' })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   } catch (e) { return { ok: false, error: e.message }; }
 }
 function superAdminListClients_(token) {
@@ -9301,7 +9317,12 @@ function superAdminListTrash_(token) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const items = [];
-    [[CONFIG.SHEETS.QUOTES, q => q.statut === 'supprime', 'Devis', q => q.quote_number || 'Sans N'], [CONFIG.SHEETS.SALES, s => s.statut === 'cancelled', 'Vente', s => s.sale_number || 'Sans N'], [CONFIG.SHEETS.CLIENTS, c => c.statut === 'inactif', 'Client', c => c.name], [CONFIG.SHEETS.PRODUCTS, p => p.statut === 'inactif', 'Produit', p => p.name], [CONFIG.SHEETS.EMPLOYEES, e => e.statut === 'supprime', 'Employe', e => e.full_name]]
+    [[CONFIG.SHEETS.COMPANIES, c => String(c.statut||'').toLowerCase() === 'supprimee', 'Entreprise', c => c.name || ('Entreprise ' + c.id)],
+     [CONFIG.SHEETS.QUOTES, q => q.statut === 'supprime', 'Devis', q => q.quote_number || 'Sans N'],
+     [CONFIG.SHEETS.SALES, s => s.statut === 'cancelled', 'Vente', s => s.sale_number || 'Sans N'],
+     [CONFIG.SHEETS.CLIENTS, c => c.statut === 'inactif', 'Client', c => c.name],
+     [CONFIG.SHEETS.PRODUCTS, p => p.statut === 'inactif', 'Produit', p => p.name],
+     [CONFIG.SHEETS.EMPLOYEES, e => e.statut === 'supprime', 'Employe', e => e.full_name]]
       .forEach(([sheet, filter, type, getName]) => { sheetToObjects_(sheet).filter(filter).forEach(x => items.push({ type, id: x.id, name: getName(x) || '', date: x.updated_at || x.created_at, company_id: x.company_id || '' })); });
     return items.sort((a, b) => new Date(b.date) - new Date(a.date));
   } catch (e) { return { ok: false, error: e.message }; }
@@ -12217,6 +12238,7 @@ function superAdminListCompanies_(token) {
     const list = [];
     for (let i = 1; i < companies.length; i++) {
       const row = companies[i]; const owner = userMap[String(row[1])];
+      if (String(row[13]).toLowerCase() === 'supprimee') continue;
       list.push({ id: String(row[0]), name: row[2] || '', owner_name: owner ? (owner[1] + ' ' + owner[2]) : '', owner_email: owner ? owner[3] : '', phone: row[3] || '', employees_count: empCountByCompany[String(row[0])] || 0, statut: row[13] || 'actif', created_at: row[14] });
     }
     return list;
@@ -12235,6 +12257,7 @@ function superAdminListEmployees_(token) {
     const list = [];
     for (let i = 1; i < employees.length; i++) {
       const row = employees[i];
+      if (String(row[11]).toLowerCase() === 'supprime') continue;
       list.push({ id: String(row[0]), full_name: row[3] || '', company_name: compMap[String(row[1])] || '', poste: row[7] || '', phone: row[4] || '', statut: row[11] || '', created_at: row[12] });
     }
     return list;
@@ -12464,7 +12487,7 @@ function superAdminListProducts_(token) {
     const companies = sheetToObjects_(CONFIG.SHEETS.COMPANIES);
     const map = {};
     companies.forEach(c => { map[String(c.id)] = c.name; });
-    return products.map(p => ({ ...p, company_name: map[String(p.company_id)] || '' })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    return products.filter(p => String(p.statut).toLowerCase() !== 'inactif').map(p => ({ ...p, company_name: map[String(p.company_id)] || '' })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   } catch (e) { return { ok: false, error: e.message }; }
 }
 function superAdminListClients_(token) {
@@ -12483,7 +12506,12 @@ function superAdminListTrash_(token) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const items = [];
-    [[CONFIG.SHEETS.QUOTES, q => q.statut === 'supprime', 'Devis', q => q.quote_number || 'Sans N'], [CONFIG.SHEETS.SALES, s => s.statut === 'cancelled', 'Vente', s => s.sale_number || 'Sans N'], [CONFIG.SHEETS.CLIENTS, c => c.statut === 'inactif', 'Client', c => c.name], [CONFIG.SHEETS.PRODUCTS, p => p.statut === 'inactif', 'Produit', p => p.name], [CONFIG.SHEETS.EMPLOYEES, e => e.statut === 'supprime', 'Employe', e => e.full_name]]
+    [[CONFIG.SHEETS.COMPANIES, c => String(c.statut||'').toLowerCase() === 'supprimee', 'Entreprise', c => c.name || ('Entreprise ' + c.id)],
+     [CONFIG.SHEETS.QUOTES, q => q.statut === 'supprime', 'Devis', q => q.quote_number || 'Sans N'],
+     [CONFIG.SHEETS.SALES, s => s.statut === 'cancelled', 'Vente', s => s.sale_number || 'Sans N'],
+     [CONFIG.SHEETS.CLIENTS, c => c.statut === 'inactif', 'Client', c => c.name],
+     [CONFIG.SHEETS.PRODUCTS, p => p.statut === 'inactif', 'Produit', p => p.name],
+     [CONFIG.SHEETS.EMPLOYEES, e => e.statut === 'supprime', 'Employe', e => e.full_name]]
       .forEach(([sheet, filter, type, getName]) => { sheetToObjects_(sheet).filter(filter).forEach(x => items.push({ type, id: x.id, name: getName(x) || '', date: x.updated_at || x.created_at, company_id: x.company_id || '' })); });
     return items.sort((a, b) => new Date(b.date) - new Date(a.date));
   } catch (e) { return { ok: false, error: e.message }; }
@@ -15399,6 +15427,7 @@ function superAdminListCompanies_(token) {
     const list = [];
     for (let i = 1; i < companies.length; i++) {
       const row = companies[i]; const owner = userMap[String(row[1])];
+      if (String(row[13]).toLowerCase() === 'supprimee') continue;
       list.push({ id: String(row[0]), name: row[2] || '', owner_name: owner ? (owner[1] + ' ' + owner[2]) : '', owner_email: owner ? owner[3] : '', phone: row[3] || '', employees_count: empCountByCompany[String(row[0])] || 0, statut: row[13] || 'actif', created_at: row[14] });
     }
     return list;
@@ -15417,6 +15446,7 @@ function superAdminListEmployees_(token) {
     const list = [];
     for (let i = 1; i < employees.length; i++) {
       const row = employees[i];
+      if (String(row[11]).toLowerCase() === 'supprime') continue;
       list.push({ id: String(row[0]), full_name: row[3] || '', company_name: compMap[String(row[1])] || '', poste: row[7] || '', phone: row[4] || '', statut: row[11] || '', created_at: row[12] });
     }
     return list;
@@ -15646,7 +15676,7 @@ function superAdminListProducts_(token) {
     const companies = sheetToObjects_(CONFIG.SHEETS.COMPANIES);
     const map = {};
     companies.forEach(c => { map[String(c.id)] = c.name; });
-    return products.map(p => ({ ...p, company_name: map[String(p.company_id)] || '' })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    return products.filter(p => String(p.statut).toLowerCase() !== 'inactif').map(p => ({ ...p, company_name: map[String(p.company_id)] || '' })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   } catch (e) { return { ok: false, error: e.message }; }
 }
 function superAdminListClients_(token) {
@@ -15665,7 +15695,12 @@ function superAdminListTrash_(token) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const items = [];
-    [[CONFIG.SHEETS.QUOTES, q => q.statut === 'supprime', 'Devis', q => q.quote_number || 'Sans N'], [CONFIG.SHEETS.SALES, s => s.statut === 'cancelled', 'Vente', s => s.sale_number || 'Sans N'], [CONFIG.SHEETS.CLIENTS, c => c.statut === 'inactif', 'Client', c => c.name], [CONFIG.SHEETS.PRODUCTS, p => p.statut === 'inactif', 'Produit', p => p.name], [CONFIG.SHEETS.EMPLOYEES, e => e.statut === 'supprime', 'Employe', e => e.full_name]]
+    [[CONFIG.SHEETS.COMPANIES, c => String(c.statut||'').toLowerCase() === 'supprimee', 'Entreprise', c => c.name || ('Entreprise ' + c.id)],
+     [CONFIG.SHEETS.QUOTES, q => q.statut === 'supprime', 'Devis', q => q.quote_number || 'Sans N'],
+     [CONFIG.SHEETS.SALES, s => s.statut === 'cancelled', 'Vente', s => s.sale_number || 'Sans N'],
+     [CONFIG.SHEETS.CLIENTS, c => c.statut === 'inactif', 'Client', c => c.name],
+     [CONFIG.SHEETS.PRODUCTS, p => p.statut === 'inactif', 'Produit', p => p.name],
+     [CONFIG.SHEETS.EMPLOYEES, e => e.statut === 'supprime', 'Employe', e => e.full_name]]
       .forEach(([sheet, filter, type, getName]) => { sheetToObjects_(sheet).filter(filter).forEach(x => items.push({ type, id: x.id, name: getName(x) || '', date: x.updated_at || x.created_at, company_id: x.company_id || '' })); });
     return items.sort((a, b) => new Date(b.date) - new Date(a.date));
   } catch (e) { return { ok: false, error: e.message }; }
