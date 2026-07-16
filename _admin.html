@@ -964,6 +964,162 @@ async function genPdf(sendEmail, sendWhatsapp){
   } catch(e){ showToast(e.message,'error'); }
 }
 
+/* ================= LIVENESS ================= */
+let pollTimer = null;
+let onlineTimer = null;
+let lastActivityItems = {};
+function startPoll(){
+  stopPoll();
+  pollTimer = setInterval(async ()=>{
+    const active = document.querySelector('.sec.active');
+    if(active){
+      const id = active.id;
+      if(['secCompanies','secEmployees','secQuotes','secSales','secProducts','secClients'].includes(id)){
+        await refreshSectionSilent(id);
+      } else if(id==='secActivity'){
+        await refreshActivitySilent();
+      } else if(id==='secTrash'){
+        try{ await loadTrash(); }catch(e){}
+      }
+    }
+    loadOverviewCounts();
+  }, 5000);
+}
+function stopPoll(){ if(pollTimer){ clearInterval(pollTimer); pollTimer=null; } }
+function startOnlinePoll(){ stopOnlinePoll(); loadOnline(); onlineTimer = setInterval(loadOnline, 5000); }
+function stopOnlinePoll(){ if(onlineTimer){ clearInterval(onlineTimer); onlineTimer=null; } }
+
+function updateTrashCountSilent(){
+  const el = document.getElementById('ctTrash');
+  if(!el) return;
+  el.textContent = Math.max(0, (parseInt(el.textContent||'0') - 1));
+}
+async function refreshSectionSilent(id){
+  const fn = loaders[id];
+  if(fn && fn._silent){ try{ await fn._silent(); }catch(e){} }
+}
+async function refreshActivitySilent(){
+  try{
+    const feed = await api('superAdminActivityFeed', {limit:150});
+    const items = (feed && feed.items) || [];
+    if(!activityCache.length){ activityCache = items; lastActivityItems = items.reduce((m,it)=>((m[it.id]=it),m),{}); renderActivity(); return; }
+    const newest = items[0];
+    const old = activityCache[0];
+    if(!old || newest.id !== old.id){
+      activityCache = items;
+      lastActivityItems = items.reduce((m,it)=>((m[it.id]=it),m),{});
+      renderActivity();
+      if(document.hidden) showToast('Nouvelle activité sur la plateforme','success');
+    }
+  }catch(e){}
+}
+
+async function loadOnline(){
+  setErr('onlineErr','');
+  try{
+    const rows = await api('superAdminListOnline');
+    const list = Array.isArray(rows) ? rows : [];
+    const el = document.getElementById('onlineList');
+    if(!el) return;
+    if(!list.length){ el.innerHTML = '<div class="empty">Personne en ligne actuellement</div>'; return; }
+    el.innerHTML = list.map(r=>`<div class="online-row"><div class="live-dot"></div><div class="av">${esc(initials(r.label))}</div><div><div class="primary-txt" style="font-size:12.5px;">${esc(r.label||'—')}</div><div class="sub-txt">${esc(r.role||'')} ${r.company_name?'· '+esc(r.company_name):''}</div></div><div style="margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--text-faint);">${timeAgo(r.last_seen)}</div></div>`).join('');
+  }catch(e){ setErr('onlineErr','Impossible de charger : '+e.message); }
+}
+loaders.secOnline = loadOnline;
+
+/* ================= DELETES INSTANTS ================= */
+function delCompany(id){
+  const row = document.querySelector(`button[onclick="delCompany('${id}')"]`)?.closest('tr');
+  askConfirm('Supprimer l'entreprise','Le propriétaire et l'entreprise seront retirés et déplacés dans la Corbeille.', async ()=>{
+    if(row){ row.classList.add('removing'); await new Promise(r=>setTimeout(r,320)); }
+    try{
+      await api('superAdminDeleteCompany',{companyId:id});
+      if(row){ row.remove(); updateTrashCountSilent(); }
+      showToast('Entreprise supprimée — visible dans la Corbeille','success');
+    }catch(e){ showToast(e.message,'error'); loadCompanies(); loadOverviewCounts(); }
+  });
+}
+function actCompany(id, suspend){
+  askConfirm(suspend?'Suspendre l'entreprise':'Réactiver l'entreprise', suspend?'L'entreprise perdra l'accès immédiatement.':'L'entreprise retrouvera l'accès immédiatement.', async ()=>{
+    await api('superAdminSuspendCompany',{companyId:id, suspend});
+    showToast(suspend?'Entreprise suspendue':'Entreprise réactivée','success');
+    loadCompanies(); loadOverviewCounts();
+  });
+}
+function delEmployee(id){
+  const row = document.querySelector(`button[onclick="delEmployee('${id}')"]`)?.closest('tr');
+  askConfirm('Supprimer l'employé','Il sera déplacé dans la Corbeille, restaurable à tout moment.', async ()=>{
+    if(row){ row.classList.add('removing'); await new Promise(r=>setTimeout(r,320)); }
+    try{
+      await api('superAdminDeleteEmployee',{employeeId:id});
+      if(row){ row.remove(); updateTrashCountSilent(); }
+      showToast('Employé supprimé — visible dans la Corbeille','success');
+    }catch(e){ showToast(e.message,'error'); loadEmployees(); loadOverviewCounts(); }
+  });
+}
+function actEmployee(id, suspend){
+  askConfirm(suspend?'Suspendre l'employé':'Réactiver l'employé', suspend?'L'employé perdra l'accès immédiatement.':'L'employé retrouvera l'accès immédiatement.', async ()=>{
+    await api('superAdminSuspendEmployee',{employeeId:id, suspend});
+    showToast(suspend?'Employé suspendu':'Employé réactivé','success');
+    loadEmployees(); loadOverviewCounts();
+  });
+}
+function delQuote(id){
+  const row = document.querySelector(`button[onclick="delQuote('${id}')"]`)?.closest('tr');
+  askConfirm('Supprimer le devis','Il sera déplacé dans la Corbeille.', async ()=>{
+    if(row){ row.classList.add('removing'); await new Promise(r=>setTimeout(r,320)); }
+    try{
+      await api('superAdminDeleteQuote',{id});
+      if(row){ row.remove(); updateTrashCountSilent(); }
+      showToast('Devis supprimé','success');
+    }catch(e){ showToast(e.message,'error'); loadQuotes(); }
+  });
+}
+function cancelSale(id){
+  const row = document.querySelector(`button[onclick="cancelSale('${id}')"]`)?.closest('tr');
+  askConfirm('Annuler la vente','Cette vente sera marquée comme annulée.', async ()=>{
+    if(row){ row.classList.add('removing'); await new Promise(r=>setTimeout(r,320)); }
+    try{
+      await api('superAdminCancelSale',{id});
+      if(row){ row.remove(); }
+      showToast('Vente annulée','success');
+    }catch(e){ showToast(e.message,'error'); loadSales(); }
+  });
+}
+function delProduct(id){
+  const row = document.querySelector(`button[onclick="delProduct('${id}')"]`)?.closest('tr');
+  askConfirm('Désactiver le produit','Il sera retiré du catalogue actif et visible dans la Corbeille.', async ()=>{
+    if(row){ row.classList.add('removing'); await new Promise(r=>setTimeout(r,320)); }
+    try{
+      await api('superAdminDeleteProduct',{id});
+      if(row){ row.remove(); updateTrashCountSilent(); }
+      showToast('Produit désactivé','success');
+    }catch(e){ showToast(e.message,'error'); loadProducts(); }
+  });
+}
+function delClient(id){
+  const row = document.querySelector(`button[onclick="delClient('${id}')"]`)?.closest('tr');
+  askConfirm('Désactiver le client','Il sera visible dans la Corbeille, restaurable.', async ()=>{
+    if(row){ row.classList.add('removing'); await new Promise(r=>setTimeout(r,320)); }
+    try{
+      await api('superAdminDeleteClient',{id});
+      if(row){ row.remove(); updateTrashCountSilent(); }
+      showToast('Client désactivé','success');
+    }catch(e){ showToast(e.message,'error'); loadClients(); }
+  });
+}
+function restoreTrash(type, id){
+  const row = document.querySelector(`button[onclick="restoreTrash('${type}','${id}')"]`)?.closest('tr');
+  askConfirm('Restaurer l'élément','Il redeviendra actif immédiatement.', async ()=>{
+    if(row){ row.classList.add('removing'); await new Promise(r=>setTimeout(r,320)); }
+    try{
+      await api('superAdminRestoreTrash',{type,id});
+      if(row){ row.remove(); updateTrashCountSilent(); }
+      showToast('Élément restauré','success');
+    }catch(e){ showToast(e.message,'error'); loadTrash(); loadOverviewCounts(); }
+  });
+}
+
 /* ================= BOOT ================= */
 function boot(){
   document.getElementById('gate').classList.add('hidden');
@@ -971,7 +1127,7 @@ function boot(){
   loadOverviewCounts();
   loadOverviewExtras();
   loaders.secOverview._loaded = true;
-  setInterval(()=>{ if(document.querySelector('#secOverview.active')) loadOverviewCounts(); }, 30000);
+  startPoll();
 }
 if(t()){ boot(); }
 </script>
