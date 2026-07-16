@@ -1030,7 +1030,7 @@ loaders.secOnline = loadOnline;
 /* ================= DELETES INSTANTS ================= */
 function delCompany(id){
   const row = document.querySelector(`button[onclick="delCompany('${id}')"]`)?.closest('tr');
-  askConfirm('Supprimer l'entreprise','Le propriétaire et l'entreprise seront retirés et déplacés dans la Corbeille.', async ()=>{
+  askConfirm("Supprimer l'entreprise","Le propriétaire et l'entreprise seront retirés et déplacés dans la Corbeille.", async ()=>{
     if(row){ row.classList.add('removing'); await new Promise(r=>setTimeout(r,320)); }
     try{
       await api('superAdminDeleteCompany',{companyId:id});
@@ -1040,7 +1040,7 @@ function delCompany(id){
   });
 }
 function actCompany(id, suspend){
-  askConfirm(suspend?'Suspendre l'entreprise':'Réactiver l'entreprise', suspend?'L'entreprise perdra l'accès immédiatement.':'L'entreprise retrouvera l'accès immédiatement.', async ()=>{
+  askConfirm(suspend?"Suspendre l'entreprise":"Réactiver l'entreprise", suspend?"L'entreprise perdra l'accès immédiatement.":"L'entreprise retrouvera l'accès immédiatement.", async ()=>{
     await api('superAdminSuspendCompany',{companyId:id, suspend});
     showToast(suspend?'Entreprise suspendue':'Entreprise réactivée','success');
     loadCompanies(); loadOverviewCounts();
@@ -1048,7 +1048,7 @@ function actCompany(id, suspend){
 }
 function delEmployee(id){
   const row = document.querySelector(`button[onclick="delEmployee('${id}')"]`)?.closest('tr');
-  askConfirm('Supprimer l'employé','Il sera déplacé dans la Corbeille, restaurable à tout moment.', async ()=>{
+  askConfirm('Supprimer l\'employé','Il sera déplacé dans la Corbeille, restaurable à tout moment.', async ()=>{
     if(row){ row.classList.add('removing'); await new Promise(r=>setTimeout(r,320)); }
     try{
       await api('superAdminDeleteEmployee',{employeeId:id});
@@ -1058,7 +1058,7 @@ function delEmployee(id){
   });
 }
 function actEmployee(id, suspend){
-  askConfirm(suspend?'Suspendre l'employé':'Réactiver l'employé', suspend?'L'employé perdra l'accès immédiatement.':'L'employé retrouvera l'accès immédiatement.', async ()=>{
+  askConfirm(suspend?"Suspendre l'employé":"Réactiver l'employé", suspend?"L'employé perdra l'accès immédiatement.":"L'employé retrouvera l'accès immédiatement.", async ()=>{
     await api('superAdminSuspendEmployee',{employeeId:id, suspend});
     showToast(suspend?'Employé suspendu':'Employé réactivé','success');
     loadEmployees(); loadOverviewCounts();
@@ -1110,7 +1110,7 @@ function delClient(id){
 }
 function restoreTrash(type, id){
   const row = document.querySelector(`button[onclick="restoreTrash('${type}','${id}')"]`)?.closest('tr');
-  askConfirm('Restaurer l'élément','Il redeviendra actif immédiatement.', async ()=>{
+  askConfirm('Restaurer l\'élément','Il redeviendra actif immédiatement.', async ()=>{
     if(row){ row.classList.add('removing'); await new Promise(r=>setTimeout(r,320)); }
     try{
       await api('superAdminRestoreTrash',{type,id});
