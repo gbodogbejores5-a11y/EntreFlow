@@ -2142,7 +2142,11 @@ document.getElementById('saveSaleBtn').addEventListener('click',async()=>{
   try{
     setBtnLoading(btn,true);
     const res=await api('createSale',{company_id:CO.id,branch_id:branchId,client_id:clientId,client_name:clientId?'':clientName,client_email:clientEmail,payment_method:method,amount_paid:paid,items,created_by:U.email});
-    clearApiCache();toast(`Vente de ${fmtAmt(res.total)} F enregistrée !`+(clientEmail?' Facture envoyée par email.':''),'success');
+    clearApiCache();
+    let msg=`Vente de ${fmtAmt(res.total)} F enregistrée !`+(clientEmail?' Facture envoyée par email.':'');
+    if(res.emcf&&res.emcf.ok){toast(msg+` Facture normalisée DGI (NIM ${res.emcf.nim}).`,'success');}
+    else if(res.emcf&&!res.emcf.ok){toast(msg,'success');toast('e-MCF : '+res.emcf.error,'error');}
+    else{toast(msg,'success');}
     closeModal('saleModal');loadSalesPage(false);loadHomePage(false);
   }catch(err){toast('Erreur : '+err.message,'error');}
   finally{setBtnLoading(btn,false);}

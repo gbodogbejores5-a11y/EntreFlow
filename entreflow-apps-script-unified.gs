@@ -1048,6 +1048,7 @@ function saveSaleRecord_(p) {
      Non bloquant : si a chec ou non configure, la vente reste valide, seul le statut de
      fiscalisation est enregistre pour suivi/relance ulterieure. Fait AVANT l'email pour
      que la facture envoyee au client porte deja le NIM/QR code. */
+  let emcfInfo = null;
   if (p.company_id) {
     try {
       const company = rowToObject_(findRow_(CONFIG.SHEETS.COMPANIES, 'id', p.company_id));
@@ -1056,11 +1057,13 @@ function saveSaleRecord_(p) {
         if (fisc.ok) {
           updateRow_(CONFIG.SHEETS.SALES, id, { emcf_nim: fisc.nim, emcf_qrcode: fisc.qrCode, emcf_code: fisc.codeMECeFDGI, emcf_statut: 'valide' });
           sale.emcf_nim = fisc.nim; sale.emcf_qrcode = fisc.qrCode; sale.emcf_code = fisc.codeMECeFDGI;
+          emcfInfo = { ok: true, nim: fisc.nim };
         } else if (!fisc.skipped) {
           updateRow_(CONFIG.SHEETS.SALES, id, { emcf_statut: 'echec: ' + (fisc.errorDesc || 'inconnu') });
+          emcfInfo = { ok: false, error: fisc.errorDesc || 'Erreur inconnue' };
         }
       }
-    } catch (e) { /* ne jamais bloquer une vente a cause de la DGI */ }
+    } catch (e) { emcfInfo = { ok: false, error: 'Erreur interne: ' + e.message }; }
   }
   if (p.client_email) sendInvoiceEmail_(sale, sheetToObjects_(CONFIG.SHEETS.SALE_ITEMS).filter(i => String(i.sale_id) === String(id)));
   logAudit_('CREATE_SALE', 'Ventes', id, p.created_by || '', `Vente ${saleNumber}`);
@@ -1071,7 +1074,7 @@ function saveSaleRecord_(p) {
       // already notified above per sale, notify once per batch if any low stock found
     } catch(e){}
   }
-  return { id, saleNumber, sale_number: saleNumber, total };
+  return { id, saleNumber, sale_number: saleNumber, total, emcf: emcfInfo };
   } finally { lock.releaseLock(); }
 }
 
