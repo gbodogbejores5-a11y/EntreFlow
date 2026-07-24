@@ -532,6 +532,15 @@ body.ef-xs .toast-wrap, body.ef-sm .toast-wrap {
       <div class="fg"><label>Logo (apparaît sur devis/factures)</label><input id="cp-logo" type="file" accept="image/*"><div id="logoPreview" style="margin-top:8px;height:56px;"></div></div>
       <div class="fg"><label>Signature (apparaît sur devis signés)</label><input id="cp-signature" type="file" accept="image/*"><div id="signaturePreview" style="margin-top:8px;height:46px;"></div></div>
     </div>
+    <div class="cp-section">
+      <div class="cp-section-title">Facturation normalisée (e-MCF / DGI)</div>
+      <div class="fg"><label>Jeton API e-MCF</label><input id="cp-emcf-token" type="text" placeholder="Collez le jeton fourni par la DGI"></div>
+      <div class="row2">
+        <div class="fg"><label>Environnement</label><select id="cp-emcf-env"><option value="test">Test</option><option value="prod">Production</option></select></div>
+        <div class="fg"><label>Statut</label><div id="emcfStatusBadge" style="padding-top:8px;color:var(--gray);font-size:13px;">Non configuré</div></div>
+      </div>
+      <p style="font-size:11.5px;color:var(--gray);margin:4px 0 0;">Une fois le jeton renseigné, toutes les factures de cette entreprise seront automatiquement transmises à la DGI et porteront un NIM + QR code officiels. Aucune action manuelle requise.</p>
+    </div>
     <button class="btn btn-primary btn-full" id="saveCompanyBtn" onclick="saveCompanySettings()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
       Enregistrer les modifications
@@ -1351,6 +1360,10 @@ function openPanel(){
     document.getElementById('cp-currency').value=CO.currency||'XOF';
     document.getElementById('cp-tva').value=CO.tva_rate||18;
     document.getElementById('cp-prefix').value=CO.quote_prefix||'EF-';
+    document.getElementById('cp-emcf-token').value=CO.emcf_token||'';
+    document.getElementById('cp-emcf-env').value=CO.emcf_env||'test';
+    const emcfBadge=document.getElementById('emcfStatusBadge');
+    if(emcfBadge) emcfBadge.innerHTML=CO.emcf_token?`<span style="color:#16A34A;font-weight:700;">● Actif (${CO.emcf_env==='prod'?'Production':'Test'})</span>`:`<span style="color:#94A3B8;">Non configuré</span>`;
     if(CO.logo_data) document.getElementById('logoPreview').innerHTML=`<img src="${CO.logo_data}" style="max-height:56px;border-radius:9px;border:1px solid var(--border)">`;
     if(CO.signature_data) document.getElementById('signaturePreview').innerHTML=`<img src="${CO.signature_data}" style="max-height:46px;border-radius:6px;border:1px solid var(--border)">`;
   }
@@ -1416,7 +1429,7 @@ async function saveCompanySettings(){
   const name=document.getElementById('cp-name').value.trim();
   if(!name){toast('Le nom est obligatoire','error');return;}
   try{
-    const updates={name,phone:document.getElementById('cp-phone').value.trim(),email:document.getElementById('cp-email').value.trim(),address:document.getElementById('cp-address').value.trim(),tax_id:document.getElementById('cp-nif').value.trim(),rccm:document.getElementById('cp-rccm').value.trim(),currency:document.getElementById('cp-currency').value,tva_rate:parseFloat(document.getElementById('cp-tva').value)||18,quote_prefix:document.getElementById('cp-prefix').value.trim()||'EF-'};
+    const updates={name,phone:document.getElementById('cp-phone').value.trim(),email:document.getElementById('cp-email').value.trim(),address:document.getElementById('cp-address').value.trim(),tax_id:document.getElementById('cp-nif').value.trim(),rccm:document.getElementById('cp-rccm').value.trim(),currency:document.getElementById('cp-currency').value,tva_rate:parseFloat(document.getElementById('cp-tva').value)||18,quote_prefix:document.getElementById('cp-prefix').value.trim()||'EF-',emcf_token:document.getElementById('cp-emcf-token').value.trim(),emcf_env:document.getElementById('cp-emcf-env').value};
     if(CO._newLogo) updates.logo_data=CO._newLogo;
     if(CO._newLogoColor) updates.logo_color=CO._newLogoColor;
     if(CO._newSignature) updates.signature_data=CO._newSignature;

@@ -45,18 +45,23 @@ const CONFIG = {
     AUDIT_LOG: 'JournalAudit', SESSIONS: 'SessionsUtilisateurs', AVIS: 'Avis',
     EMP_ACTIVITIES: 'ActivitesEmployes', RESET_CODES: 'ResetCodes',
     PRESENCE: 'PresenceEnLigne'
+  },
+
+  EMCF: {
+    INVOICE_URL: { test: 'https://developper.impots.bj/sygmef-emcf/api/facture', prod: 'https://sygmef.impots.bj/emcf/api/facture' },
+    INVOICE_ACTION_URL: { test: 'https://developper.impots.bj/sygmef-emcf/api/invoice', prod: 'https://sygmef.impots.bj/emcf/api/invoice' }
   }
 };
 
 const SHEET_SCHEMAS = {
   Utilisateurs  : ['id','prenom','nom','email','password_hash','salt','telephone','whatsapp','adresse','role','company_id','statut','derniere_connexion','created_at','updated_at'],
-  Boutiques     : ['id','owner_id','name','phone','email','address','logo_data','tax_id','rccm','currency','tva_rate','quote_prefix','signature_data','statut','created_at','updated_at','logo_color'],
+  Boutiques     : ['id','owner_id','name','phone','email','address','logo_data','tax_id','rccm','currency','tva_rate','quote_prefix','signature_data','statut','created_at','updated_at','logo_color','emcf_token','emcf_env'],
   Agences       : ['id','company_id','name','is_main','is_active','created_at'],
   Employes      : ['id','company_id','branch_id','full_name','phone','email','whatsapp','poste','salaire','access_token','access_code','statut','created_at'],
   Clients       : ['id','company_id','name','phone','email','city','notes','total_revenue','statut','created_at','updated_at'],
   Produits      : ['id','company_id','name','category','unit','pack_qty','pack_buy_price','unit_sell_price','min_threshold','statut','created_at','updated_at'],
   Stocks        : ['id','company_id','branch_id','product_id','quantity','min_threshold','updated_at'],
-  Ventes        : ['id','company_id','branch_id','sale_number','client_id','client_name','client_email','total','subtotal','payment_method','amount_paid','change_given','statut','created_by','employee_id','created_at'],
+  Ventes        : ['id','company_id','branch_id','sale_number','client_id','client_name','client_email','total','subtotal','payment_method','amount_paid','change_given','statut','created_by','employee_id','created_at','emcf_nim','emcf_qrcode','emcf_code','emcf_statut'],
   VenteLignes   : ['id','sale_id','product_id','name','unit','quantity','unit_price','total_ligne'],
   Devis         : ['id','company_id','quote_number','client_id','client_name','client_email','client_phone','total','tva_rate','tva_amount','validite_jours','signature_data','signed_by','signed_at','sign_token','theme_seed','statut','created_by','employee_id','created_at'],
   DevisLignes   : ['id','quote_id','product_id','name','unit','quantity','unit_price','total_ligne'],
@@ -203,14 +208,32 @@ function rowToObject_(found) {
   const item = {}; found.header.forEach((h, i) => item[h.trim()] = found.row[i]); return item;
 }
 function insertRow_(name, obj) {
+  for (const key in obj) {
+    const v = obj[key];
+    if (typeof v === 'string' && v.length > SHEET_CELL_MAX_CHARS_) {
+      throw new Error(`Image trop volumineuse pour le champ "${key}" (${v.length} caractres, max ${SHEET_CELL_MAX_CHARS_}). Choisissez une photo plus lgre ou plus petite.`);
+    }
+  }
   const sh = getSheet_(name);
   const header = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
   sh.appendRow(header.map(h => obj[h.trim()] !== undefined ? obj[h.trim()] : ''));
   return obj;
 }
+/* P3: une cellule Google Sheets refuse tout texte de plus de 50 000 caractres.
+   Une image en base64 (logo, photo, signature) peut facilement dpasser cette limite
+   et faisait planter setValue_() en plein milieu de la boucle  ce qui pouvait laisser
+   certains champs mis  jour et d'autres non. On valide TOUT avant d'crire quoi que
+   ce soit, et on renvoie une erreur claire au lieu de planter. */
+var SHEET_CELL_MAX_CHARS_ = 50000;
 function updateRow_(name, id, updates) {
   const found = findRow_(name, 'id', id);
   if (!found) return { ok: false, error: 'not_found' };
+  for (const key in updates) {
+    const v = updates[key];
+    if (typeof v === 'string' && v.length > SHEET_CELL_MAX_CHARS_) {
+      return { ok: false, error: `Image trop volumineuse pour le champ "${key}" (${v.length} caractres, max ${SHEET_CELL_MAX_CHARS_}). Choisissez une photo plus lgre ou plus petite.` };
+    }
+  }
   const sh = getSheet_(name);
   Object.keys(updates).forEach(key => { const col = found.header.findIndex(h => h.trim() === key); if (col >= 0) sh.getRange(found.rowIndex, col + 1).setValue(updates[key]); });
   return { ok: true };
@@ -887,6 +910,111 @@ function getDailySalesByEmployee_(p) {
      VENTES  avec contrle de stock strict
     */
 /* P1/P4: saveSaleRecord_  vrification + dcrment stock sous verrou pour viter la survente concurrente */
+/* ============================================================
+   INTÉGRATION e-MCF / DGI (facturation normalisée) — P4
+   Chaque entreprise renseigne son jeton dans ses paramètres (emcf_token, emcf_env).
+   Dès lors, CHAQUE vente est automatiquement soumise à la DGI, sans aucune
+   intervention manuelle. Si l'entreprise n'a pas configuré e-MCF, ou si l'appel
+   échoue, la vente est quand même enregistrée normalement (non bloquant) — le
+   statut de fiscalisation est juste marqué en attente / échec pour suivi.
+   ============================================================ */
+
+const EMCF_ERROR_MESSAGES_ = {
+  1: 'Le nombre maximum de factures en attente est dépassé.',
+  3: "Le type de facture n'est pas valide.",
+  4: 'La référence de la facture originale est manquante.',
+  5: 'La référence de la facture originale ne comporte pas 24 caractères.',
+  6: "La valeur de l'AIB n'est pas valide.",
+  7: "Le type de paiement n'est pas valide.",
+  8: 'La facture doit contenir au moins un article.',
+  9: "Le groupe de taxation d'un article n'est pas valide.",
+  10: 'La référence de la facture originale ne peut pas être validée, réessayez plus tard.',
+  11: "La référence de la facture originale n'est pas valide (facture introuvable).",
+  12: "Le montant de la facture d'avoir dépasse le montant de la facture originale.",
+  20: "La facture n'existe pas ou elle est déjà finalisée / annulée.",
+  99: 'Erreur lors du traitement de la demande par la DGI.'
+};
+
+function _emcfErrorMessage_(code, fallback) {
+  return EMCF_ERROR_MESSAGES_[Number(code)] || fallback || ('Erreur DGI (code ' + code + ')');
+}
+
+function _emcfPaymentType_(method) {
+  const map = { cash: 'ESPECES', mobile_money_wave: 'MOBILEMONEY', mobile_money_mtn: 'MOBILEMONEY', mobile_money_moov: 'MOBILEMONEY', card: 'CARTEBANCAIRE', bank_transfer: 'VIREMENT' };
+  return map[method] || 'AUTRE';
+}
+
+/** Appel générique vers l'API e-MCF (facturation). kind: 'facture' (soumission) ou 'invoice' (confirm/cancel/détails). Retourne { ok, data, errorCode, errorDesc } — ne lève jamais d'exception. */
+function _emcfCall_(company, method, kind, suffix, payload) {
+  try {
+    const env = (company.emcf_env === 'prod') ? 'prod' : 'test';
+    const base = (kind === 'invoice') ? CONFIG.EMCF.INVOICE_ACTION_URL[env] : CONFIG.EMCF.INVOICE_URL[env];
+    const url = base + (suffix || '');
+    const options = {
+      method: method,
+      contentType: 'application/json',
+      headers: { Authorization: 'Bearer ' + company.emcf_token, Accept: 'application/json' },
+      muteHttpExceptions: true
+    };
+    if (payload) options.payload = JSON.stringify(payload);
+    const resp = UrlFetchApp.fetch(url, options);
+    const code = resp.getResponseCode();
+    const body = resp.getContentText();
+    const json = body ? JSON.parse(body) : {};
+    if (code === 401) return { ok: false, errorCode: 401, errorDesc: "Jeton e-MCF invalide ou expiré. Vérifiez le jeton dans Paramètres > Entreprise." };
+    if (code >= 400) return { ok: false, errorCode: json.errorCode || code, errorDesc: _emcfErrorMessage_(json.errorCode, json.errorDesc || ('Erreur HTTP ' + code)) };
+    if (json.errorCode) return { ok: false, errorCode: json.errorCode, errorDesc: _emcfErrorMessage_(json.errorCode, json.errorDesc) };
+    return { ok: true, data: json };
+  } catch (e) {
+    return { ok: false, errorCode: 'network', errorDesc: 'Impossible de joindre le serveur de la DGI (' + e.message + ').' };
+  }
+}
+
+/** Construit le payload InvoiceRequestDataDto attendu par l'API e-MCF à partir d'une vente EntreFlow. */
+function _emcfBuildInvoicePayload_(company, sale, items) {
+  return {
+    ifu: String(company.tax_id || '').trim(),
+    type: 'FV',
+    items: items.map(it => ({
+      name: String(it.name || 'Article').substring(0, 200),
+      price: Math.round(Number(it.unit_price) || 0),
+      quantity: Number(it.quantity) || 1,
+      taxGroup: 'B' /* TVA standard 18% — à ajuster si des produits exonérés sont introduits plus tard */
+    })),
+    client: sale.client_name ? { name: String(sale.client_name).substring(0, 200), contact: sale.client_email || '' } : undefined,
+    operator: { id: String(sale.employee_id || ''), name: getEmployeeName_(sale.employee_id) || 'Caissier' },
+    payment: [{ name: _emcfPaymentType_(sale.payment_method), amount: Math.round(Number(sale.total) || 0) }]
+  };
+}
+
+/**
+ * Soumet une vente à la DGI et la finalise (confirm). Non bloquant : en cas d'échec,
+ * retourne { ok:false, errorDesc } mais N'INTERROMPT PAS la vente déjà enregistrée.
+ */
+function _emcfFiscaliserVente_(company, sale, items) {
+  if (!company || !company.emcf_token) return { ok: false, skipped: true };
+  const payload = _emcfBuildInvoicePayload_(company, sale, items);
+  const step1 = _emcfCall_(company, 'POST', 'facture', '', payload);
+  if (!step1.ok) return step1;
+  const uid = step1.data.uid;
+  if (!uid) return { ok: false, errorDesc: "Réponse DGI invalide (uid manquant)." };
+  const step2 = _emcfCall_(company, 'PUT', 'invoice', '/' + uid + '/confirm', null);
+  if (!step2.ok) return step2;
+  return { ok: true, nim: step2.data.nim || '', qrCode: step2.data.qrCode || '', codeMECeFDGI: step2.data.codeMECeFDGI || '' };
+}
+
+/** Génère un QR code (PNG) en base64 à partir du contenu qrCode renvoyé par la DGI, pour l'imprimer sur le PDF. */
+function _qrCodeDataUri_(text) {
+  if (!text) return '';
+  try {
+    const url = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=0&data=' + encodeURIComponent(text);
+    const resp = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    if (resp.getResponseCode() !== 200) return '';
+    const b64 = Utilities.base64Encode(resp.getBlob().getBytes());
+    return 'data:image/png;base64,' + b64;
+  } catch (e) { return ''; }
+}
+
 function saveSaleRecord_(p) {
   p = p || {};
   if (!p.branch_id) throw new Error('Agence manquante.');
@@ -915,6 +1043,24 @@ function saveSaleRecord_(p) {
   /* P3: notification patron sur nouvelle vente employ */
   if (p.employee_id && p.company_id) {
     try { notifyBoss_(p.company_id, 'NEW_SALE', `Vente ${saleNumber}`, `${getEmployeeName_(p.employee_id)} a enregistr une vente de ${money(total || 0)}`, { employee_id: p.employee_id, employee_name: getEmployeeName_(p.employee_id), montant: total }); } catch (e) {}
+  }
+  /* P4: fiscalisation automatique e-MCF/DGI  aucune intervention manuelle requise.
+     Non bloquant : si a chec ou non configure, la vente reste valide, seul le statut de
+     fiscalisation est enregistre pour suivi/relance ulterieure. Fait AVANT l'email pour
+     que la facture envoyee au client porte deja le NIM/QR code. */
+  if (p.company_id) {
+    try {
+      const company = rowToObject_(findRow_(CONFIG.SHEETS.COMPANIES, 'id', p.company_id));
+      if (company && company.emcf_token) {
+        const fisc = _emcfFiscaliserVente_(company, sale, items);
+        if (fisc.ok) {
+          updateRow_(CONFIG.SHEETS.SALES, id, { emcf_nim: fisc.nim, emcf_qrcode: fisc.qrCode, emcf_code: fisc.codeMECeFDGI, emcf_statut: 'valide' });
+          sale.emcf_nim = fisc.nim; sale.emcf_qrcode = fisc.qrCode; sale.emcf_code = fisc.codeMECeFDGI;
+        } else if (!fisc.skipped) {
+          updateRow_(CONFIG.SHEETS.SALES, id, { emcf_statut: 'echec: ' + (fisc.errorDesc || 'inconnu') });
+        }
+      }
+    } catch (e) { /* ne jamais bloquer une vente a cause de la DGI */ }
   }
   if (p.client_email) sendInvoiceEmail_(sale, sheetToObjects_(CONFIG.SHEETS.SALE_ITEMS).filter(i => String(i.sale_id) === String(id)));
   logAudit_('CREATE_SALE', 'Ventes', id, p.created_by || '', `Vente ${saleNumber}`);
@@ -1312,7 +1458,11 @@ function _entreflowMark_(size) {
    avant d'etre affiche pour eviter les ovales avec des logos rectangulaires. */
 function _companyLogo_(company, size) {
   const sz = size || 46;
-  if (company.logo_data) return `<div style="width:${sz}px;height:${sz}px;border-radius:50%;overflow:hidden;display:inline-block;border:1px solid #E5E9F0;"><img src="${company.logo_data}" style="width:100%;height:100%;object-fit:cover;"></div>`;
+  /* P3: le convertisseur HTML->PDF d'Apps Script clippe (fait disparatre) une <img>
+     place dans une <div> avec overflow:hidden;border-radius:50%. On applique donc
+     l'arrondi et le recadrage directement sur l'<img>, sans div englobante  overflow
+     cach, pour que la photo de l'entreprise s'affiche bien sur les devis/factures PDF. */
+  if (company.logo_data) return `<img src="${company.logo_data}" style="width:${sz}px;height:${sz}px;border-radius:50%;object-fit:cover;border:1px solid #E5E9F0;display:inline-block;vertical-align:middle;">`;
   const initial = (company.name || 'E').trim()[0].toUpperCase();
   const bg = company.logo_color ? `background:${company.logo_color};` : `background:linear-gradient(135deg,#1D4ED8,#3B82F6);`;
   return `<div style="width:${sz}px;height:${sz}px;border-radius:50%;${bg}display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:${Math.round(sz*0.42)}px;font-family:Arial,sans-serif;">${initial}</div>`;
@@ -1336,7 +1486,7 @@ function _docHeader_(theme, docType, docNumber, extraBadgeHtml, company) {
       </td>
       <td style="vertical-align:top;text-align:right;">
         <p style="font-size:32px;font-weight:900;color:${theme.primary};margin:0;letter-spacing:1px;font-family:Arial,sans-serif;">${docType}</p>
-        <div style="display:inline-block;background:${theme.soft};border:1px solid ${theme.border};color:${theme.primary};font-weight:700;font-size:12px;padding:5px 14px;border-radius:8px;margin-top:8px;">N ${docNumber}</div>
+        <div style="display:inline-block;background:${theme.soft};border:1px solid ${theme.border};color:${theme.primary};font-weight:700;font-size:12px;padding:5px 14px;border-radius:8px;margin-top:8px;">N° ${docNumber}</div>
         ${extraBadgeHtml || ''}
       </td>
     </tr>
@@ -1352,11 +1502,11 @@ function _infoLine_(label, value) {
 /** Bloc "metteur"  logo entreprise + coordonnes relles de l'entreprise */
 function _emitterBox_(company) {
   return `<div style="background:#F8FAFC;border:1px solid #E5E9F0;border-radius:12px;padding:18px 20px;height:100%;">
-    <p style="font-size:9.5px;color:#94A3B8;text-transform:uppercase;letter-spacing:.07em;font-weight:800;margin:0 0 12px;">metteur</p>
+    <p style="font-size:9.5px;color:#94A3B8;text-transform:uppercase;letter-spacing:.07em;font-weight:800;margin:0 0 12px;">Émetteur</p>
     <div style="margin-bottom:10px;">${_companyLogo_(company, 40)}</div>
     <p style="font-size:15px;font-weight:800;color:#0F172A;margin:0 0 8px;">${company.name || CONFIG.APP_NAME}</p>
     ${_infoLine_('Adresse', company.address)}
-    ${_infoLine_('Tlphone', company.phone)}
+    ${_infoLine_('Téléphone', company.phone)}
     ${_infoLine_('Email', company.email)}
     ${_infoLine_('NIF', company.tax_id)}
     ${_infoLine_('RCCM', company.rccm)}
@@ -1368,7 +1518,7 @@ function _metaBox_(rows) {
   const lines = (rows || []).filter(r => r.value).map(r => `
     <tr><td style="padding:5px 0;font-size:11.5px;color:#94A3B8;">${r.label}</td><td style="padding:5px 0;font-size:12.5px;color:#0F172A;font-weight:700;text-align:right;">${r.value}</td></tr>`).join('');
   return `<div style="background:#F8FAFC;border:1px solid #E5E9F0;border-radius:12px;padding:18px 20px;height:100%;">
-    <p style="font-size:9.5px;color:#94A3B8;text-transform:uppercase;letter-spacing:.07em;font-weight:800;margin:0 0 12px;">Dtails du document</p>
+    <p style="font-size:9.5px;color:#94A3B8;text-transform:uppercase;letter-spacing:.07em;font-weight:800;margin:0 0 12px;">Détails du document</p>
     <table width="100%" style="border-collapse:collapse;">${lines}</table>
   </div>`;
 }
@@ -1379,11 +1529,11 @@ function _clientBox_(label, name, email, phone) {
     <p style="font-size:9.5px;color:#94A3B8;text-transform:uppercase;letter-spacing:.07em;font-weight:800;margin:0 0 10px;">${label}</p>
     <p style="font-size:15px;font-weight:800;color:#0F172A;margin:0 0 6px;">${name || 'Client'}</p>
     ${_infoLine_('Email', email)}
-    ${_infoLine_('Tlphone', phone)}
+    ${_infoLine_('Téléphone', phone)}
   </div>`;
 }
 
-/** Tableau des articles (dsignation, unit, qt, prix, total) */
+/** Tableau des articles (désignation, unité, quantité, prix, total) */
 function _itemsTable_(items, theme, money) {
   const rows = (items || []).map((it, i) => `
     <tr>
@@ -1397,9 +1547,9 @@ function _itemsTable_(items, theme, money) {
   return `<table width="100%" style="border-collapse:collapse;position:relative;z-index:1;">
     <thead><tr style="background:${theme.primary};">
       <th style="padding:11px 14px;text-align:left;font-size:9.5px;color:#fff;text-transform:uppercase;letter-spacing:.05em;border-radius:8px 0 0 8px;width:26px;">#</th>
-      <th style="padding:11px 14px;text-align:left;font-size:9.5px;color:#fff;text-transform:uppercase;letter-spacing:.05em;">Dsignation</th>
-      <th style="padding:11px 14px;text-align:center;font-size:9.5px;color:#fff;text-transform:uppercase;letter-spacing:.05em;">Unit</th>
-      <th style="padding:11px 14px;text-align:center;font-size:9.5px;color:#fff;text-transform:uppercase;letter-spacing:.05em;">Qt</th>
+      <th style="padding:11px 14px;text-align:left;font-size:9.5px;color:#fff;text-transform:uppercase;letter-spacing:.05em;">Désignation</th>
+      <th style="padding:11px 14px;text-align:center;font-size:9.5px;color:#fff;text-transform:uppercase;letter-spacing:.05em;">Unité</th>
+      <th style="padding:11px 14px;text-align:center;font-size:9.5px;color:#fff;text-transform:uppercase;letter-spacing:.05em;">Qté</th>
       <th style="padding:11px 14px;text-align:right;font-size:9.5px;color:#fff;text-transform:uppercase;letter-spacing:.05em;">Prix unit.</th>
       <th style="padding:11px 14px;text-align:right;font-size:9.5px;color:#fff;text-transform:uppercase;letter-spacing:.05em;border-radius:0 8px 8px 0;">Total</th>
     </tr></thead>
@@ -1444,7 +1594,7 @@ function buildQuoteHTML_(quote, items, company) {
   const dueDate = fmtDate(addDays_(quote.created_at, Number(quote.validite_jours || 7)));
 
   const statusBadge = isSigned
-    ? `<div style="display:inline-block;background:#ECFDF5;border:1.5px solid #A7F3D0;color:#16A34A;font-weight:800;font-size:11px;padding:5px 14px;border-radius:8px;margin-top:8px;margin-left:8px;"> APPROUV</div>`
+    ? `<div style="display:inline-block;background:#ECFDF5;border:1.5px solid #A7F3D0;color:#16A34A;font-weight:800;font-size:11px;padding:5px 14px;border-radius:8px;margin-top:8px;margin-left:8px;">✅ APPROUVÉ</div>`
     : `<div style="display:inline-block;background:${theme.soft};border:1px solid ${theme.border};color:${theme.primary};font-weight:700;font-size:11px;padding:5px 14px;border-radius:8px;margin-top:8px;margin-left:8px;">EN ATTENTE DE SIGNATURE</div>`;
 
   const totalsRows = quote.tva_rate > 0 ? `
@@ -1453,13 +1603,13 @@ function buildQuoteHTML_(quote, items, company) {
 
   const signatureBlock = isSigned ? `
     <table width="100%" style="margin-top:26px;position:relative;z-index:1;"><tr><td style="width:55%;"></td><td style="text-align:right;">
-      <p style="font-size:9.5px;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;margin:0 0 6px;font-weight:700;">Sign lectroniquement par</p>
+      <p style="font-size:9.5px;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;margin:0 0 6px;font-weight:700;">Signé électroniquement par</p>
       <img src="${quote.signature_data}" style="height:52px;display:block;margin-left:auto;">
       <p style="font-size:13px;font-weight:700;color:#0F172A;margin:6px 0 0;">${quote.signed_by || ''}</p>
       <p style="font-size:11px;color:#94A3B8;margin:2px 0 0;">${fmtDateTime(quote.signed_at)}</p>
     </td></tr></table>` : `
     <div style="position:relative;z-index:1;margin-top:26px;background:${theme.soft};border:1px dashed ${theme.border};border-radius:10px;padding:14px 18px;">
-      <p style="font-size:12px;color:${theme.primaryDark};margin:0;">Ce devis est valable jusqu'au <b>${dueDate}</b>. Un lien de signature lectronique scuris a t transmis au client par email.</p>
+      <p style="font-size:12px;color:${theme.primaryDark};margin:0;">Ce devis est valable jusqu'au <b>${dueDate}</b>. Un lien de signature électronique sécurisé a été transmis au client par email.</p>
     </div>`;
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"></head>
@@ -1473,14 +1623,14 @@ function buildQuoteHTML_(quote, items, company) {
     <td style="width:49%;vertical-align:top;">${_emitterBox_(company)}</td>
     <td style="width:2%;"></td>
     <td style="width:49%;vertical-align:top;">${_metaBox_([
-      { label: "Date d'mission", value: fmtDate(quote.created_at) },
+      { label: "Date d'émission", value: fmtDate(quote.created_at) },
       { label: 'Valable jusqu\'au', value: dueDate },
       { label: 'Devise', value: currency },
-      { label: 'Statut', value: isSigned ? 'Approuv' : 'En attente' }
+      { label: 'Statut', value: isSigned ? 'Approuvé' : 'En attente' }
     ])}</td>
   </tr></table>
 
-  <div style="position:relative;z-index:1;margin-bottom:20px;">${_clientBox_('Adress ', quote.client_name, quote.client_email, quote.client_phone)}</div>
+  <div style="position:relative;z-index:1;margin-bottom:20px;">${_clientBox_('Adressé à', quote.client_name, quote.client_email, quote.client_phone)}</div>
 
   ${_itemsTable_(items, theme, money)}
   ${_totalsBox_(theme, totalsRows, 'TOTAL DU DEVIS', money(quote.total))}
@@ -1506,13 +1656,13 @@ function buildInvoiceHTML_(sale, items, company) {
   const hasClient = sale.client_name && sale.client_name !== 'Sans nom';
   const safeSaleNumber = escapeHtml_(sale.sale_number);
 
-  const paidBadge = `<div style="display:inline-block;background:#ECFDF5;border:1.5px solid #A7F3D0;color:#16A34A;font-weight:800;font-size:11px;padding:5px 14px;border-radius:8px;margin-top:8px;margin-left:8px;"> PAYE</div>`;
+  const paidBadge = `<div style="display:inline-block;background:#ECFDF5;border:1.5px solid #A7F3D0;color:#16A34A;font-weight:800;font-size:11px;padding:5px 14px;border-radius:8px;margin-top:8px;margin-left:8px;">✅ PAYÉE</div>`;
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"></head>
 <body style="font-family:Arial,Helvetica,sans-serif;color:#0F172A;margin:0;padding:0;background:#fff;">
 <div style="max-width:760px;margin:0 auto;padding:38px 46px;position:relative;">
   ${_watermarkCSS_(company.name || 'ENTREFLOW', theme)}
-  <div style="position:absolute;top:150px;right:46px;border:4px solid #16A34A;color:#16A34A;font-weight:900;font-size:26px;padding:7px 22px;border-radius:10px;transform:rotate(-8deg);opacity:.85;letter-spacing:2px;z-index:2;">PAY</div>
+  <div style="position:absolute;top:150px;right:46px;border:4px solid #16A34A;color:#16A34A;font-weight:900;font-size:26px;padding:7px 22px;border-radius:10px;transform:rotate(-8deg);opacity:.85;letter-spacing:2px;z-index:2;">PAYÉ</div>
   ${_accentBar_(theme)}
   ${_docHeader_(theme, 'FACTURE', sale.sale_number, paidBadge, company)}
 
@@ -1520,26 +1670,41 @@ function buildInvoiceHTML_(sale, items, company) {
     <td style="width:49%;vertical-align:top;">${_emitterBox_(company)}</td>
     <td style="width:2%;"></td>
     <td style="width:49%;vertical-align:top;">${_metaBox_([
-      { label: "Date d'mission", value: fmtDate(sale.created_at) },
+      { label: "Date d'émission", value: fmtDate(sale.created_at) },
       { label: 'Devise', value: currency },
-      { label: 'Statut', value: 'Paye' }
+      { label: 'Statut', value: 'Payée' }
     ])}</td>
   </tr></table>
 
-  ${hasClient ? `<div style="position:relative;z-index:1;margin-bottom:20px;">${_clientBox_('Factur ', sale.client_name, sale.client_email, '')}</div>` : ''}
+  ${hasClient ? `<div style="position:relative;z-index:1;margin-bottom:20px;">${_clientBox_('Facturé à', sale.client_name, sale.client_email, '')}</div>` : ''}
 
   ${_itemsTable_(items, theme, money)}
-  ${_totalsBox_(theme, '', 'MONTANT TOTAL PAY', money(sale.total))}
+  ${_totalsBox_(theme, '', 'MONTANT TOTAL PAYÉ', money(sale.total))}
+  ${_emcfFiscalBlock_(sale, theme)}
   ${_footerBlock_(theme, company)}
 </div>
 </body></html>`;
+}
+
+/** Bloc facture normalisée DGI (NIM, code MECeF/DGI, QR code) — n'apparaît que si la vente a été fiscalisée via e-MCF. */
+function _emcfFiscalBlock_(sale, theme) {
+  if (!sale.emcf_nim && !sale.emcf_code) return '';
+  const qrDataUri = _qrCodeDataUri_(sale.emcf_qrcode);
+  return `<div style="position:relative;z-index:1;margin-top:18px;border:1px solid ${theme.border};border-radius:10px;padding:14px 18px;display:table;width:100%;">
+    <div style="display:table-cell;vertical-align:middle;">
+      <p style="font-size:9.5px;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;font-weight:800;margin:0 0 6px;">Facture normalisée — DGI</p>
+      <p style="font-size:12px;margin:0 0 3px;">NIM : <b>${escapeHtml_(sale.emcf_nim || '')}</b></p>
+      <p style="font-size:12px;margin:0;">Code MECeF/DGI : <b>${escapeHtml_(sale.emcf_code || '')}</b></p>
+    </div>
+    ${qrDataUri ? `<div style="display:table-cell;vertical-align:middle;text-align:right;width:90px;"><img src="${qrDataUri}" style="width:80px;height:80px;"></div>` : ''}
+  </div>`;
 }
 function sendInvoiceEmail_(sale, items) {
   try {
     const company = getCompanyById_(sale.company_id) || {};
     const html = buildInvoiceHTML_(sale, items, company);
     const pdf = Utilities.newBlob(html, 'text/html').getAs('application/pdf').setName('Facture_' + sale.sale_number + '.pdf');
-    sendEmail_({ to: sale.client_email, subject: `${company.name || CONFIG.APP_NAME}  Facture N ${sale.sale_number}`, html: buildEmail_SaleConfirmation({ clientNom: sale.client_name || 'Client', saleNumber: sale.sale_number, total: sale.total, company }), attachments: [pdf] });
+    sendEmail_({ to: sale.client_email, subject: `${company.name || CONFIG.APP_NAME} — Facture N° ${sale.sale_number}`, html: buildEmail_SaleConfirmation({ clientNom: sale.client_name || 'Client', saleNumber: sale.sale_number, total: sale.total, company }), attachments: [pdf] });
   } catch (e) { console.error('sendInvoiceEmail_', e); }
 }
 function resendInvoice_(p) {
